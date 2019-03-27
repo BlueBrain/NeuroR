@@ -352,6 +352,9 @@ def compute_statistics(neuron, cut_plane, only_intact_neurites=True):
     else:
         neurites = neuron.neurites
 
+    if NeuriteType.basal_dendrite not in {sec.type for sec in neurites}:
+        raise Exception('No intact basal dendrites !')
+
     dendritic_sections = list(iter_sections(neuron, neurite_filter=lambda n: n.type in {
                               nm.APICAL_DENDRITE, nm.BASAL_DENDRITE, }))
     data = {'intact_branching_angles': intact_branching_angles(neuron.neurites),
