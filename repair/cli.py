@@ -13,6 +13,19 @@ def cli():
     '''The CLI entry point'''
 
 
+@cli.command(short_help='unravel')
+@click.argument('input_file', type=click.Path(exists=True, file_okay=True))
+@click.argument('output_file')
+@click.option('--window-half-length', default=5)
+@click.option('--quiet/--no-quiet', default=False)
+def unravel(input_file, output_file, window_half_length, quiet):
+    '''Unravel a cell'''
+    logger.setLevel(logging.WARNING if quiet else logging.DEBUG)
+    from repair.unravel import unravel  # pylint: disable=redefined-outer-name
+
+    unravel(input_file, window_half_length=window_half_length).write(output_file)
+
+
 @cli.command(short_help='repair')
 @click.argument('input_file', type=click.Path(exists=True, file_okay=True))
 @click.argument('output_file')
