@@ -2,9 +2,16 @@
 
 Unravelling is the action of "stretching" the cell that
 has been shrunk because of the dehydratation caused by the slicing'''
+import logging
+import os
 import numpy as np
 
 import morphio
+
+from repair.utils import good_ext
+
+
+L = logging.getLogger('repair')
 
 
 def _get_principal_direction(points):
@@ -39,7 +46,10 @@ def unravel(filename, window_half_length=5):
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
         points = sec.points
         point_count = len(points)
-        unravelled_points = [sec.points[0]]
+        if new_section.is_root:
+            unravelled_points = [new_section.points[0]]
+        else:
+            unravelled_points = [new_section.parent.points[-1]]
 
         for window_center in range(1, point_count):
             window_start = max(0, window_center - window_half_length - 1)
@@ -59,3 +69,18 @@ def unravel(filename, window_half_length=5):
 
         new_section.points = unravelled_points
     return new_morph
+
+
+def unravel_all(input_dir, output_dir, window_half_length):
+    '''Repair all morphologies in input folder'''
+    files = list(filter(good_ext, os.listdir(input_dir)))
+
+    for f in files:
+        L.info(f)
+        inputfilename = os.path.join(input_dir, f)
+        outfilename = os.path.join(output_dir, os.path.basename(f))
+        try:
+            unravel(inputfilename, window_half_length).write(outfilename)
+        except Exception as e:  # noqa, pylint: disable=broad-except
+            L.warning('Unravelling %s failed', f)
+            L.warning(e, exc_info=True)

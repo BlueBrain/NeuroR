@@ -7,6 +7,7 @@ import os
 from collections import defaultdict, Counter
 from enum import Enum
 from itertools import chain, tee
+import json
 
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -18,7 +19,7 @@ from neurom import (NeuriteType, iter_neurites, iter_sections, iter_segments,
                     load_neuron)
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
-from repair.utils import angle_between, rotation_matrix
+from repair.utils import angle_between, rotation_matrix, good_ext
 
 L = logging.getLogger('repair')
 SEG_LENGTH = 5.0
@@ -28,7 +29,9 @@ NOISE_CONTINUATION = 0.7
 SOMA_REPULSION = 0.7
 BIFURCATION_ANGLE = 0
 
-EPSILON = 1e-8
+# Epsilon needs not to be to small otherwise leaves stored in json files
+# are not found in the NeuroM neuron
+EPSILON = 1e-6
 
 
 class Action(Enum):
@@ -373,11 +376,18 @@ def make_intact(filename, cut_points, outfilename):
     neuron.write(outfilename)
 
 
-def repair(inputfile, outputfile, seed=0):
+def repair(inputfile, outputfile, seed=0, plane=None):
     '''Repair the input morphology'''
     np.random.seed(seed)
-    cut_plane_data = load_cut_plane_data(inputfile)
+    if plane is None:
+        cut_plane_data = load_cut_plane_data(inputfile)
+    else:
+        with open(plane) as f:
+            cut_plane_data = json.load(f)
+
     if cut_plane_data['status'] != 'ok':
+        L.info('Cut plane status is not ok, skipping repair')
+        L.info('Status: %s', cut_plane_data['status'])
         return
     cut_plane = np.array(cut_plane_data['cut-leaves'])
     neuron = load_neuron(inputfile)
@@ -408,13 +418,8 @@ def repair(inputfile, outputfile, seed=0):
     neuron.write(outputfile)
 
 
-def repair_all(input_dir, output_dir, seed=0):
+def repair_all(input_dir, output_dir, seed=0, planes_dir=None):
     '''Repair all morphologies in input folder'''
-    def good_ext(filename):
-        s = filename.split('.')
-        if len(s) < 2:
-            return False
-        return s[-1].lower() in {'asc', 'h5', 'swc'}
 
     files = list(filter(good_ext, os.listdir(input_dir)))
 
@@ -422,7 +427,12 @@ def repair_all(input_dir, output_dir, seed=0):
         L.info(f)
         inputfilename = os.path.join(input_dir, f)
         outfilename = os.path.join(output_dir, os.path.basename(f))
+        if planes_dir:
+            plane = os.path.join(planes_dir, f + '.json')
+        else:
+            plane = None
         try:
-            repair(inputfilename, outfilename, seed=seed)
-        except:  # noqa, pylint: disable=bare-except
+            repair(inputfilename, outfilename, seed=seed, plane=plane)
+        except Exception as e:  # noqa, pylint: disable=broad-except
             L.warning('%s failed', f)
+            L.warning(e, exc_info=True)

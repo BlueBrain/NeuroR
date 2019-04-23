@@ -3,49 +3,78 @@ import logging
 import os
 from datetime import datetime
 
+import numpy as np
+
+from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
-from neurom import load_neuron
+from neurom import load_neuron, geom
 from neurom.view.plotly import PlotBuilder
 from neurom.view.view import plot_neuron
 
 L = logging.getLogger('repair')
 
 
-def view_all(before_repair_dir, after_repair_dir, old_repair_dir, output_pdf=None):
+def get_common_bounding_box(neurons):
+    '''Returns the bounding box that wraps all neurons'''
+    common_bbox = geom.bounding_box(neurons[0])
+    for neuron in neurons[1:]:
+        bbox = geom.bounding_box(neuron)
+        common_bbox[0] = np.min(np.vstack([common_bbox[0], bbox[0]]), axis=0)
+        common_bbox[1] = np.max(np.vstack([common_bbox[1], bbox[1]]), axis=0)
+
+    return common_bbox
+
+
+def plot(neuron, bbox, subplot, title, **kwargs):
+    '''2D neuron plot'''
+    ax = plt.subplot(subplot, facecolor='w', aspect='equal')
+    xlim = (bbox[0][0], bbox[1][0])
+    ylim = (bbox[0][2], bbox[1][2])
+
+    plot_neuron(ax, neuron, **kwargs)
+    ax.set_title(title)
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+
+
+def _neuron_subplot(folders, f, pp, subplot, titles):
+    kwargs = {'plane': 'xz'}
+    fig = plt.figure()
+    neurons = [load_neuron(os.path.join(folder, f)) for folder in folders]
+
+    common_bbox = get_common_bounding_box(neurons)
+
+    for i, (neuron, title) in enumerate(zip(neurons, titles)):
+        plot(neuron, common_bbox, subplot + 1 + i, title, **kwargs)
+    fig.suptitle(f)
+    pp.savefig()
+
+
+def view_all(folders, titles, output_pdf=None):
     '''Generate PDF report'''
     if not output_pdf:
         path = './plots'
-        output_pdf = os.path.join(path, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
+        output_pdf = os.path.join(path, datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.pdf')
+        if not os.path.exists(path):
+            os.mkdir(path)
 
-    from matplotlib.backends.backend_pdf import PdfPages
     pp = PdfPages(output_pdf)
-    limits = {'x': [-150, 150], 'y': [-150, 150]}
 
-    def plot(filename, subplot, title):
-        ax = plt.subplot(subplot, facecolor='w', aspect='equal')
-        ax.set_xlim(*limits['x'])
-        ax.set_ylim(*limits['y'])
-        neuron = load_neuron(filename)
-        plot_neuron(ax, neuron, **kwargs)
-        ax.set_title(title)
-        ax.set_aspect('equal', 'datalim')
+    files = os.listdir(folders[0])
 
-    files = os.listdir(after_repair_dir)
+    subplot = 100 + 10 * len(folders)
     for f in files:
         L.info(f)
+
         try:
-            kwargs = {'plane': 'xz'}
-            fig = plt.figure()
-            plot(os.path.join(before_repair_dir, f), 131, 'raw')
-            plot(os.path.join(old_repair_dir, f), 132, 'old repair')
-            plot(os.path.join(after_repair_dir, f), 133, 'new repair')
-            fig.suptitle(f)
-            pp.savefig()
+            _neuron_subplot(folders, f, pp, subplot, titles)
         except Exception as e:  # pylint: disable=broad-except
             L.info("e: %s", e)
             L.info('failu: %s', f)
     pp.close()
+    L.info('Done writing %s', output_pdf)
 
 
 def plot_repaired_neuron(neuron, cut_points, plot_out_path='.'):

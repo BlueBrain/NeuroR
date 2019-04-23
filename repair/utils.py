@@ -6,6 +6,14 @@ import numpy as np
 from neurom import NeuriteType
 
 
+def good_ext(filename):
+    '''Returns True if the extension is supported'''
+    s = filename.split('.')
+    if len(s) < 2:
+        return False
+    return s[-1].lower() in {'asc', 'h5', 'swc'}
+
+
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)
