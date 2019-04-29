@@ -12,7 +12,7 @@ import json
 import numpy as np
 from scipy.spatial.distance import cdist
 
-import morphio
+from morphio import PointLevel
 from cut_plane.detection import find_cut_plane
 import neurom as nm
 from neurom import (NeuriteType, iter_neurites, iter_sections, iter_segments,
@@ -20,6 +20,7 @@ from neurom import (NeuriteType, iter_neurites, iter_sections, iter_segments,
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
 from repair.utils import angle_between, rotation_matrix, good_ext
+from repair.view import plot_repaired_neuron
 
 L = logging.getLogger('repair')
 SEG_LENGTH = 5.0
@@ -254,28 +255,28 @@ def grow_until_sholl_sphere(section, origin, sholl_layer):
     return backwards_sections
 
 
-def get_similar_radius(sections, radius):
-    '''Return a non-leaf section with a similar radius'''
-    threshold = 0.1
+def get_similar_child_diameters(sections, original_section):
+    '''Find an existing section with a similar diameter and returns the diameters
+    of its children
+
+    If no similar section is found, returns twice the diameter of the last point'''
+    threshold = 0.2
+    diameter = original_section.points[-1, COLS.R] * 2
 
     for section in sections:
-        if section.children and abs(section.points[-1, COLS.R] - radius) < threshold:
-            return section
+        if section.children and abs(section.points[-1, COLS.R] * 2 - diameter) < threshold:
+            return [2 * section.children[0].points[0, COLS.R],
+                    2 * section.children[1].points[0, COLS.R]]
+
     L.warning("Oh no, no similar diameter found!")
-    return None
+    return [original_section.points[-1, COLS.R] * 2,
+            original_section.points[-1, COLS.R] * 2]
 
 
 def bifurcation(section, order_offset, info):
     '''Create 2 children at the end of the current section'''
-    current_radius = section.points[-1, COLS.R]
-    similar_section = get_similar_radius(info['dendritic_sections'], current_radius)
-
-    if similar_section:
-        child_radii = [2 * similar_section.children[0].points[0, COLS.R],
-                       2 * similar_section.children[1].points[0, COLS.R]]
-    else:
-        child_radii = [section.points[-1, COLS.R] * 2,
-                       section.points[-1, COLS.R] * 2]
+    current_diameter = section.points[-1, COLS.R] * 2
+    child_diameters = get_similar_child_diameters(info['dendritic_sections'], section)
 
     median_angle = np.median(
         best_case_angle_data(info, section.type, branch_order(section) - order_offset))
@@ -291,11 +292,11 @@ def bifurcation(section, order_offset, info):
                          first_rotation)
         return new_dir / np.linalg.norm(new_dir)
 
-    for child_radius in child_radii:
+    for child_diameter in child_diameters:
         child_start = section.points[-1, COLS.XYZ]
         points = [child_start.tolist(),
                   (child_start + shuffle_direction(last_segment_vec) * SEG_LENGTH).tolist()]
-        prop = morphio.PointLevel(points, [current_radius, child_radius])
+        prop = PointLevel(points, [current_diameter, child_diameter])
 
         child = section.append_section(prop)
         L.debug('section appended: %s', child.id)
@@ -376,7 +377,7 @@ def make_intact(filename, cut_points, outfilename):
     neuron.write(outfilename)
 
 
-def repair(inputfile, outputfile, seed=0, plane=None):
+def repair(inputfile, outputfile, seed=0, plane=None, plot=False):
     '''Repair the input morphology'''
     np.random.seed(seed)
     if plane is None:
@@ -385,10 +386,11 @@ def repair(inputfile, outputfile, seed=0, plane=None):
         with open(plane) as f:
             cut_plane_data = json.load(f)
 
-    if cut_plane_data['status'] != 'ok':
-        L.info('Cut plane status is not ok, skipping repair')
-        L.info('Status: %s', cut_plane_data['status'])
-        return
+    # print("cut_plane_data: {}".format(cut_plane_data))
+    # if cut_plane_data['status'] != 'ok':
+    #     L.info('Cut plane status is not ok, skipping repair')
+    #     L.info('Status: %s', cut_plane_data['status'])
+    #     return
     cut_plane = np.array(cut_plane_data['cut-leaves'])
     neuron = load_neuron(inputfile)
     info = compute_statistics(neuron, cut_plane)
@@ -404,6 +406,9 @@ def repair(inputfile, outputfile, seed=0, plane=None):
             )
     ]
 
+    cut_leaves_ids = {section: len(section.points)
+                      for section in cut_sections_in_bounding_cylinder}
+
     try:
         for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
             if section.type == NeuriteType.axon:
@@ -415,6 +420,9 @@ def repair(inputfile, outputfile, seed=0, plane=None):
                  origin=neuron.soma.center)
     except StopIteration:
         pass
+
+    if plot:
+        plot_repaired_neuron(neuron, cut_leaves_ids)
     neuron.write(outputfile)
 
 

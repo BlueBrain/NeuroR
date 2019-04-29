@@ -5,12 +5,10 @@ from datetime import datetime
 
 import numpy as np
 
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.pyplot as plt
-
 from neurom import load_neuron, geom
-from neurom.view.plotly import PlotBuilder
 from neurom.view.view import plot_neuron
+
+from plotly_helper.neuron_viewer import NeuronBuilder
 
 L = logging.getLogger('repair')
 
@@ -28,6 +26,7 @@ def get_common_bounding_box(neurons):
 
 def plot(neuron, bbox, subplot, title, **kwargs):
     '''2D neuron plot'''
+    import matplotlib.pyplot as plt
     ax = plt.subplot(subplot, facecolor='w', aspect='equal')
     xlim = (bbox[0][0], bbox[1][0])
     ylim = (bbox[0][2], bbox[1][2])
@@ -40,6 +39,7 @@ def plot(neuron, bbox, subplot, title, **kwargs):
 
 
 def _neuron_subplot(folders, f, pp, subplot, titles):
+    import matplotlib.pyplot as plt
     kwargs = {'plane': 'xz'}
     fig = plt.figure()
     neurons = [load_neuron(os.path.join(folder, f)) for folder in folders]
@@ -54,6 +54,7 @@ def _neuron_subplot(folders, f, pp, subplot, titles):
 
 def view_all(folders, titles, output_pdf=None):
     '''Generate PDF report'''
+    from matplotlib.backends.backend_pdf import PdfPages
     if not output_pdf:
         path = './plots'
         output_pdf = os.path.join(path, datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.pdf')
@@ -81,10 +82,10 @@ def plot_repaired_neuron(neuron, cut_points, plot_out_path='.'):
     ''' Draw a neuron using plotly
 
     Repaired section are displayed with a different colors'''
+
     for mode in ['3d', 'xz']:
         name = os.path.join(plot_out_path, 'neuron_{}'.format(neuron.name)).replace(' ', '_')
-        builder = PlotBuilder(neuron, mode, name, False)
-        for section_id, offset in cut_points.items():
-            section = neuron.sections[section_id]
-            builder.color_section(section, 'green', recursive=True, index_offset=offset)
+        builder = NeuronBuilder(neuron, mode, name, False)
+        for section, offset in cut_points.items():
+            builder.color_section(section, 'green', recursive=True, start_point=offset)
         builder.plot(show_link=False, auto_open=True)

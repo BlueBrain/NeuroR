@@ -41,7 +41,7 @@ def unravel(filename, window_half_length=5):
         morphio.mut.Morphology
     '''
     morph = morphio.Morphology(filename)
-    new_morph = morphio.mut.Morphology(morph)
+    new_morph = morphio.mut.Morphology(morph)  # pylint: disable=no-member
 
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
         points = sec.points

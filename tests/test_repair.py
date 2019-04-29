@@ -131,11 +131,21 @@ def test_continuation():
     test_module.continuation(DummySection([[1.0,1,1,1], [1,1,2,1]]), [0,0,0])
     test_module.continuation(DummySection([[1.0,1,1,1], [1,1,2,1]]), [1,1,1])
 
-def test_get_similar_radius():
-    section = DummySection([[1.0,1,1,1], [1,1,2,1]], children=[True])
-    ok_(test_module.get_similar_radius([section], 1))
-    ok_(not test_module.get_similar_radius([section], 2))
 
+def test_get_similar_child_diameters():
+    children = [DummySection([[1.0,1,1,10]]),
+                DummySection([[1.0,1,1,12]])]
+    sections = [DummySection([[1.0,1,1,1], [1,1,2,1]], children=children)]
+
+    similar_section = DummySection([[1.0,1,1,1], [1,1,2,1]], children=[])
+    assert_array_equal(test_module.get_similar_child_diameters(sections, similar_section),
+                       [20, 24])
+
+    different_section = DummySection([[1.0,1,1, 42]],
+                                     children=[DummySection([[1.0,1,1,1]]),
+                                               DummySection([[1.0,1,1,2]])])
+    assert_array_equal(test_module.get_similar_child_diameters(sections, different_section),
+                       [84, 84])
 
 
 def test_get_sholl_layer():
