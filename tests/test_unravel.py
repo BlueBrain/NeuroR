@@ -1,4 +1,4 @@
-import os
+from os.path import dirname, join as joinp
 
 from mock import patch
 import numpy as np
@@ -6,6 +6,7 @@ from neurom import COLS, load_neuron
 from neurom.geom import bounding_box
 from nose.tools import assert_dict_equal, ok_
 from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_equal
+import pandas as pd
 
 import repair.main as test_module
 from morphio import SectionType, Morphology
@@ -13,9 +14,9 @@ from morphio import SectionType, Morphology
 from utils import setup_tempdir
 
 import repair.unravel as test_module
-PATH = os.path.dirname(__file__)
+PATH = joinp(dirname(__file__), 'data')
 
-SIMPLE = load_neuron(os.path.join(PATH, 'data', 'simple.swc'))
+SIMPLE = load_neuron(joinp(PATH, 'simple.swc'))
 
 def test_get_principal_direction():
     assert_array_almost_equal(test_module._get_principal_direction([[0.,0,0], [1,1,2]]),
@@ -27,7 +28,7 @@ def test_get_principal_direction():
                               np.array([1, 0, 0]))
 
 def test_unravel():
-    neuron = test_module.unravel(os.path.join(PATH, 'data', 'simple.asc'))
+    neuron, mapping = test_module.unravel(joinp(PATH, 'simple.asc'))
     assert_array_almost_equal(neuron.root_sections[0].points,
                               np.array([[ 0.      ,  0.      ,  0.      ],
                                         [ 1.404784, -0.163042,  0.      ],
@@ -36,3 +37,42 @@ def test_unravel():
 
     assert_array_almost_equal(neuron.root_sections[0].children[0].points[0],
                               np.array([ 3.8029  , -0.441373,  0.      ]))
+
+    assert_array_almost_equal(mapping[['x0', 'y0', 'z0']].values,
+                              [[0., 0., 0.],
+                               [1., 1., 0.],
+                               [2., 0., 0.],
+                               [3., 0., 0.],
+                               [3., 0., 0.],
+                               [4., 1., 0.],
+                               [3., 0., 0.],
+                               [6., 4., 2.]])
+
+    assert_array_almost_equal(mapping[['x1', 'y1', 'z1']].values,
+                              [[0.        ,  0.        , 0.],
+                               [1.40478373, -0.16304241, 0.],
+                               [2.80956745, -0.32608482, 0.],
+                               [3.8028996 , -0.44137323, 0.],
+                               [3.8028996 , -0.44137323, 0.],
+                               [4.80289936,  0.55862677, 0.],
+                               [3.8028996 , -0.44137323, 0.],
+                               [6.80289936,  3.55862665, 2.]])
+
+
+def test_unravel_plane():
+    with setup_tempdir('test-unravel-plane'):
+        mapping = pd.read_csv(joinp(PATH, 'mapping.csv'))
+        plane = test_module.unravel_plane(joinp(PATH, 'neuron-slice-plane.json'), mapping)
+        assert_array_almost_equal(plane.cut_leaves_coordinates,
+                                  [[-111.24885559,   -1.29032707,   55.46524429],
+                                   [-156.59031677,   23.12454224,   53.51153946],
+                                   [ -60.68390274,  111.23972321,   54.0868721 ],
+                                   [  15.63226223,  -25.58386421,   51.45604706],
+                                   [ -14.81918049,  -10.20301151,   52.09701157],
+                                   [ -32.34645462,  -19.15251732,   50.921875  ],
+                                   [ -40.98423767,  -20.00574303,   51.760952  ],
+                                   [ -26.68880844,   -1.51575243,   51.23664093],
+                                   [ -18.93479538,   22.15104103,   50.69124985],
+                                   [  -7.5544219 ,   15.30504322,   51.06955719],
+                                   [  32.2554512 ,   56.86440277,   49.46508026],
+                                   [  -4.24387503,   47.21520996,   52.44573212]])

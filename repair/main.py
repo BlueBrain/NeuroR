@@ -7,20 +7,22 @@ import os
 from collections import defaultdict, Counter
 from enum import Enum
 from itertools import chain, tee
-import json
+from pathlib2 import Path
 
 import numpy as np
 from scipy.spatial.distance import cdist
 
 from morphio import PointLevel
-from cut_plane.detection import find_cut_plane
+from cut_plane import CutPlane
+from cut_plane.utils import iter_morphology_files
 import neurom as nm
 from neurom import (NeuriteType, iter_neurites, iter_sections, iter_segments,
                     load_neuron)
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
-from repair.utils import angle_between, rotation_matrix, good_ext
-from repair.view import plot_repaired_neuron
+from repair.utils import angle_between, rotation_matrix
+from repair.view import plot_repaired_neuron, view_all
+from repair.unravel import unravel_all
 
 L = logging.getLogger('repair')
 SEG_LENGTH = 5.0
@@ -57,12 +59,6 @@ def find_intact_sub_trees(morph, cut_points):
     '''Returns intact neurites'''
     return [neurite for neurite in iter_neurites(morph)
             if is_neurite_intact(neurite, cut_points)]
-
-
-def load_cut_plane_data(inputfile):
-    '''Return cut plane'''
-    width = 15
-    return find_cut_plane(load_neuron(inputfile), width)
 
 
 def direction(section):
@@ -377,23 +373,18 @@ def make_intact(filename, cut_points, outfilename):
     neuron.write(outfilename)
 
 
-def repair(inputfile, outputfile, seed=0, plane=None, plot=False):
+def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
     '''Repair the input morphology'''
     np.random.seed(seed)
     if plane is None:
-        cut_plane_data = load_cut_plane_data(inputfile)
+        cut_plane = CutPlane.find(inputfile, bin_width=15)
     else:
-        with open(plane) as f:
-            cut_plane_data = json.load(f)
+        cut_plane = CutPlane.from_json(plane)
 
-    # print("cut_plane_data: {}".format(cut_plane_data))
-    # if cut_plane_data['status'] != 'ok':
-    #     L.info('Cut plane status is not ok, skipping repair')
-    #     L.info('Status: %s', cut_plane_data['status'])
-    #     return
-    cut_plane = np.array(cut_plane_data['cut-leaves'])
+    cut_leaves = cut_plane.cut_leaves_coordinates
+
     neuron = load_neuron(inputfile)
-    info = compute_statistics(neuron, cut_plane)
+    info = compute_statistics(neuron, cut_leaves)
 
     # BlueRepairSDK used to have a bounding cylinder filter but
     # I don't know what is it good at so I have commented
@@ -401,7 +392,7 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot=False):
     # bounding_cylinder_radius = 10000
     cut_sections_in_bounding_cylinder = [
         section for section in iter_sections(neuron)
-        if (is_cut_section(section, cut_points=cut_plane)
+        if (is_cut_section(section, cut_points=cut_leaves)
             # and np.linalg.norm(section.points[-1, COLS.XZ]) < bounding_cylinder_radius
             )
     ]
@@ -421,26 +412,66 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot=False):
     except StopIteration:
         pass
 
-    if plot:
-        plot_repaired_neuron(neuron, cut_leaves_ids)
+    if plot_file is not None:
+        plot_repaired_neuron(neuron, cut_leaves_ids, plot_file)
     neuron.write(outputfile)
 
 
-def repair_all(input_dir, output_dir, seed=0, planes_dir=None):
+def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plot_dir=None):
     '''Repair all morphologies in input folder'''
-
-    files = list(filter(good_ext, os.listdir(input_dir)))
-
-    for f in files:
+    for f in iter_morphology_files(input_dir):
         L.info(f)
-        inputfilename = os.path.join(input_dir, f)
-        outfilename = os.path.join(output_dir, os.path.basename(f))
+        inputfilename = Path(input_dir, f)
+        outfilename = Path(output_dir, os.path.basename(f))
         if planes_dir:
-            plane = os.path.join(planes_dir, f + '.json')
+            plane = str(Path(planes_dir, inputfilename.name).with_suffix('.json'))
         else:
             plane = None
+
+        if plot_dir is not None:
+            name = 'neuron_{}.html'.format(Path(inputfilename).stem.replace(' ', '_'))
+            plot_file = str(Path(plot_dir, name))
+        else:
+            plot_file = None
+
         try:
-            repair(inputfilename, outfilename, seed=seed, plane=plane)
+            repair(str(inputfilename), str(outfilename),
+                   seed=seed, plane=plane, plot_file=plot_file)
         except Exception as e:  # noqa, pylint: disable=broad-except
             L.warning('%s failed', f)
             L.warning(e, exc_info=True)
+
+
+def full(root_dir, seed=0, window_half_length=5):
+    '''
+    Perform the unravelling and repair in ROOT_DIR:
+
+    1) perform the unravelling of the neuron
+    2) update the cut points position after unravelling and writes it
+       in the unravelled/planes folder
+    3) repair the morphology
+
+    The ROOT_DIR is expected to contain the following folders:
+    - raw/ with all raw morphologies to repair
+    - raw/planes with all cut planes
+    - unravelled/ where unravelled morphologies will be written
+    - unravelled/planes where unravelled planes will be written
+    - repaired/ where repaired morphologies will be written
+    '''
+
+    raw_dir = os.path.join(root_dir, 'raw')
+    unravelled_dir = os.path.join(root_dir, 'unravelled')
+    repaired_dir = os.path.join(root_dir, 'repaired')
+    plots_dir = os.path.join(root_dir, 'plots')
+    unravelled_planes_dir = str(Path(unravelled_dir, 'planes'))
+    if not os.path.exists(raw_dir):
+        raise Exception('%s does not exists' % raw_dir)
+
+    unravel_all(raw_dir, unravelled_dir, window_half_length)
+    repair_all(unravelled_dir,
+               repaired_dir,
+               seed=seed,
+               planes_dir=unravelled_planes_dir,
+               plot_dir=plots_dir)
+    view_all([raw_dir, unravelled_dir, repaired_dir],
+             titles=['raw', 'unravelled', 'repaired'])

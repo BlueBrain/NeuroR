@@ -2,14 +2,19 @@
 
 Unravelling is the action of "stretching" the cell that
 has been shrunk because of the dehydratation caused by the slicing'''
+import json
 import logging
 import os
+from scipy.spatial.ckdtree import cKDTree
 import numpy as np
+import pandas as pd
 
+from pathlib2 import Path
 import morphio
+from cut_plane import CutPlane
+from cut_plane.utils import iter_morphology_files
 
-from repair.utils import good_ext
-
+from repair.utils import RepairJSON
 
 L = logging.getLogger('repair')
 
@@ -25,6 +30,34 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
+def _unravel_section(sec, new_section, window_half_length):
+    '''Unravel a section'''
+    points = sec.points
+    point_count = len(points)
+    if new_section.is_root:
+        unravelled_points = [new_section.points[0]]
+    else:
+        unravelled_points = [new_section.parent.points[-1]]
+
+    for window_center in range(1, point_count):
+        window_start = max(0, window_center - window_half_length - 1)
+        window_end = min(point_count, window_center + window_half_length + 1)
+
+        direction = _get_principal_direction(points[window_start:window_end])
+
+        segment = points[window_center] - points[window_center - 1]
+
+        # make it span length the same as the original segment within the window
+        direction *= np.linalg.norm(segment) / np.linalg.norm(direction)
+
+        # point it in the same direction as before
+        direction *= np.sign(np.dot(segment, direction))
+
+        unravelled_points.append(direction + unravelled_points[window_center - 1])
+
+    new_section.points = unravelled_points
+
+
 def unravel(filename, window_half_length=5):
     '''Return an unravelled neuron
 
@@ -38,49 +71,64 @@ def unravel(filename, window_half_length=5):
         window_half_length (int): the number of segments that defines half of the sliding window
 
     Returns:
-        morphio.mut.Morphology
+        a tuple (morphio.mut.Morphology, dict) where first item is the unravelled
+            morphology and the second one is the mapping of each point coordinate
+            before and after unravelling
     '''
     morph = morphio.Morphology(filename)
     new_morph = morphio.mut.Morphology(morph)  # pylint: disable=no-member
 
+    coord_before = np.empty([0, 3])
+    coord_after = np.empty([0, 3])
+
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
-        points = sec.points
-        point_count = len(points)
-        if new_section.is_root:
-            unravelled_points = [new_section.points[0]]
-        else:
-            unravelled_points = [new_section.parent.points[-1]]
+        _unravel_section(sec, new_section, window_half_length)
 
-        for window_center in range(1, point_count):
-            window_start = max(0, window_center - window_half_length - 1)
-            window_end = min(point_count, window_center + window_half_length + 1)
+        coord_before = np.append(coord_before, sec.points, axis=0)
+        coord_after = np.append(coord_after, new_section.points, axis=0)
 
-            direction = _get_principal_direction(points[window_start:window_end])
+    mapping = pd.DataFrame({
+        'x0': coord_before[:, 0],
+        'y0': coord_before[:, 1],
+        'z0': coord_before[:, 2],
+        'x1': coord_after[:, 0],
+        'y1': coord_after[:, 1],
+        'z1': coord_after[:, 2],
+    })
 
-            segment = points[window_center] - points[window_center - 1]
-
-            # make it span length the same as the original segment within the window
-            direction *= np.linalg.norm(segment) / np.linalg.norm(direction)
-
-            # point it in the same direction as before
-            direction *= np.sign(np.dot(segment, direction))
-
-            unravelled_points.append(direction + unravelled_points[window_center - 1])
-
-        new_section.points = unravelled_points
-    return new_morph
+    return new_morph, mapping
 
 
-def unravel_all(input_dir, output_dir, window_half_length):
+def unravel_plane(input_plane, mapping):
+    '''Return a new CutPlane object where the cut-leaves
+    position has been updated after unravelling'''
+    plane = CutPlane.from_json(input_plane)
+    leaves = plane.cut_leaves_coordinates
+    t = cKDTree(mapping[['x0', 'y0', 'z0']])
+    distances, indices = t.query(leaves)
+    not_matching_leaves = np.where(distances > 1e-5)[0]
+    if not_matching_leaves.size:
+        raise Exception('Cannot find the following leaves in the mapping:\n{}'.format(
+                        leaves[not_matching_leaves]))
+    plane.cut_leaves_coordinates = mapping.iloc[indices][['x1', 'y1', 'z1']].values
+    return plane
+
+
+def unravel_all(raw_dir, unravelled_dir, window_half_length):
     '''Repair all morphologies in input folder'''
-    files = list(filter(good_ext, os.listdir(input_dir)))
+    for f in iter_morphology_files(raw_dir):
+        L.info('Unravelling: %s', f)
+        inputfilename = Path(raw_dir, f)
+        outfilename = Path(unravelled_dir, os.path.basename(f))
+        raw_plane = str(Path(raw_dir, 'planes', inputfilename.name).with_suffix('.json'))
+        unravelled_plane = Path(unravelled_dir, 'planes', inputfilename.name).with_suffix('.json')
 
-    for f in files:
-        L.info(f)
-        inputfilename = os.path.join(input_dir, f)
-        outfilename = os.path.join(output_dir, os.path.basename(f))
         try:
-            unravel(inputfilename, window_half_length).write(outfilename)
+            neuron, mapping = unravel(str(inputfilename), window_half_length)
+            neuron.write(str(outfilename))
+            with open(unravelled_plane, 'w') as f:
+                json.dump(unravel_plane(raw_plane, mapping).to_json(), f, cls=RepairJSON)
+
         except Exception as e:  # noqa, pylint: disable=broad-except
             L.warning('Unravelling %s failed', f)
             L.warning(e, exc_info=True)

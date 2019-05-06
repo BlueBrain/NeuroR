@@ -45,6 +45,6 @@ ignore-docstrings=yes
 # (useful for classes with attributes dynamically set).
 
 #as of numpy 1.8.0, name resolution seems to be a problem.  Ignore lookups in numpy
-ignored-classes=numpy,list,morphio
+ignored-classes=numpy,list,morphio,scipy
 
-extension-pkg-whitelist=numpy,lxml,morphio
+extension-pkg-whitelist=numpy,lxml,morphio,scipy

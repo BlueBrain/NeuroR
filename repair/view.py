@@ -78,14 +78,18 @@ def view_all(folders, titles, output_pdf=None):
     L.info('Done writing %s', output_pdf)
 
 
-def plot_repaired_neuron(neuron, cut_points, plot_out_path='.'):
+def plot_repaired_neuron(neuron, cut_points, plot_file=None):
     ''' Draw a neuron using plotly
 
     Repaired section are displayed with a different colors'''
 
     for mode in ['3d', 'xz']:
-        name = os.path.join(plot_out_path, 'neuron_{}'.format(neuron.name)).replace(' ', '_')
-        builder = NeuronBuilder(neuron, mode, name, False)
+        builder = NeuronBuilder(neuron, mode, neuron.name, False)
         for section, offset in cut_points.items():
             builder.color_section(section, 'green', recursive=True, start_point=offset)
-        builder.plot(show_link=False, auto_open=True)
+
+        if plot_file is not None:
+            root, ext = os.path.splitext(plot_file)
+            plot_file = '{}_{}{}'.format(root, mode, ext)
+
+        builder.plot(show_link=False, auto_open=False, filename=plot_file)
