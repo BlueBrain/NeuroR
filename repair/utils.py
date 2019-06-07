@@ -1,9 +1,14 @@
 '''Utils module'''
+import logging
 import json
 
+import h5py
 import numpy as np
 
 from neurom import NeuriteType
+from neurom.features.sectionfunc import branch_order
+
+L = logging.getLogger('repair')
 
 
 def unit_vector(vector):
@@ -59,3 +64,28 @@ class RepairJSON(json.JSONEncoder):
         elif isinstance(o, NeuriteType):
             return int(o)
         return json.JSONEncoder.default(self, o)
+
+
+def read_apical_points(filename, neuron_old, neuron_new):
+    '''Read apical section ID and point ID from file
+
+    Returns a 4-tuple with:
+    - neurom v2 section id (ie. shifted by -1)
+    - apical section branch order
+    - point ID in new morphology
+    - point ID in old morphology
+    '''
+    with h5py.File(filename) as f:
+        group = f['neuron1']
+        try:
+            section_id = group.attrs['apical'][0, 0]
+            # Neurom v2 does not have a soma section so section ids are shifted!
+            neurom_v2_section_id = section_id - 1
+            apical_point_new = len(neuron_new.section(neurom_v2_section_id).points) - 1
+            apical_point_old = len(neuron_old.section(neurom_v2_section_id).points) - 1
+            apical_point_order = branch_order(neuron_new.sections[section_id])
+            return neurom_v2_section_id, apical_point_order, apical_point_new, apical_point_old
+
+        except (KeyError, IndexError):
+            L.warning("Could not load apical point from file: %s", filename)
+            return -1, 0, [0, 0, 0], [0, 0, 0]
