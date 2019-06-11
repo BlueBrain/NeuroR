@@ -12,7 +12,7 @@ from pathlib2 import Path
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from morphio import PointLevel
+from morphio import PointLevel, SectionType
 from cut_plane import CutPlane
 from cut_plane.utils import iter_morphology_files
 import neurom as nm
@@ -42,6 +42,14 @@ class Action(Enum):
     BIFURCATION = 1
     CONTINUATION = 2
     TERMINATION = 3
+
+
+class RepairType(Enum):
+    '''The types used for the repair'''
+    oblique = 1
+    basal = 2
+    tuft = 3
+    trunk = 4
 
 
 def is_cut_section(section, cut_points):
@@ -442,6 +450,27 @@ def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plot_dir=None):
             L.warning(e, exc_info=True)
 
 
+def subtree_classification(neuron, apical_point_id):
+    '''Assign a repair section type to each section'''
+    repair_type = dict()
+    for section in iter_sections(neuron):
+        if section.type == SectionType.apical_dendrite:
+            repair_type[section] = RepairType.oblique
+        elif section.type == SectionType.basal_dendrite:
+            repair_type[section] = RepairType.basal
+
+    apical_section = neuron.sections[apical_point_id]
+
+    for section in apical_section.ipreorder():
+        repair_type[section] = RepairType.tuft
+
+    # The value for the apical section gets overriden to 'trunk'
+    for section in apical_section.iupstream():
+        repair_type[section] = RepairType.trunk
+
+    return repair_type
+
+
 def full(root_dir, seed=0, window_half_length=5):
     '''
     Perform the unravelling and repair in ROOT_DIR:
@@ -467,6 +496,10 @@ def full(root_dir, seed=0, window_half_length=5):
     if not os.path.exists(raw_dir):
         raise Exception('%s does not exists' % raw_dir)
 
+    for folder in [unravelled_dir, unravelled_planes_dir, repaired_dir, plots_dir]:
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+
     unravel_all(raw_dir, unravelled_dir, window_half_length)
     repair_all(unravelled_dir,
                repaired_dir,
@@ -474,4 +507,5 @@ def full(root_dir, seed=0, window_half_length=5):
                planes_dir=unravelled_planes_dir,
                plot_dir=plots_dir)
     view_all([raw_dir, unravelled_dir, repaired_dir],
-             titles=['raw', 'unravelled', 'repaired'])
+             titles=['raw', 'unravelled', 'repaired'],
+             output_pdf=os.path.join(root_dir, 'plots.pdf'))

@@ -10,11 +10,11 @@ from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_
 import repair.main as test_module
 from morphio import SectionType
 from repair.main import Action
-from utils import setup_tempdir
+from .utils import setup_tempdir
 
-PATH = os.path.dirname(__file__)
+DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
-SIMPLE = load_neuron(os.path.join(PATH, 'data', 'simple.swc'))
+SIMPLE = load_neuron(os.path.join(DATA_PATH, 'simple.swc'))
 
 class DummySection:
     def __init__(self, points, children=None):
@@ -165,7 +165,7 @@ def test_last_segment_vector():
 
 def test_grow_until_sholl_sphere():
     np.random.seed(0)
-    neuron = load_neuron(os.path.join(PATH, 'data', 'simple.swc'))
+    neuron = load_neuron(os.path.join(DATA_PATH, 'simple.swc'))
     section = neuron.neurites[0].root_node
     test_module.grow_until_sholl_sphere(section, SIMPLE.soma.center, 0)
     assert_array_almost_equal(section.points[:, COLS.XYZ],
@@ -189,3 +189,24 @@ def test_compute_sholl_data():
                            1: {Action.BIFURCATION: 0,
                                Action.CONTINUATION: 2,
                                Action.TERMINATION: 2}}})
+
+def test_subtree_classification():
+    neuron = load_neuron(os.path.join(DATA_PATH, 'repair_type.asc'))
+
+    APICAL_POINT_ID = 3
+    # Pre check to be sure that the apical point is the one it should be
+    assert_array_almost_equal(neuron.sections[APICAL_POINT_ID].points,
+                              np.array([[0., 0., 4., 1. ],
+                                        [0., 0., 0., 0.5],
+                                        [1., 0., 0., 0.5]], dtype=np.float32))
+
+    mapping = test_module.subtree_classification(neuron, APICAL_POINT_ID)
+    assert_dict_equal({sec.id: v for sec, v in mapping.items()},
+                      {
+                          1: test_module.RepairType.trunk,
+                          2: test_module.RepairType.oblique,
+                          3: test_module.RepairType.trunk,
+                          4: test_module.RepairType.tuft,
+                          5: test_module.RepairType.tuft,
+                          6: test_module.RepairType.basal,
+                      })

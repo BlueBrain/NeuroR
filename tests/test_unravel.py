@@ -11,7 +11,7 @@ import pandas as pd
 import repair.main as test_module
 from morphio import SectionType, Morphology
 
-from utils import setup_tempdir
+from .utils import setup_tempdir
 
 import repair.unravel as test_module
 PATH = joinp(dirname(__file__), 'data')
