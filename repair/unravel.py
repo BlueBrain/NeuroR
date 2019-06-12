@@ -96,6 +96,7 @@ def unravel(filename, window_half_length=5):
         'z1': coord_after[:, 2],
     })
 
+    L.info('Unravel successful for file: %s', filename)
     return new_morph, mapping
 
 

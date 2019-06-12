@@ -19,9 +19,7 @@ DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 def test_read_apical_points():
     neuron = load_neuron(os.path.join(DATA_PATH, 'with-apical-attribute.h5'))
     filename = os.path.join(DATA_PATH, 'with-apical-attribute.h5')
-    assert_array_equal(read_apical_points(filename, neuron, neuron),
-                       [1, 2, 20, 20])
+    assert_array_equal(read_apical_points(filename, neuron).id, 1)
 
     filename = os.path.join(DATA_PATH, 'valid.h5')
-    assert_array_equal(read_apical_points(filename, neuron, neuron),
-                       [-1, 0, [0,0,0], [0,0,0]])
+    assert_array_equal(read_apical_points(filename, neuron), None)

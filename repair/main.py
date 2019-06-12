@@ -16,11 +16,11 @@ from morphio import PointLevel, SectionType
 from cut_plane import CutPlane
 from cut_plane.utils import iter_morphology_files
 import neurom as nm
-from neurom import (NeuriteType, iter_neurites, iter_sections, iter_segments,
-                    load_neuron)
+from neurom import (NeuriteType, iter_neurites, iter_segments,
+                    load_neuron, iter_sections)
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
-from repair.utils import angle_between, rotation_matrix
+from repair.utils import angle_between, rotation_matrix, read_apical_points
 from repair.view import plot_repaired_neuron, view_all
 from repair.unravel import unravel_all
 
@@ -45,11 +45,15 @@ class Action(Enum):
 
 
 class RepairType(Enum):
-    '''The types used for the repair'''
-    oblique = 1
-    basal = 2
-    tuft = 3
-    trunk = 4
+    '''The types used for the repair
+
+    based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22  # noqa, pylint: disable=line-too-long
+    '''
+    trunk = 0
+    tuft = 1
+    oblique = 2
+    basal = 3
+    axon = 4
 
 
 def is_cut_section(section, cut_points):
@@ -57,16 +61,39 @@ def is_cut_section(section, cut_points):
     return np.min(cdist(section.points[:, COLS.XYZ], cut_points)) < EPSILON
 
 
-def is_neurite_intact(neurite, cut_points):
-    '''Does the neurite have leaves belonging to the cut plane ?'''
+def is_branch_intact(branch, cut_points):
+    '''Does the branch have leaves belonging to the cut plane ?'''
     return all(not is_cut_section(section, cut_points)
-               for section in iter_sections(neurite))
+               for section in branch.ipreorder())
 
 
-def find_intact_sub_trees(morph, cut_points):
+def find_intact_obliques(neuron, cut_leaves, repair_type_map):
+    '''
+    Find root sections of all intact obliques
+
+    Root obliques are obliques with a section parent of type 'trunk'
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n193  # noqa, pylint: disable=line-too-long
+    '''
+    root_obliques = (section for section in iter_sections(neuron)
+                     if (repair_type_map[section] == RepairType.oblique and
+                         not section.is_root and
+                         repair_type_map[section.parent] == RepairType.trunk))
+    intacts = [oblique for oblique in root_obliques if is_branch_intact(oblique, cut_leaves)]
+    return intacts
+
+
+def find_intact_sub_trees(morph, cut_leaves, repair_type_map):
     '''Returns intact neurites'''
-    return [neurite for neurite in iter_neurites(morph)
-            if is_neurite_intact(neurite, cut_points)]
+    basals = [neurite.root_node for neurite in iter_neurites(morph)
+              if (neurite.type == NeuriteType.basal_dendrite and
+                  is_branch_intact(neurite.root_node, cut_leaves))]
+    if not basals:
+        raise Exception('No intact basal dendrites !')
+
+    obliques = find_intact_obliques(morph, cut_leaves, repair_type_map)
+
+    return basals + obliques
 
 
 def direction(section):
@@ -79,14 +106,17 @@ def _section_length(section):
     return np.linalg.norm(direction(section))
 
 
-def branching_angles(section):
+def branching_angles(section, order_offset=0):
     '''Return a list of 2-tuples. The first element is the branching order and the second one is
-    the angles between the direction of the section and its children's ones'''
+    the angles between the direction of the section and its children's ones
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n194  # noqa, pylint: disable=line-too-long
+    '''
     if _section_length(section) < EPSILON:
         return []
     res = []
 
-    branching_order = branch_order(section)
+    branching_order = branch_order(section) - order_offset
     for child in section.children:
         if _section_length(child) < EPSILON:
             continue
@@ -97,27 +127,34 @@ def branching_angles(section):
     return res
 
 
-def intact_branching_angles(neurites):
-    '''Returns lists of branching angles stored in a nested dict
+def intact_branching_angles(branches, repair_type_map):
+    '''
+    Returns lists of branching angles stored in a nested dict
     1st key: section type, 2nd key: branching order
 
     Args:
         neurites (List[Neurite])
 
     Returns:
-        Dict[SectionType, Dict[int, List[int]]]: Branching angles'''
+        Dict[SectionType, Dict[int, List[int]]]: Branching angles
+    '''
     res = defaultdict(lambda: defaultdict(list))
-    for neurite in neurites:
-        for order, angle in branching_angles(neurite.root_node):
-            res[neurite.type][order].append(angle)
-    return res
+    for branch in branches:
+        order_offset = get_order_offset(branch, repair_type_map)
+        for section in branch.ipreorder():
+            for order, angle in branching_angles(section, order_offset):
+                res[repair_type_map[section]][order].append(angle)
+    return dict(res)
 
 
 def best_case_angle_data(info, section_type, branching_order):
     '''Get the distribution of branching angles for this section type and
     branching order
 
-    If no data are available, fallback on aggregate data'''
+    If no data are available, fallback on aggregate data
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n329  # noqa, pylint: disable=line-too-long
+    '''
     angles = info['intact_branching_angles'][section_type]
     accurate_data = angles[branching_order]
     if accurate_data:
@@ -126,27 +163,72 @@ def best_case_angle_data(info, section_type, branching_order):
     return list(chain.from_iterable(angles.values()))
 
 
-def compute_sholl_data(neurites, origin):
+def get_origin(branch, soma_center, repair_type_map):
+    '''Return what should be considered as the origin for this branch'''
+    if repair_type_map[branch] == RepairType.oblique:
+        return branch.points[0, COLS.XYZ]
+    return soma_center
+
+
+def get_order_offset(branch, repair_type_map):
+    r'''
+    Return what should be considered as the branch order offset for this branch
+
+    For obliques, the branch order is computed with respect to
+    the branch order of the first oblique section so we have to remove the offset.
+
+                3
+             2  |
+ oblique ---->\ |
+               \| 1
+                |
+                |
+                | 0
+
+    oblique order is 2 - 1 = 1
+    '''
+    if repair_type_map[branch] == RepairType.oblique:
+        return branch_order(branch)
+    return 0
+
+
+def compute_sholl_data(branches, soma_center, repair_type_map):
     '''Compute the number of termination, bifurcation and continuation section for each
     neurite type, sholl layer and shell order
 
     data[neurite_type][layer][order][action_type] = counts
+
+    Args:
+        branches: a collection of Neurite or Section that will be traversed
+        origin: The origin of the Sholl sphere. If none, the origin is set as the
+            first point of each branch
+
+    Note: This is based on
+    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n93
     '''
     data = defaultdict(lambda: defaultdict(dict))
-    sections = (section for neurite in neurites for section in iter_sections(neurite))
-    for section in sections:
-        order = branch_order(section)
-        first_layer, last_layer = (np.linalg.norm(
-            section.points[[0, -1], COLS.XYZ] - origin, axis=1) // SHOLL_LAYER_SIZE).astype(int)
-        for layer in range(min(first_layer, last_layer), max(first_layer, last_layer) + 1):
-            if order not in data[section.type][layer]:
-                data[section.type][layer][order] = {Action.TERMINATION: 0,
-                                                    Action.CONTINUATION: 0,
-                                                    Action.BIFURCATION: 0}
-            data[section.type][layer][order][Action.CONTINUATION] += 1
 
-        data[section.type][last_layer][order][Action.BIFURCATION if section.children else
-                                              Action.TERMINATION] += 1
+    for branch in branches:
+        origin = get_origin(branch, soma_center, repair_type_map)
+        order_offset = get_order_offset(branch, repair_type_map)
+
+        for section in branch.ipreorder():
+            repair_type = repair_type_map[section]
+            assert repair_type == repair_type_map[branch], \
+                'RepairType should not change along the branch way'
+            order = branch_order(section) - order_offset
+            first_layer, last_layer = (np.linalg.norm(
+                section.points[[0, -1], COLS.XYZ] - origin, axis=1) // SHOLL_LAYER_SIZE).astype(int)
+            per_type = data[repair_type]
+            for layer in range(min(first_layer, last_layer), max(first_layer, last_layer) + 1):
+                if order not in per_type[layer]:
+                    per_type[layer][order] = {Action.TERMINATION: 0,
+                                              Action.CONTINUATION: 0,
+                                              Action.BIFURCATION: 0}
+                per_type[layer][order][Action.CONTINUATION] += 1
+
+            per_type[last_layer][order][Action.BIFURCATION if section.children else
+                                        Action.TERMINATION] += 1
     return data
 
 
@@ -167,6 +249,8 @@ def get_sholl_proba(sholl_data, section_type, sholl_layer, pseudo_order):
 
     Returns:
         Dict[Action, float]: probability of each action
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n398  # noqa, pylint: disable=line-too-long
     '''
 
     section_type_data = sholl_data[section_type]
@@ -180,6 +264,9 @@ def get_sholl_proba(sholl_data, section_type, sholl_layer, pseudo_order):
     try:
         action_counts = data_layer[pseudo_order]
     except KeyError:
+        # No data for this order. Average on all orders for this layer
+        # As done in https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n426  # noqa, pylint: disable=line-too-long
+
         action_counts = Counter()
         for data in data_layer.values():
             for action, count in data.items():
@@ -212,7 +299,10 @@ def last_segment_vector(section, normalized=False):
 
 
 def continuation(sec, origin):
-    '''Continue growing the section'''
+    '''Continue growing the section
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n241  # noqa, pylint: disable=line-too-long
+    '''
     # The following lines is from BlueRepairSDK's code but I'm not
     # convinced by its relevance
     # if first_sec:
@@ -244,7 +334,10 @@ def continuation(sec, origin):
 
 
 def grow_until_sholl_sphere(section, origin, sholl_layer):
-    '''Grow until reaching next sholl layer'''
+    '''Grow until reaching next sholl layer
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n363  # noqa, pylint: disable=line-too-long
+    '''
     backwards_sections = 0
     while get_sholl_layer(section, origin) == sholl_layer and backwards_sections < 4:
         continuation(section, origin)
@@ -263,7 +356,10 @@ def get_similar_child_diameters(sections, original_section):
     '''Find an existing section with a similar diameter and returns the diameters
     of its children
 
-    If no similar section is found, returns twice the diameter of the last point'''
+    If no similar section is found, returns twice the diameter of the last point
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n76  # noqa, pylint: disable=line-too-long
+    '''
     threshold = 0.2
     diameter = original_section.points[-1, COLS.R] * 2
 
@@ -278,7 +374,10 @@ def get_similar_child_diameters(sections, original_section):
 
 
 def bifurcation(section, order_offset, info):
-    '''Create 2 children at the end of the current section'''
+    '''Create 2 children at the end of the current section
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n287  # noqa, pylint: disable=line-too-long
+    '''
     current_diameter = section.points[-1, COLS.R] * 2
     child_diameters = get_similar_child_diameters(info['dendritic_sections'], section)
 
@@ -306,19 +405,19 @@ def bifurcation(section, order_offset, info):
         L.debug('section appended: %s', child.id)
 
 
-def grow(section, info, first_sec, order_offset, origin):
+def grow(section, info, order_offset, origin):
     '''Grow main method
 
     Will either:
         - continue growing the section
         - create a bifurcation
         - terminate the growth
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n387  # noqa, pylint: disable=line-too-long
     '''
     sholl_layer = get_sholl_layer(section, origin)
     pseudo_order = branch_order(section) - order_offset
     L.debug('In Grow. Layer: %s, order: %s', sholl_layer, pseudo_order)
-    if first_sec:
-        continuation(section, origin)
 
     proba = get_sholl_proba(info['sholl'], section.type, sholl_layer, pseudo_order)
     L.debug('action proba: %s', proba)
@@ -329,7 +428,7 @@ def grow(section, info, first_sec, order_offset, origin):
         backwards_sections = grow_until_sholl_sphere(section, origin, sholl_layer)
 
         if backwards_sections == 0:
-            grow(section, info, False, order_offset, origin)
+            grow(section, info, order_offset, origin)
         L.debug(section.points[-1])
 
     elif action == Action.BIFURCATION:
@@ -338,14 +437,16 @@ def grow(section, info, first_sec, order_offset, origin):
         if backwards_sections == 0:
             bifurcation(section, order_offset, info)
             for child in section.children:
-                grow(child, info, False, order_offset, origin)
-
+                grow(child, info, order_offset, origin)
     else:
         L.info('Terminating')
 
 
 def angle_between_segments(neuron):
-    '''Returns a list of angles between successive segments'''
+    '''Returns a list of angles between successive segments
+
+    This is not used in the growth code but can be useful for analyses
+    '''
     angles = list()
     for section in iter_sections(neuron):
         iter_seg1, iter_seg2 = tee(iter_segments(section))
@@ -357,36 +458,23 @@ def angle_between_segments(neuron):
     return angles
 
 
-def compute_statistics(neuron, cut_plane, only_intact_neurites=True):
+def compute_statistics_for_intact_subtrees(neuron, cut_plane, repair_type_map):
     '''Compute statistics'''
-    if only_intact_neurites:
-        neurites = find_intact_sub_trees(neuron, cut_plane)
-    else:
-        neurites = neuron.neurites
+    branches = find_intact_sub_trees(neuron, cut_plane, repair_type_map)
 
-    if NeuriteType.basal_dendrite not in {sec.type for sec in neurites}:
-        raise Exception('No intact basal dendrites !')
-
-    dendritic_sections = list(iter_sections(neuron, neurite_filter=lambda n: n.type in {
-                              nm.APICAL_DENDRITE, nm.BASAL_DENDRITE, }))
-    data = {'intact_branching_angles': intact_branching_angles(neuron.neurites),
-            'sholl': compute_sholl_data(neurites, neuron.soma.center),
-            'angle_between_segments': angle_between_segments(neuron),
-            'dendritic_sections': dendritic_sections}
-    return data
-
-
-def make_intact(filename, cut_points, outfilename):
-    '''Clone neuron and remove non-intact neurites'''
-    neuron = load_neuron(filename)
-    for neurite in neuron.neurites:
-        if not is_neurite_intact(neurite, cut_points):
-            neuron.delete_section(neurite.morphio_root_node, recursive=True)
-    neuron.write(outfilename)
+    return {
+        'intact_branching_angles': intact_branching_angles(branches, repair_type_map),
+        'dendritic_sections': [section for section in iter_sections(neuron)
+                               if section.type in {nm.APICAL_DENDRITE, nm.BASAL_DENDRITE}],
+        'sholl': compute_sholl_data(branches, neuron.soma.center, repair_type_map),
+    }
 
 
 def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
-    '''Repair the input morphology'''
+    '''Repair the input morphology
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
+    '''
     np.random.seed(seed)
     if plane is None:
         cut_plane = CutPlane.find(inputfile, bin_width=15)
@@ -396,7 +484,15 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
     cut_leaves = cut_plane.cut_leaves_coordinates
 
     neuron = load_neuron(inputfile)
-    info = compute_statistics(neuron, cut_leaves)
+    if cut_leaves.size == 0:
+        L.warning('No cut leaves. Nothing to repair for morphology %s', inputfile)
+        neuron.write(outputfile)
+        return
+
+    apical_section = read_apical_points(inputfile, neuron)
+    repair_type_map = subtree_classification(neuron, apical_section)
+
+    info = compute_statistics_for_intact_subtrees(neuron, cut_leaves, repair_type_map)
     L.debug(info)
 
     # BlueRepairSDK used to have a bounding cylinder filter but
@@ -415,19 +511,18 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
 
     try:
         for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
-            if section.type == NeuriteType.axon:
-                continue
-            if section.type != NeuriteType.basal_dendrite:
-                raise NotImplementedError(
-                    'Section type: {} is not handled yet'.format(section.type))
-            grow(section, info, first_sec=True, order_offset=0,  # FIXME
-                 origin=neuron.soma.center)
+            if repair_type_map[section] == RepairType.basal:
+                origin = get_origin(section, neuron.soma.center, repair_type_map)
+                if section.type == NeuriteType.basal_dendrite:
+                    continuation(section, origin)
+                grow(section, info, get_order_offset(section, repair_type_map), origin)
     except StopIteration:
         pass
 
     if plot_file is not None:
         plot_repaired_neuron(neuron, cut_leaves_ids, plot_file)
     neuron.write(outputfile)
+    L.info('Repair successful for %s', inputfile)
 
 
 def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plot_dir=None):
@@ -455,25 +550,29 @@ def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plot_dir=None):
             L.warning(e, exc_info=True)
 
 
-def subtree_classification(neuron, apical_point_id):
-    '''Assign a repair section type to each section'''
-    repair_type = dict()
+def subtree_classification(neuron, apical_section):
+    '''Assign a repair section type to each section
+
+    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n242  # noqa, pylint: disable=line-too-long
+    '''
+    repair_type_map = dict()
     for section in iter_sections(neuron):
         if section.type == SectionType.apical_dendrite:
-            repair_type[section] = RepairType.oblique
+            repair_type_map[section] = RepairType.oblique
         elif section.type == SectionType.basal_dendrite:
-            repair_type[section] = RepairType.basal
+            repair_type_map[section] = RepairType.basal
+        elif section.type == SectionType.axon:
+            repair_type_map[section] = RepairType.axon
 
-    apical_section = neuron.sections[apical_point_id]
+    if apical_section:
+        for section in apical_section.ipreorder():
+            repair_type_map[section] = RepairType.tuft
 
-    for section in apical_section.ipreorder():
-        repair_type[section] = RepairType.tuft
+        # The value for the apical section gets overriden to 'trunk'
+        for section in apical_section.iupstream():
+            repair_type_map[section] = RepairType.trunk
 
-    # The value for the apical section gets overriden to 'trunk'
-    for section in apical_section.iupstream():
-        repair_type[section] = RepairType.trunk
-
-    return repair_type
+    return repair_type_map
 
 
 def full(root_dir, seed=0, window_half_length=5):
