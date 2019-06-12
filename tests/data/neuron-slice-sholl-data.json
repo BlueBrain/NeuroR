@@ -1,0 +1,226 @@
+{
+    "SectionType.basal_dendrite": {
+        "1": {
+            "0": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            }
+        },
+        "10": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 8,
+                "Action.TERMINATION": 1
+            }
+        },
+        "11": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 1
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 7,
+                "Action.TERMINATION": 0
+            }
+        },
+        "12": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 1
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 7,
+                "Action.TERMINATION": 2
+            }
+        },
+        "13": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 5,
+                "Action.TERMINATION": 0
+            }
+        },
+        "14": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 1
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 5,
+                "Action.TERMINATION": 3
+            }
+        },
+        "15": {
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 1
+            }
+        },
+        "16": {
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 1
+            }
+        },
+        "2": {
+            "0": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            }
+        },
+        "3": {
+            "0": {
+                "Action.BIFURCATION": 2,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            },
+            "1": {
+                "Action.BIFURCATION": 1,
+                "Action.CONTINUATION": 4,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            }
+        },
+        "4": {
+            "1": {
+                "Action.BIFURCATION": 2,
+                "Action.CONTINUATION": 3,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 1,
+                "Action.CONTINUATION": 6,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            }
+        },
+        "5": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 1,
+                "Action.CONTINUATION": 5,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 4,
+                "Action.TERMINATION": 0
+            }
+        },
+        "6": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 1,
+                "Action.CONTINUATION": 4,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 6,
+                "Action.TERMINATION": 0
+            }
+        },
+        "7": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 1,
+                "Action.CONTINUATION": 3,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 8,
+                "Action.TERMINATION": 0
+            }
+        },
+        "8": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 8,
+                "Action.TERMINATION": 0
+            }
+        },
+        "9": {
+            "1": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 1,
+                "Action.TERMINATION": 0
+            },
+            "2": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 2,
+                "Action.TERMINATION": 0
+            },
+            "3": {
+                "Action.BIFURCATION": 0,
+                "Action.CONTINUATION": 8,
+                "Action.TERMINATION": 0
+            }
+        }
+    }
+}

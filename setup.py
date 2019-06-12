@@ -8,7 +8,7 @@ VERSION = "0.1.0"
 
 REQS = ['click>=0.7.0',
         'scipy>=1.1.0',
-        'morphio>=2.0.0',
+        'morphio>=2.1.1',
         'neurom @ git+https://git@github.com/wizmer/NeuroM.git@mut_morphio#egg=neurom-2.0.0',
         'plotly_helper>=0.0.1',
         'matplotlib>=2.2.3',

@@ -316,28 +316,32 @@ def grow(section, info, first_sec, order_offset, origin):
     '''
     sholl_layer = get_sholl_layer(section, origin)
     pseudo_order = branch_order(section) - order_offset
+    L.debug('In Grow. Layer: %s, order: %s', sholl_layer, pseudo_order)
     if first_sec:
         continuation(section, origin)
 
     proba = get_sholl_proba(info['sholl'], section.type, sholl_layer, pseudo_order)
+    L.debug('action proba: %s', proba)
     action = np.random.choice(list(proba.keys()), p=list(proba.values()))
 
     if action == Action.CONTINUATION:
-        L.debug('Continuing')
+        L.info('Continuing')
         backwards_sections = grow_until_sholl_sphere(section, origin, sholl_layer)
 
         if backwards_sections == 0:
             grow(section, info, False, order_offset, origin)
+        L.debug(section.points[-1])
 
     elif action == Action.BIFURCATION:
-        L.debug('Bifurcating')
+        L.info('Bifurcating')
         backwards_sections = grow_until_sholl_sphere(section, origin, sholl_layer)
         if backwards_sections == 0:
             bifurcation(section, order_offset, info)
             for child in section.children:
                 grow(child, info, False, order_offset, origin)
+
     else:
-        L.debug('Terminating')
+        L.info('Terminating')
 
 
 def angle_between_segments(neuron):
@@ -393,6 +397,7 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
 
     neuron = load_neuron(inputfile)
     info = compute_statistics(neuron, cut_leaves)
+    L.debug(info)
 
     # BlueRepairSDK used to have a bounding cylinder filter but
     # I don't know what is it good at so I have commented

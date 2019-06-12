@@ -11,7 +11,7 @@ import repair.main as test_module
 from morphio import SectionType
 from repair.main import Action
 from repair.utils import read_apical_points
-from utils import setup_tempdir
+from .utils import setup_tempdir
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 

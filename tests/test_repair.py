@@ -1,9 +1,11 @@
 import os
+import json
 
 from mock import patch
 import numpy as np
 from neurom import COLS, load_neuron
 from neurom.geom import bounding_box
+from morphio import Morphology, diff
 from nose.tools import assert_dict_equal, ok_
 from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_equal
 
@@ -15,6 +17,7 @@ from .utils import setup_tempdir
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
 SIMPLE = load_neuron(os.path.join(DATA_PATH, 'simple.swc'))
+SLICE = load_neuron(os.path.join(DATA_PATH, 'neuron-slice.h5'))
 
 class DummySection:
     def __init__(self, points, children=None):
@@ -44,8 +47,13 @@ def test_find_intact_sub_trees():
     assert_equal(len(test_module.find_intact_sub_trees(SIMPLE, [[2,2,2]])),
                  2)
 
-    assert_equal(test_module.find_intact_sub_trees(SIMPLE, [[0,0,0]]),
-                 [])
+    assert_array_equal(test_module.find_intact_sub_trees(SIMPLE, [[0,0,0]]),
+                       [])
+
+    cut_plane = test_module.CutPlane.find(SLICE, bin_width=15)
+    intact_sub_trees = test_module.find_intact_sub_trees(SLICE, cut_plane.cut_leaves_coordinates)
+    assert_array_equal([neurite.root_node.id for neurite in intact_sub_trees],
+                       [0, 34])
 
 
 def test_section_length():
@@ -210,3 +218,36 @@ def test_subtree_classification():
                           5: test_module.RepairType.tuft,
                           6: test_module.RepairType.basal,
                       })
+
+def json_compatible_dict(dict_):
+    '''Remap the dict keys so that it can be saved to JSON'''
+    if not isinstance(dict_, dict):
+        return dict_
+
+    result = dict()
+    for k, v in dict_.items():
+        if isinstance(k, (SectionType, Action, int)):
+            k = str(k)
+        result[k] = json_compatible_dict(v)
+
+    return result
+
+def test_compute_statistics():
+    input_file = os.path.join(DATA_PATH, 'neuron-slice.h5')
+    cut_plane = test_module.CutPlane.find(input_file, bin_width=15)
+    cut_leaves = cut_plane.cut_leaves_coordinates
+
+    neuron = load_neuron(input_file)
+    info = test_module.compute_statistics(neuron, cut_leaves)
+
+    with open(os.path.join(DATA_PATH, 'neuron-slice-sholl-data.json')) as f:
+        expected = json.load(f)
+
+    basal_data = expected['SectionType.basal_dendrite']
+
+    actual = json_compatible_dict(info['sholl'][SectionType.basal_dendrite])
+    for layer in basal_data:
+        for order in basal_data[layer]:
+            for action in basal_data[layer][order]:
+                assert_equal(basal_data[layer][order][action],
+                             actual[layer][order][action])
