@@ -5,7 +5,6 @@ import click
 
 logging.basicConfig()
 logger = logging.getLogger('repair')
-logger.setLevel(logging.DEBUG)
 
 
 @click.group()
@@ -13,9 +12,8 @@ logger.setLevel(logging.DEBUG)
               help='-v for INFO, -vv for DEBUG')
 def cli(verbose):
     '''The CLI entry point'''
-    logging.basicConfig(level=(logging.WARNING,
-                               logging.INFO,
-                               logging.DEBUG)[min(verbose, 2)])
+    level = (logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)]
+    logger.setLevel(level)
 
 
 @cli.group()
