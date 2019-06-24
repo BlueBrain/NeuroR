@@ -102,30 +102,30 @@ def test_intact_branching_angles():
 
 
 def test_get_sholl_proba():
-    sholl_data = {SectionType.axon: {0: {1: {Action.TERMINATION: 2,
+    sholl_data = {RepairType.axon: {0: {1: {Action.TERMINATION: 2,
                                              Action.BIFURCATION: 2,
                                              Action.CONTINUATION: 4
                                              }}}}
 
-    assert_dict_equal(test_module.get_sholl_proba(sholl_data, SectionType.axon, 0, 1),
+    assert_dict_equal(test_module.get_sholl_proba(sholl_data, RepairType.axon, 0, 1),
                       {Action.TERMINATION: 0.25,
                        Action.BIFURCATION: 0.25,
                        Action.CONTINUATION: 0.5})
 
     # No info for pseudo_order == 2, re-use data from pseudo_order == 1
-    assert_dict_equal(test_module.get_sholl_proba(sholl_data, SectionType.axon, 0, 2),
+    assert_dict_equal(test_module.get_sholl_proba(sholl_data, RepairType.axon, 0, 2),
                       {Action.TERMINATION: 0.25,
                        Action.BIFURCATION: 0.25,
                        Action.CONTINUATION: 0.5})
 
     # No info for sholl_layer == 1, use default value
-    assert_dict_equal(test_module.get_sholl_proba(sholl_data, SectionType.axon, 1, 2),
+    assert_dict_equal(test_module.get_sholl_proba(sholl_data, RepairType.axon, 1, 2),
                       {Action.TERMINATION: 1,
                        Action.BIFURCATION: 0,
                        Action.CONTINUATION: 0})
 
     # No data at all, use default value
-    assert_dict_equal(test_module.get_sholl_proba({SectionType.axon: {1: {}}}, SectionType.axon, 1, 2),
+    assert_dict_equal(test_module.get_sholl_proba({RepairType.axon: {1: {}}}, RepairType.axon, 1, 2),
                       {Action.TERMINATION: 1,
                        Action.BIFURCATION: 0,
                        Action.CONTINUATION: 0})
@@ -269,3 +269,15 @@ def test_compute_statistics_for_intact_subtrees():
             for action in basal_data[layer][order]:
                 assert_equal(basal_data[layer][order][action],
                              actual[layer][order][action])
+
+def test_grow():
+    np.random.seed(1)
+    leaf = SIMPLE.sections[2]
+    info = {
+        'sholl': {RepairType.basal: {0: {1: {Action.BIFURCATION: 0.5, Action.TERMINATION: 0, Action.CONTINUATION: 0.5}}}},
+        'dendritic_sections': SIMPLE.sections,
+        'intact_branching_angles': {RepairType.basal: {1: [0.2]}}
+    }
+    repair_type_map = {section: RepairType.basal for section in SIMPLE.sections}
+    test_module.grow(leaf, info, 0, SIMPLE.soma.center, repair_type_map)
+    assert_equal(len(SIMPLE.sections), 8)

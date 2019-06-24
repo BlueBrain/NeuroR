@@ -7,8 +7,9 @@ import os
 from collections import defaultdict, Counter
 from enum import Enum
 from itertools import chain, tee
-from pathlib2 import Path
+from pprint import pformat
 
+from pathlib2 import Path
 import numpy as np
 from scipy.spatial.distance import cdist
 
@@ -373,7 +374,7 @@ def get_similar_child_diameters(sections, original_section):
             original_section.points[-1, COLS.R] * 2]
 
 
-def bifurcation(section, order_offset, info):
+def bifurcation(section, order_offset, info, repair_type_map):
     '''Create 2 children at the end of the current section
 
     Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n287  # noqa, pylint: disable=line-too-long
@@ -382,7 +383,7 @@ def bifurcation(section, order_offset, info):
     child_diameters = get_similar_child_diameters(info['dendritic_sections'], section)
 
     median_angle = np.median(
-        best_case_angle_data(info, section.type, branch_order(section) - order_offset))
+        best_case_angle_data(info, repair_type_map[section], branch_order(section) - order_offset))
 
     last_segment_vec = last_segment_vector(section)
     orthogonal = np.cross(last_segment_vec, section.points[-1, COLS.XYZ])
@@ -405,7 +406,7 @@ def bifurcation(section, order_offset, info):
         L.debug('section appended: %s', child.id)
 
 
-def grow(section, info, order_offset, origin):
+def grow(section, info, order_offset, origin, repair_type_map):
     '''Grow main method
 
     Will either:
@@ -419,8 +420,8 @@ def grow(section, info, order_offset, origin):
     pseudo_order = branch_order(section) - order_offset
     L.debug('In Grow. Layer: %s, order: %s', sholl_layer, pseudo_order)
 
-    proba = get_sholl_proba(info['sholl'], section.type, sholl_layer, pseudo_order)
-    L.debug('action proba: %s', proba)
+    proba = get_sholl_proba(info['sholl'], repair_type_map[section], sholl_layer, pseudo_order)
+    L.debug('action proba[%s][%s][%s]: %s', section.type, sholl_layer, pseudo_order, proba)
     action = np.random.choice(list(proba.keys()), p=list(proba.values()))
 
     if action == Action.CONTINUATION:
@@ -428,16 +429,17 @@ def grow(section, info, order_offset, origin):
         backwards_sections = grow_until_sholl_sphere(section, origin, sholl_layer)
 
         if backwards_sections == 0:
-            grow(section, info, order_offset, origin)
+            grow(section, info, order_offset, origin, repair_type_map)
         L.debug(section.points[-1])
 
     elif action == Action.BIFURCATION:
         L.info('Bifurcating')
         backwards_sections = grow_until_sholl_sphere(section, origin, sholl_layer)
         if backwards_sections == 0:
-            bifurcation(section, order_offset, info)
+            bifurcation(section, order_offset, info, repair_type_map)
             for child in section.children:
-                grow(child, info, order_offset, origin)
+                repair_type_map[child] = repair_type_map[section]
+                grow(child, info, order_offset, origin, repair_type_map)
     else:
         L.info('Terminating')
 
@@ -493,7 +495,7 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
     repair_type_map = subtree_classification(neuron, apical_section)
 
     info = compute_statistics_for_intact_subtrees(neuron, cut_leaves, repair_type_map)
-    L.debug(info)
+    L.debug(pformat(info))
 
     # BlueRepairSDK used to have a bounding cylinder filter but
     # I don't know what is it good at so I have commented
@@ -515,7 +517,8 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
                 origin = get_origin(section, neuron.soma.center, repair_type_map)
                 if section.type == NeuriteType.basal_dendrite:
                     continuation(section, origin)
-                grow(section, info, get_order_offset(section, repair_type_map), origin)
+                grow(section, info, get_order_offset(section, repair_type_map), origin,
+                     repair_type_map)
     except StopIteration:
         pass
 
