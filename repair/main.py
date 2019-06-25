@@ -4,7 +4,7 @@ It is based on the BlueRepairSDK's implementation
 '''
 import logging
 import os
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, OrderedDict
 from enum import Enum
 from itertools import chain, tee
 from pprint import pformat
@@ -240,6 +240,7 @@ def get_sholl_proba(sholl_data, section_type, sholl_layer, pseudo_order):
     If no data are available for this branch order, the action_counts
     are averaged on all branch orders for this sholl layer
 
+
     Args:
         sholl_data: nested dict that stores the number of section per SectionType, sholl order
             sholl layer and Action type
@@ -252,15 +253,16 @@ def get_sholl_proba(sholl_data, section_type, sholl_layer, pseudo_order):
         Dict[Action, float]: probability of each action
 
     Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n398  # noqa, pylint: disable=line-too-long
+    Note2: OrderedDict ensures the reproducibility of np.random.choice outcome
     '''
 
     section_type_data = sholl_data[section_type]
     try:
         data_layer = section_type_data[sholl_layer]
     except KeyError:
-        return {Action.BIFURCATION: 0,
-                Action.CONTINUATION: 0,
-                Action.TERMINATION: 1}
+        return OrderedDict([(Action.BIFURCATION, 0),
+                            (Action.CONTINUATION, 0),
+                            (Action.TERMINATION, 1)])
 
     try:
         action_counts = data_layer[pseudo_order]
@@ -275,14 +277,15 @@ def get_sholl_proba(sholl_data, section_type, sholl_layer, pseudo_order):
 
     total_counts = sum(action_counts.values())
     if total_counts == 0:
-        return {Action.BIFURCATION: 0,
-                Action.CONTINUATION: 0,
-                Action.TERMINATION: 1}
+        return OrderedDict([(Action.BIFURCATION, 0),
+                            (Action.CONTINUATION, 0),
+                            (Action.TERMINATION, 1)])
 
     boost_bifurcation = int(total_counts * BIFURCATION_BOOSTER)
     action_counts[Action.BIFURCATION] += boost_bifurcation
     total_counts += boost_bifurcation
-    res = {action: count / float(total_counts) for action, count in action_counts.items()}
+    res = OrderedDict([tuple((action, action_counts[action] / float(total_counts))) for action in
+                       sorted(action_counts.keys(), key=lambda t: t.value)])
     return res
 
 
@@ -421,6 +424,7 @@ def grow(section, info, order_offset, origin, repair_type_map):
     L.debug('In Grow. Layer: %s, order: %s', sholl_layer, pseudo_order)
 
     proba = get_sholl_proba(info['sholl'], repair_type_map[section], sholl_layer, pseudo_order)
+
     L.debug('action proba[%s][%s][%s]: %s', section.type, sholl_layer, pseudo_order, proba)
     action = np.random.choice(list(proba.keys()), p=list(proba.values()))
 
