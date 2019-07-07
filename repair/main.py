@@ -25,7 +25,6 @@ from repair.utils import angle_between, rotation_matrix, read_apical_points
 from repair.view import plot_repaired_neuron, view_all
 from repair.unravel import unravel_all
 
-L = logging.getLogger('repair')
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
 BIFURCATION_BOOSTER = 0
@@ -36,6 +35,8 @@ BIFURCATION_ANGLE = 0
 # Epsilon needs not to be to small otherwise leaves stored in json files
 # are not found in the NeuroM neuron
 EPSILON = 1e-6
+
+L = logging.getLogger('repair')
 
 
 class Action(Enum):
@@ -532,7 +533,7 @@ def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
     L.info('Repair successful for %s', inputfile)
 
 
-def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plot_dir=None):
+def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plots_dir=None):
     '''Repair all morphologies in input folder'''
     for f in iter_morphology_files(input_dir):
         L.info(f)
@@ -543,9 +544,9 @@ def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plot_dir=None):
         else:
             plane = None
 
-        if plot_dir is not None:
+        if plots_dir is not None:
             name = 'neuron_{}.html'.format(Path(inputfilename).stem.replace(' ', '_'))
-            plot_file = str(Path(plot_dir, name))
+            plot_file = str(Path(plots_dir, name))
         else:
             plot_file = None
 
@@ -582,7 +583,35 @@ def subtree_classification(neuron, apical_section):
     return repair_type_map
 
 
-def full(root_dir, seed=0, window_half_length=5):
+def _get_folders(root_dir,
+                 raw_dir=None,
+                 raw_planes_dir=None,
+                 unravelled_dir=None,
+                 unravelled_planes_dir=None,
+                 repaired_dir=None,
+                 plots_dir=None):
+    '''Get folder paths with sensible defaults'''
+    folders = dict()
+    folders['raw'] = raw_dir or str(Path(root_dir, 'raw'))
+    folders['raw_planes'] = raw_planes_dir or str(Path(folders['raw'], 'planes'))
+    folders['unravelled'] = unravelled_dir or str(Path(root_dir, 'unravelled'))
+    folders['unravelled_planes'] = unravelled_planes_dir or str(
+        Path(folders['unravelled'], 'planes'))
+    folders['repaired'] = repaired_dir or str(Path(root_dir, 'repaired'))
+    folders['plots'] = plots_dir or str(Path(root_dir, 'plots'))
+    return folders
+
+
+# pylint: disable=too-many-arguments
+def full(root_dir,
+         seed=0,
+         window_half_length=5,
+         raw_dir=None,
+         raw_planes_dir=None,
+         unravelled_dir=None,
+         unravelled_planes_dir=None,
+         repaired_dir=None,
+         plots_dir=None):
     '''
     Perform the unravelling and repair in ROOT_DIR:
 
@@ -591,32 +620,43 @@ def full(root_dir, seed=0, window_half_length=5):
        in the unravelled/planes folder
     3) repair the morphology
 
-    The ROOT_DIR is expected to contain the following folders:
-    - raw/ with all raw morphologies to repair
-    - raw/planes with all cut planes
-    - unravelled/ where unravelled morphologies will be written
-    - unravelled/planes where unravelled planes will be written
-    - repaired/ where repaired morphologies will be written
+    All output directories can be overriden with the corresponding arguments.
+    Here is the default structure:
+
+    - raw_dir: ROOT_DIR/raw/ with all raw morphologies to repair
+    - raw_planes_dir: RAW_DIR/planes with all cut planes
+    - unravelled_dir: ROOT_DIR/unravelled/ where unravelled morphologies will be written
+    - unravelled_planes_dir: UNRAVELLED_DIR/planes where unravelled planes will be written
+    - repaired_dir: ROOT_DIR/repaired/ where repaired morphologies will be written
+    - plots_dir: ROOT_DIR/plots where the plots will be put
     '''
 
-    raw_dir = os.path.join(root_dir, 'raw')
-    unravelled_dir = os.path.join(root_dir, 'unravelled')
-    repaired_dir = os.path.join(root_dir, 'repaired')
-    plots_dir = os.path.join(root_dir, 'plots')
-    unravelled_planes_dir = str(Path(unravelled_dir, 'planes'))
-    if not os.path.exists(raw_dir):
-        raise Exception('%s does not exists' % raw_dir)
+    folders = _get_folders(root_dir,
+                           raw_dir,
+                           raw_planes_dir,
+                           unravelled_dir,
+                           unravelled_planes_dir,
+                           repaired_dir,
+                           plots_dir)
 
-    for folder in [unravelled_dir, unravelled_planes_dir, repaired_dir, plots_dir]:
-        if not os.path.exists(folder):
-            os.mkdir(folder)
+    for folder in ['raw', 'raw_planes']:
+        if not os.path.exists(folders[folder]):
+            raise Exception('%s does not exists' % folders[folder])
 
-    unravel_all(raw_dir, unravelled_dir, window_half_length)
-    repair_all(unravelled_dir,
-               repaired_dir,
+    for folder in ['unravelled', 'unravelled_planes', 'repaired', 'plots']:
+        if not os.path.exists(folders[folder]):
+            os.mkdir(folders[folder])
+
+    unravel_all(folders['raw'],
+                folders['unravelled'],
+                window_half_length,
+                folders['raw_planes'],
+                folders['unravelled_planes'])
+    repair_all(folders['unravelled'],
+               folders['repaired'],
                seed=seed,
-               planes_dir=unravelled_planes_dir,
-               plot_dir=plots_dir)
-    view_all([raw_dir, unravelled_dir, repaired_dir],
+               planes_dir=folders['unravelled_planes'],
+               plots_dir=folders['plots'])
+    view_all([folders['raw'], folders['unravelled'], folders['repaired']],
              titles=['raw', 'unravelled', 'repaired'],
-             output_pdf=os.path.join(root_dir, 'plots.pdf'))
+             output_pdf=str(Path(folders['plots'], 'report.pdf')))

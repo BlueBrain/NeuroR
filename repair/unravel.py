@@ -115,19 +115,26 @@ def unravel_plane(input_plane, mapping):
     return plane
 
 
-def unravel_all(raw_dir, unravelled_dir, window_half_length):
-    '''Repair all morphologies in input folder'''
+def unravel_all(raw_dir, unravelled_dir, window_half_length, raw_planes_dir, unravelled_planes_dir):
+    '''Repair all morphologies in input folder
+    '''
+    if not os.path.exists(raw_planes_dir):
+        raise Exception('{} does not exist'.format(raw_planes_dir))
+
+    if not os.path.exists(unravelled_planes_dir):
+        os.mkdir(unravelled_planes_dir)
+
     for f in iter_morphology_files(raw_dir):
         L.info('Unravelling: %s', f)
         inputfilename = Path(raw_dir, f)
         outfilename = Path(unravelled_dir, os.path.basename(f))
-        raw_plane = str(Path(raw_dir, 'planes', inputfilename.name).with_suffix('.json'))
-        unravelled_plane = Path(unravelled_dir, 'planes', inputfilename.name).with_suffix('.json')
+        raw_plane = str(Path(raw_planes_dir, inputfilename.name).with_suffix('.json'))
+        unravelled_plane = Path(unravelled_planes_dir, inputfilename.name).with_suffix('.json')
 
         try:
             neuron, mapping = unravel(str(inputfilename), window_half_length)
             neuron.write(str(outfilename))
-            with open(unravelled_plane, 'w') as f:
+            with open(str(unravelled_plane), 'w') as f:
                 json.dump(unravel_plane(raw_plane, mapping).to_json(), f, cls=RepairJSON)
 
         except Exception as e:  # noqa, pylint: disable=broad-except

@@ -21,10 +21,19 @@ def unravel():
     '''CLI utilities related to unravelling'''
 
 
+# pylint: disable=too-many-arguments
 @cli.command(short_help='Unravel and repair one morphology')
 @click.argument('root_dir', type=click.Path(exists=True, file_okay=True))
 @click.option('--window-half-length', default=5)
-def full(root_dir, window_half_length):
+@click.option('--raw-dir', default=None, help='Folder of input raw morphologies')
+@click.option('--raw-planes-dir', default=None, help='Folder of input raw cut planes')
+@click.option('--unravelled-dir', default=None, help='Folder of unravelled morphologies')
+@click.option('--unravelled-planes-dir', default=None, help='Folder of unravelled cut planes')
+@click.option('--repaired-dir', default=None, help='Folder of repaired morphologies')
+@click.option('--plots-dir', default=None, help='Folder of plots')
+@click.option('--seed', default=0, help='The numpy.random seed')
+def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
+         unravelled_planes_dir, repaired_dir, plots_dir, seed):
     '''
     Perform the unravelling and repair in ROOT_DIR:
 
@@ -33,15 +42,26 @@ def full(root_dir, window_half_length):
        in the unravelled/planes folder
     3) repair the morphology
 
-    The ROOT_DIR is expected to contain the following folders:
-    - raw/ with all raw morphologies to repair
-    - raw/planes with all cut planes
-    - unravelled/ where unravelled morphologies will be written
-    - unravelled/planes where unravelled planes will be written
-    - repaired/ where repaired morphologies will be written
+    All output directories can be overriden with the corresponding arguments.
+    Here is the default structure:
+
+    - raw_dir: ROOT_DIR/raw/ with all raw morphologies to repair
+    - raw_planes_dir: RAW_DIR/planes with all cut planes
+    - unravelled_dir: ROOT_DIR/unravelled/ where unravelled morphologies will be written
+    - unravelled_planes_dir: UNRAVELLED_DIR/planes where unravelled planes will be written
+    - repaired_dir: ROOT_DIR/repaired/ where repaired morphologies will be written
+    - plots_dir: ROOT_DIR/plots where the plots will be put
     '''
     from repair.main import full  # pylint: disable=redefined-outer-name
-    full(root_dir, window_half_length=window_half_length)
+    full(root_dir,
+         seed=seed,
+         window_half_length=window_half_length,
+         raw_dir=raw_dir,
+         raw_planes_dir=raw_planes_dir,
+         unravelled_dir=unravelled_dir,
+         unravelled_planes_dir=unravelled_planes_dir,
+         repaired_dir=repaired_dir,
+         plots_dir=plots_dir)
 
 
 @unravel.command(short_help='Unravel one morphology')
@@ -65,11 +85,15 @@ def file(input_file, output_file, mapping_file, window_half_length):
 @unravel.command(short_help='Unravel all morphologies in a folder')
 @click.argument('input_dir')
 @click.argument('output_dir', type=click.Path(exists=True, file_okay=False, writable=True))
+@click.option('--raw-plane-dir', type=click.Path(exists=True, file_okay=False), default=None,
+              help='The path to raw cut planes (if None, defaults to INPUT_DIR/planes)')
+@click.option('--unravelled-plane-dir', type=click.Path(exists=True, file_okay=False), default=None,
+              help='The path to unravelled cut planes (if None, defaults to OUTPUT_DIR/planes)')
 @click.option('--window-half-length', default=5)
-def folder(input_dir, output_dir, window_half_length):
+def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_half_length):
     '''Unravel all cells in a folder'''
     from repair.unravel import unravel_all
-    unravel_all(input_dir, output_dir, window_half_length)
+    unravel_all(input_dir, output_dir, window_half_length, raw_planes_dir, unravelled_planes_dir)
 
 
 # pylint: disable=function-redefined
@@ -104,7 +128,7 @@ def file(input_file, output_file, plot_file, plane):
 def folder(input_dir, output_dir, plot_dir, planes):
     '''Repair dendrites of all neurons in a directory'''
     from repair.main import repair_all
-    repair_all(input_dir, output_dir, planes_dir=planes, plot_dir=plot_dir)
+    repair_all(input_dir, output_dir, planes_dir=planes, plots_dir=plot_dir)
 
 
 @cli.command(short_help='Generate PDF')
