@@ -8,15 +8,14 @@ from mock import patch
 import numpy as np
 from neurom import COLS, load_neuron
 from neurom.geom import bounding_box
-from morphio import Morphology, diff
+from morphio import Morphology
 from nose.tools import assert_dict_equal, ok_, assert_raises
 from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_equal
 
-import repair.main as test_module
+import morph_repair.main as test_module
 from morphio import SectionType
-from repair.main import Action
+from morph_repair.main import Action, RepairType, full
 from .utils import setup_tempdir
-from repair.main import RepairType, full
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -77,7 +76,7 @@ def test_branching_angles():
     # Test skip too short child sections
     tiny_child = DummySection([[0, 0, 0], [0, 0, 1e-9]])
     parent = DummySection([[0, 0, 0], [0, 0, 1]], children=[tiny_child])
-    with patch('repair.main.branch_order'):
+    with patch('morph_repair.main.branch_order'):
         assert_equal(test_module.branching_angles(parent),
                      [])
 
@@ -304,8 +303,8 @@ def assert_output_exists(root_dir,
 
 
 # Patch this to speed up test
-@patch('repair.main.plot_repaired_neuron')
-@patch('repair.main.view_all')
+@patch('morph_repair.main.plot_repaired_neuron')
+@patch('morph_repair.main.view_all')
 def test_full(mock1, mock2):
     with setup_tempdir('test-cli-full') as tmp_folder:
         test_folder = joinp(tmp_folder, 'test-full-repair')
@@ -315,8 +314,8 @@ def test_full(mock1, mock2):
 
 
 # Patch this to speed up test
-@patch('repair.main.plot_repaired_neuron')
-@patch('repair.main.view_all')
+@patch('morph_repair.main.plot_repaired_neuron')
+@patch('morph_repair.main.view_all')
 def test_full_custom_raw_dir(mock1, mock2):
     with setup_tempdir('test-cli-full') as tmp_folder:
         test_folder = joinp(tmp_folder, 'test-full-repair')
@@ -332,8 +331,8 @@ def test_full_custom_raw_dir(mock1, mock2):
 
 
 # Patching this to speed up test
-@patch('repair.main.plot_repaired_neuron')
-@patch('repair.main.view_all')
+@patch('morph_repair.main.plot_repaired_neuron')
+@patch('morph_repair.main.view_all')
 def test_full_custom_unravel_dir(mock1, mock2):
     with setup_tempdir('test-cli-full') as tmp_folder:
         test_folder = joinp(tmp_folder, 'test-full-repair')
@@ -345,8 +344,8 @@ def test_full_custom_unravel_dir(mock1, mock2):
 
 
 # Patching this to speed up test
-@patch('repair.main.plot_repaired_neuron')
-@patch('repair.main.view_all')
+@patch('morph_repair.main.plot_repaired_neuron')
+@patch('morph_repair.main.view_all')
 def test_full_custom_unravelled_planes_dir(mock1, mock2):
     with setup_tempdir('test-cli-full') as tmp_folder:
         test_folder = joinp(tmp_folder, 'test-full-repair')
@@ -358,8 +357,8 @@ def test_full_custom_unravelled_planes_dir(mock1, mock2):
 
 
 # Patching this to speed up test
-@patch('repair.main.plot_repaired_neuron')
-@patch('repair.main.view_all')
+@patch('morph_repair.main.plot_repaired_neuron')
+@patch('morph_repair.main.view_all')
 def test_full_custom_repaired_dir(mock1, mock2):
     with setup_tempdir('test-cli-full') as tmp_folder:
         test_folder = joinp(tmp_folder, 'test-full-repair')

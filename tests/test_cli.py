@@ -2,7 +2,7 @@ import shutil
 from os.path import dirname, join as joinp
 from nose.tools import assert_equal
 from click.testing import CliRunner
-from repair.cli import cli
+from morph_repair.cli import cli
 
 from .utils import setup_tempdir
 

@@ -14,9 +14,9 @@ import morphio
 from cut_plane import CutPlane
 from cut_plane.utils import iter_morphology_files
 
-from repair.utils import RepairJSON
+from morph_repair.utils import RepairJSON
 
-L = logging.getLogger('repair')
+L = logging.getLogger('morph-repair')
 
 
 def _get_principal_direction(points):

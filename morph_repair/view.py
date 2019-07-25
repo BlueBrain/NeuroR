@@ -10,7 +10,7 @@ from neurom.view.view import plot_neuron
 
 from plotly_helper.neuron_viewer import NeuronBuilder
 
-L = logging.getLogger('repair')
+L = logging.getLogger('morph-repair')
 
 
 def get_common_bounding_box(neurons):

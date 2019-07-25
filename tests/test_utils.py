@@ -7,10 +7,10 @@ from neurom.geom import bounding_box
 from nose.tools import assert_dict_equal, ok_
 from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_equal
 
-import repair.main as test_module
+import morph_repair.main as test_module
 from morphio import SectionType
-from repair.main import Action
-from repair.utils import read_apical_points
+from morph_repair.main import Action
+from morph_repair.utils import read_apical_points
 from .utils import setup_tempdir
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')

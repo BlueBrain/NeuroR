@@ -1,19 +1,15 @@
-from os.path import dirname, join as joinp
+from os.path import dirname
+from os.path import join as joinp
 
-from mock import patch
 import numpy as np
-from neurom import COLS, load_neuron
-from neurom.geom import bounding_box
-from nose.tools import assert_dict_equal, ok_
-from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_equal
 import pandas as pd
+from neurom import load_neuron
+from numpy.testing import assert_array_almost_equal
 
-import repair.main as test_module
-from morphio import SectionType, Morphology
+import morph_repair.unravel as test_module
 
 from .utils import setup_tempdir
 
-import repair.unravel as test_module
 PATH = joinp(dirname(__file__), 'data')
 
 SIMPLE = load_neuron(joinp(PATH, 'simple.swc'))

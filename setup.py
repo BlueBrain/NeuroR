@@ -1,11 +1,11 @@
-"""Repair setup.py"""
+"""Morph-repair setup.py"""
 import os
 import imp
 from setuptools import setup
 from setuptools import find_packages
 
 
-VERSION = imp.load_source("repair.version", "repair/version.py").VERSION
+VERSION = imp.load_source("morph_repair.version", "morph_repair/version.py").VERSION
 
 REQS = ['click>=0.7.0',
         'scipy>=1.1.0',
@@ -26,8 +26,8 @@ config = {
     'install_requires': REQS,
     'packages': find_packages(),
     'license': 'BSD',
-    'name': 'repair',
-    'entry_points': {'console_scripts': ['repair=repair.cli:cli']},
+    'name': 'morph-repair',
+    'entry_points': {'console_scripts': ['morph-repair=morph_repair.cli:cli']},
 }
 
 setup(**config)

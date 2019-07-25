@@ -4,7 +4,7 @@ import logging
 import click
 
 logging.basicConfig()
-logger = logging.getLogger('repair')
+logger = logging.getLogger('morph-repair')
 
 
 @click.group()
@@ -52,7 +52,7 @@ def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
     - repaired_dir: ROOT_DIR/repaired/ where repaired morphologies will be written
     - plots_dir: ROOT_DIR/plots where the plots will be put
     '''
-    from repair.main import full  # pylint: disable=redefined-outer-name
+    from morph_repair.main import full  # pylint: disable=redefined-outer-name
     full(root_dir,
          seed=seed,
          window_half_length=window_half_length,
@@ -73,7 +73,7 @@ def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
 @click.option('--window-half-length', default=5)
 def file(input_file, output_file, mapping_file, window_half_length):
     '''Unravel a cell'''
-    from repair.unravel import unravel  # pylint: disable=redefined-outer-name
+    from morph_repair.unravel import unravel  # pylint: disable=redefined-outer-name
     neuron, mapping = unravel(input_file, window_half_length=window_half_length)
     neuron.write(output_file)
     if mapping_file is not None:
@@ -92,12 +92,12 @@ def file(input_file, output_file, mapping_file, window_half_length):
 @click.option('--window-half-length', default=5)
 def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_half_length):
     '''Unravel all cells in a folder'''
-    from repair.unravel import unravel_all
+    from morph_repair.unravel import unravel_all
     unravel_all(input_dir, output_dir, window_half_length, raw_planes_dir, unravelled_planes_dir)
 
 
 # pylint: disable=function-redefined
-@cli.command(short_help='repair')
+@cli.command(short_help='morph-repair')
 @click.argument('input_file', type=click.Path(exists=True, file_okay=True))
 @click.argument('output_file')
 @click.option('--plot_file', type=click.Path(file_okay=True), default=None,
@@ -109,7 +109,7 @@ def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
 def file(input_file, output_file, plot_file, plane):
     '''Repair dendrites of a cut neuron'''
-    from repair.main import repair
+    from morph_repair.main import repair
     repair(input_file, output_file, plane=plane, plot_file=plot_file)
 
 
@@ -127,7 +127,7 @@ def file(input_file, output_file, plot_file, plane):
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
 def folder(input_dir, output_dir, plot_dir, planes):
     '''Repair dendrites of all neurons in a directory'''
-    from repair.main import repair_all
+    from morph_repair.main import repair_all
     repair_all(input_dir, output_dir, planes_dir=planes, plots_dir=plot_dir)
 
 
@@ -136,7 +136,7 @@ def folder(input_dir, output_dir, plot_dir, planes):
 @click.option('--title', '-t', multiple=True)
 def report(folders, title):
     '''Generate a PDF with plots of pre and post repair neurons'''
-    from repair.view import view_all
+    from morph_repair.view import view_all
     if not folders:
         print('Need to pass at least one folder')
         return

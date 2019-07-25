@@ -21,9 +21,9 @@ from neurom import (NeuriteType, iter_neurites, iter_segments,
                     load_neuron, iter_sections)
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
-from repair.utils import angle_between, rotation_matrix, read_apical_points
-from repair.view import plot_repaired_neuron, view_all
-from repair.unravel import unravel_all
+from morph_repair.utils import angle_between, rotation_matrix, read_apical_points
+from morph_repair.view import plot_repaired_neuron, view_all
+from morph_repair.unravel import unravel_all
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
@@ -36,7 +36,7 @@ BIFURCATION_ANGLE = 0
 # are not found in the NeuroM neuron
 EPSILON = 1e-6
 
-L = logging.getLogger('repair')
+L = logging.getLogger('morph-repair')
 
 
 class Action(Enum):
