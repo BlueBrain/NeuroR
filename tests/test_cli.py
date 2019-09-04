@@ -10,17 +10,20 @@ PATH = joinp(dirname(__file__), 'data')
 
 
 def test_cli():
-    runner = CliRunner()
-    result = runner.invoke(cli, ['report', PATH, PATH])
-    assert_equal(result.exit_code, 0)
+    with setup_tempdir('test-report') as folder:
+        runner = CliRunner()
+        result = runner.invoke(cli, ['report', PATH, folder])
+        assert_equal(result.exit_code, 0)
 
-    result = runner.invoke(cli, ['file',
-                                 joinp(PATH, 'real.asc'),
-                                 '/tmp/test_repair_cli.asc'])
-    assert_equal(result.exit_code, 0)
+    with setup_tempdir('test-file') as folder:
+        result = runner.invoke(cli, ['file',
+                                     joinp(PATH, 'real.asc'),
+                                     '/tmp/test_repair_cli.asc'])
+        assert_equal(result.exit_code, 0)
 
-    result = runner.invoke(cli, ['folder', PATH, '/tmp/'])
-    assert_equal(result.exit_code, 0)
+    with setup_tempdir('test-cli-folder') as folder:
+        result = runner.invoke(cli, ['folder', PATH, folder])
+        assert_equal(result.exit_code, 0)
 
 
 def test_cli_full():

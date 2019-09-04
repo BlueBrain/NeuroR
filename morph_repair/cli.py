@@ -52,7 +52,7 @@ def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
     - repaired_dir: ROOT_DIR/repaired/ where repaired morphologies will be written
     - plots_dir: ROOT_DIR/plots where the plots will be put
     '''
-    from morph_repair.main import full  # pylint: disable=redefined-outer-name
+    from morph_repair.full import full  # pylint: disable=redefined-outer-name
     full(root_dir,
          seed=seed,
          window_half_length=window_half_length,
@@ -127,7 +127,7 @@ def file(input_file, output_file, plot_file, plane):
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
 def folder(input_dir, output_dir, plot_dir, planes):
     '''Repair dendrites of all neurons in a directory'''
-    from morph_repair.main import repair_all
+    from morph_repair.full import repair_all
     repair_all(input_dir, output_dir, planes_dir=planes, plots_dir=plot_dir)
 
 

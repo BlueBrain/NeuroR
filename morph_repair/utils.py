@@ -2,7 +2,6 @@
 import logging
 import json
 
-import h5py
 import numpy as np
 
 from neurom import NeuriteType
@@ -63,23 +62,3 @@ class RepairJSON(json.JSONEncoder):
         elif isinstance(o, NeuriteType):
             return int(o)
         return json.JSONEncoder.default(self, o)
-
-
-def read_apical_points(filename, neuron):
-    '''Read apical section ID and point ID from file
-
-    Returns a 3-tuple with:
-    - neurom v2 section id (ie. shifted by -1)
-    - apical section branch order
-    - point ID
-    '''
-    try:
-        with h5py.File(filename) as f:
-            group = f['neuron1']
-            section_id = group.attrs['apical'][0, 0]
-            # Neurom v2 does not have a soma section so section ids are shifted!
-            neurom_v2_section_id = section_id - 1
-            return neuron.sections[neurom_v2_section_id]
-    except (KeyError, IndexError, OSError, IOError):
-        L.warning("Could not load apical point from file: %s", filename)
-        return None

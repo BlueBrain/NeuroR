@@ -13,9 +13,10 @@ REQS = ['click>=0.7.0',
         'neurom @ git+https://git@github.com/wizmer/NeuroM.git@mut_morphio#egg=neurom-2.0.0',
         'plotly_helper>=0.0.1',
         'matplotlib>=2.2.3',
+        'morph-tool>=0.1.14',
         'pathlib2>=2.3.3',
         'pandas>=0.24.2',
-        'cut-plane>=0.0.4',
+        'cut-plane>=0.0.6',
 ]
 
 
