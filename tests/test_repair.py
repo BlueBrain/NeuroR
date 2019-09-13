@@ -4,13 +4,15 @@ from os.path import join as joinp
 
 from mock import patch, MagicMock
 import numpy as np
-from neurom import COLS, load_neuron
+from neurom import COLS, load_neuron, NeuriteType
 from nose.tools import assert_dict_equal, ok_, assert_raises
 from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_equal
 
 import morph_repair.main as test_module
 from morphio import SectionType
 from morph_repair.main import Action, Repair, RepairType
+
+from .utils import setup_tempdir
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -49,7 +51,7 @@ def test__find_intact_sub_trees():
     obj.cut_leaves = [[2, 2, 2]]
     obj._fill_repair_type_map()
 
-    assert_equal(len(obj._find_intact_sub_trees()), 1)
+    assert_equal(len(obj._find_intact_sub_trees()), 2)
 
     obj = Repair(SIMPLE_PATH)
     obj.cut_leaves = [[0, 0, 0]]
@@ -292,3 +294,16 @@ def test__grow():
 
     obj._grow(leaf, 0, obj.neuron.soma.center)
     assert_equal(len(obj.neuron.sections), 8)
+
+def test_repair_axon():
+    filename = os.path.join(DATA_PATH, 'real-with-axon.asc')
+    with setup_tempdir('test-cli-axon') as tmp_folder:
+        outfilename = os.path.join(tmp_folder, 'out.asc')
+        test_module.repair(filename, outfilename, axons=[filename])
+        neuron_in = load_neuron(filename)
+        neuron_out = load_neuron(outfilename)
+        axon = neuron_out.section(40)
+        ok_(axon.type == NeuriteType.axon)
+        assert_array_equal(neuron_in.section(40).points[0],
+                           neuron_out.section(40).points[0])
+        ok_(len(neuron_out.section(40).points) > len(neuron_in.section(40).points))

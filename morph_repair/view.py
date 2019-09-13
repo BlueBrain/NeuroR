@@ -3,14 +3,19 @@ import logging
 import os
 from datetime import datetime
 
+import matplotlib
 import numpy as np
+from plotly_helper.neuron_viewer import NeuronBuilder
 
 from neurom import load_neuron, geom
 from neurom.view.view import plot_neuron
 
-from plotly_helper.neuron_viewer import NeuronBuilder
 
 L = logging.getLogger('morph-repair')
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
+from matplotlib.backends.backend_pdf import PdfPages  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
 
 
 def get_common_bounding_box(neurons):
@@ -26,7 +31,6 @@ def get_common_bounding_box(neurons):
 
 def plot(neuron, bbox, subplot, title, **kwargs):
     '''2D neuron plot'''
-    import matplotlib.pyplot as plt
     ax = plt.subplot(subplot, facecolor='w', aspect='equal')
     xlim = (bbox[0][0], bbox[1][0])
     ylim = (bbox[0][2], bbox[1][2])
@@ -39,7 +43,6 @@ def plot(neuron, bbox, subplot, title, **kwargs):
 
 
 def _neuron_subplot(folders, f, pp, subplot, titles):
-    import matplotlib.pyplot as plt
     kwargs = {'plane': 'xz'}
     fig = plt.figure()
     neurons = [load_neuron(os.path.join(folder, f)) for folder in folders]
@@ -54,7 +57,6 @@ def _neuron_subplot(folders, f, pp, subplot, titles):
 
 def view_all(folders, titles, output_pdf=None):
     '''Generate PDF report'''
-    from matplotlib.backends.backend_pdf import PdfPages
     if not output_pdf:
         path = './plots'
         output_pdf = os.path.join(path, datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.pdf')

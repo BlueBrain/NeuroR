@@ -62,3 +62,21 @@ class RepairJSON(json.JSONEncoder):
         elif isinstance(o, NeuriteType):
             return int(o)
         return json.JSONEncoder.default(self, o)
+
+
+def _direction(section):
+    '''Return the direction vector of a section
+
+    Args:
+        section (morphio.mut.Section): section
+    '''
+    return np.diff(section.points[[0, -1]], axis=0)[0]
+
+
+def _section_length(section):
+    '''Section length
+
+    Args:
+        section (morphio.mut.Section): section
+    '''
+    return np.linalg.norm(_direction(section))

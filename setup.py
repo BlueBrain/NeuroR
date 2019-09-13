@@ -15,6 +15,7 @@ REQS = ['click>=0.7.0',
         'matplotlib>=2.2.3',
         'morph-tool>=0.1.14',
         'pathlib2>=2.3.3',
+        'morph-tool>=0.1.14',
         'pandas>=0.24.2',
         'cut-plane>=0.0.6',
 ]

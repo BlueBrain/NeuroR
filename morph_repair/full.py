@@ -33,7 +33,7 @@ def _get_folders(root_dir,
     return folders
 
 
-def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plots_dir=None):
+def repair_all(input_dir, output_dir, seed=0, axons=None, planes_dir=None, plots_dir=None):
     '''Repair all morphologies in input folder'''
     for f in iter_morphology_files(input_dir):
         L.info(f)
@@ -52,7 +52,7 @@ def repair_all(input_dir, output_dir, seed=0, planes_dir=None, plots_dir=None):
 
         try:
             repair(str(inputfilename), str(outfilename),
-                   seed=seed, plane=plane, plot_file=plot_file)
+                   seed=seed, axons=axons, plane=plane, plot_file=plot_file)
         except Exception as e:  # noqa, pylint: disable=broad-except
             L.warning('%s failed', f)
             L.warning(e, exc_info=True)

@@ -19,8 +19,9 @@ from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
 from morph_tool import apical_point_section_segment
 
-from morph_repair.utils import rotation_matrix
+from morph_repair.utils import rotation_matrix, _section_length, _direction
 from morph_repair.view import plot_repaired_neuron
+from morph_repair import axon
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
@@ -196,16 +197,6 @@ def _branching_angles(section, order_offset=0):
     return res
 
 
-def _direction(section):
-    '''Return the direction vector of a section'''
-    return np.diff(section.points[[0, -1]][:, COLS.XYZ], axis=0)[0]
-
-
-def _section_length(section):
-    '''Section length'''
-    return np.linalg.norm(_direction(section))
-
-
 def _continuation(sec, origin):
     '''Continue growing the section
 
@@ -241,10 +232,22 @@ def _continuation(sec, origin):
     sec.points = np.vstack((sec.points, new_point))
 
 
+def _y_cylindrical_extent(section):
+    '''Returns the distance from the last section point to the origin in the XZ plane'''
+    xz_last_point = section.points[-1, [0, 2]]
+    return np.linalg.norm(xz_last_point)
+
+
+def _max_y_dendritic_cylindrical_extent(neuron):
+    '''Return the maximum distance of dendritic section ends and the origin in the XZ plane'''
+    return max(_y_cylindrical_extent(section) for section in neuron.iter()
+               if section.type in {SectionType.basal_dendrite, SectionType.apical_dendrite})
+
+
 class Repair(object):
     '''The repair class'''
 
-    def __init__(self, inputfile, seed=0, plane=None):
+    def __init__(self, inputfile, axons=None, seed=0, plane=None):
         '''Repair the input morphology
 
         Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
@@ -259,10 +262,16 @@ class Repair(object):
                 cut_plane = CutPlane.from_json(plane)
 
         self.inputfile = inputfile
+        self.axon_donors = axons or list()
+        self.donated_intact_axon_sections = list()
         self.cut_leaves = cut_plane.cut_leaves_coordinates
         self.neuron = load_neuron(inputfile)
         self.apical_section = None
         self.repair_type_map = dict()
+        self.max_y_cylindrical_extent = _max_y_dendritic_cylindrical_extent(self.neuron)
+        self.max_y_extent = max(np.max(section.points[:, COLS.Y])
+                                for section in self.neuron.iter())
+
         self.info = dict()
 
     def run(self, outputfile, plot_file=None):
@@ -272,6 +281,14 @@ class Repair(object):
             self.neuron.write(outputfile)
             return
 
+        for axon_donor in self.axon_donors:
+            plane = CutPlane.find(axon_donor)
+            no_cut_plane = (plane.minus_log_prob < 50)
+            self.donated_intact_axon_sections.extend(
+                [section for section in iter_sections(plane.morphology)
+                 if section.type == SectionType.axon and
+                 (no_cut_plane or is_branch_intact(section, plane.cut_sections))])
+
         apical_section_id, _ = apical_point_section_segment(self.neuron)
         if apical_section_id:
             self.apical_section = self.neuron.section(apical_section_id)
@@ -280,6 +297,9 @@ class Repair(object):
 
         self._fill_repair_type_map()
         self._fill_statistics_for_intact_subtrees()
+        intact_axonal_sections = [section for section in iter_sections(self.neuron)
+                                  if section.type == SectionType.axon and
+                                  is_branch_intact(section, self.cut_leaves)]
 
         L.debug(pformat(self.info))
 
@@ -299,11 +319,20 @@ class Repair(object):
 
         try:
             for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
-                if self.repair_type_map[section] in {RepairType.basal, RepairType.oblique}:
+                type_ = self.repair_type_map[section]
+                if type_ in {RepairType.basal, RepairType.oblique, RepairType.tuft}:
                     origin = self._get_origin(section)
                     if section.type == NeuriteType.basal_dendrite:
                         _continuation(section, origin)
                     self._grow(section, self._get_order_offset(section), origin)
+                elif type_ == RepairType.axon:
+                    axon.repair(self.neuron, section, intact_axonal_sections,
+                                self.donated_intact_axon_sections, self.max_y_extent)
+                elif type_ == RepairType.trunk:
+                    L.info('Trunk repair is not (nor has ever been) implemented')
+                else:
+                    raise Exception('Unknown type: {}'.format(type_))
+
         except StopIteration:
             pass
 
@@ -333,12 +362,16 @@ class Repair(object):
         basals = [neurite.root_node for neurite in iter_neurites(self.neuron)
                   if (neurite.type == NeuriteType.basal_dendrite and
                       is_branch_intact(neurite.root_node, self.cut_leaves))]
+
         if not basals:
             raise Exception('No intact basal dendrites !')
 
+        axons = [neurite.root_node for neurite in iter_neurites(self.neuron)
+                 if (neurite.type == NeuriteType.axon and
+                     is_branch_intact(neurite.root_node, self.cut_leaves))]
         obliques = self._find_intact_obliques()
 
-        return basals + obliques
+        return basals + obliques + axons
 
     def _intact_branching_angles(self, branches):
         '''
@@ -378,6 +411,8 @@ class Repair(object):
         '''Return what should be considered as the origin for this branch'''
         if self.repair_type_map[branch] == RepairType.oblique:
             return branch.points[0, COLS.XYZ]
+        if self.repair_type_map[branch] == RepairType.tuft:
+            return self.apical_section.points[-1]
         return self.neuron.soma.center
 
     def _get_order_offset(self, branch):
@@ -399,6 +434,8 @@ class Repair(object):
         '''
         if self.repair_type_map[branch] == RepairType.oblique:
             return branch_order(branch)
+        if self.repair_type_map[branch] == RepairType.tuft:
+            return branch_order(self.apical_section)
         return 0
 
     def _compute_sholl_data(self, branches):
@@ -483,6 +520,10 @@ class Repair(object):
 
         Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n387  # noqa, pylint: disable=line-too-long
         '''
+        if (self.repair_type_map[section] == RepairType.tuft and
+                _y_cylindrical_extent(section) > self.max_y_cylindrical_extent):
+            return
+
         sholl_layer = _get_sholl_layer(section, origin)
         pseudo_order = branch_order(section) - order_offset
         L.debug('In _grow. Layer: %s, order: %s', sholl_layer, pseudo_order)
@@ -547,6 +588,9 @@ class Repair(object):
                 self.repair_type_map[section] = RepairType.trunk
 
 
-def repair(inputfile, outputfile, seed=0, plane=None, plot_file=None):
+def repair(inputfile, outputfile, axons=None, seed=0, plane=None, plot_file=None):
     '''The repair function'''
-    return Repair(inputfile, seed=seed, plane=plane).run(outputfile, plot_file=plot_file)
+    if axons is None:
+        axons = list()
+    obj = Repair(inputfile, axons=axons, seed=seed, plane=plane)
+    obj.run(outputfile, plot_file=plot_file)

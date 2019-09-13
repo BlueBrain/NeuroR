@@ -102,15 +102,17 @@ def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_
 @click.argument('output_file')
 @click.option('--plot_file', type=click.Path(file_okay=True), default=None,
               help='Where to save the plot')
+@click.option('-a', '--axon-donor', multiple=True,
+              help='A morphology that provides a reference axon')
 @click.option('--plane',
               type=click.Path(exists=True, file_okay=True), default=None,
               help=('A custom cut plane to use. '
                     'Cut planes are created by the code hosted at '
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
-def file(input_file, output_file, plot_file, plane):
+def file(input_file, output_file, plot_file, axon_donor, plane):
     '''Repair dendrites of a cut neuron'''
     from morph_repair.main import repair
-    repair(input_file, output_file, plane=plane, plot_file=plot_file)
+    repair(input_file, output_file, axons=axon_donor, plane=plane, plot_file=plot_file)
 
 
 # pylint: disable=function-redefined
@@ -119,16 +121,18 @@ def file(input_file, output_file, plot_file, plane):
 @click.argument('output_dir', type=click.Path(exists=True, file_okay=False, writable=True))
 @click.option('--plot_dir', default=None, type=click.Path(exists=True, file_okay=False,
                                                           writable=True))
+@click.option('-a', '--axon-donor', multiple=True,
+              help='A morphology that provides a reference axon')
 @click.option('--planes',
               type=click.Path(exists=True, file_okay=True), default=None,
               help=('A folder containing cut planes for each morphology. '
                     'The filename must be the morphology filename followed by ".csv". '
                     'Cut planes are created by the code hosted at '
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
-def folder(input_dir, output_dir, plot_dir, planes):
+def folder(input_dir, output_dir, plot_dir, axon_donor, planes):
     '''Repair dendrites of all neurons in a directory'''
     from morph_repair.full import repair_all
-    repair_all(input_dir, output_dir, planes_dir=planes, plots_dir=plot_dir)
+    repair_all(input_dir, output_dir, axons=axon_donor, planes_dir=planes, plots_dir=plot_dir)
 
 
 @cli.command(short_help='Generate PDF')
