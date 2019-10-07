@@ -6,7 +6,6 @@ import logging
 from collections import defaultdict, Counter, OrderedDict
 from enum import Enum
 from itertools import chain
-from pprint import pformat
 
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -19,7 +18,7 @@ from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
 from morph_tool import apical_point_section_segment
 
-from morph_repair.utils import rotation_matrix, _section_length, _direction
+from morph_repair.utils import rotation_matrix, section_length, direction
 from morph_repair.view import plot_repaired_neuron
 from morph_repair import axon
 
@@ -58,6 +57,8 @@ class RepairType(Enum):
 
 def is_cut_section(section, cut_points):
     '''Return true if the section is close from the cut plane'''
+    if cut_points.size == 0 or section.points.size == 0:
+        return False
     return np.min(cdist(section.points[:, COLS.XYZ], cut_points)) < EPSILON
 
 
@@ -182,17 +183,17 @@ def _branching_angles(section, order_offset=0):
 
     Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n194  # noqa, pylint: disable=line-too-long
     '''
-    if _section_length(section) < EPSILON:
+    if section_length(section) < EPSILON:
         return []
     res = []
 
     branching_order = branch_order(section) - order_offset
     for child in section.children:
-        if _section_length(child) < EPSILON:
+        if section_length(child) < EPSILON:
             continue
 
-        theta = np.math.acos(np.dot(_direction(section), _direction(child)) /
-                             (_section_length(section) * _section_length(child)))
+        theta = np.math.acos(np.dot(direction(section), direction(child)) /
+                             (section_length(section) * section_length(child)))
         res.append((branching_order, theta))
     return res
 
@@ -254,7 +255,9 @@ class Repair(object):
         '''
         np.random.seed(seed)
         if plane is None:
+            L.info('No cut plane specified. Calling CutPlane.find...')
             cut_plane = CutPlane.find(inputfile, bin_width=15)
+            L.info('Found cut plane: %s', cut_plane)
         else:
             if isinstance(plane, CutPlane):
                 cut_plane = plane
@@ -281,17 +284,22 @@ class Repair(object):
             self.neuron.write(outputfile)
             return
 
+        # The only purpose of the 'planes' variable is to keep
+        # each plane.morphology alive. Otherwise sections become unusable
+        # https://github.com/BlueBrain/MorphIO/issues/29
+        planes = []
         for axon_donor in self.axon_donors:
             plane = CutPlane.find(axon_donor)
+            planes.append(plane)
             no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
                 [section for section in iter_sections(plane.morphology)
                  if section.type == SectionType.axon and
-                 (no_cut_plane or is_branch_intact(section, plane.cut_sections))])
+                 (no_cut_plane or is_branch_intact(section, plane.cut_leaves_coordinates))])
 
         apical_section_id, _ = apical_point_section_segment(self.neuron)
         if apical_section_id:
-            self.apical_section = self.neuron.section(apical_section_id)
+            self.apical_section = self.neuron.sections[apical_section_id]
         else:
             self.apical_section = None
 
@@ -300,8 +308,6 @@ class Repair(object):
         intact_axonal_sections = [section for section in iter_sections(self.neuron)
                                   if section.type == SectionType.axon and
                                   is_branch_intact(section, self.cut_leaves)]
-
-        L.debug(pformat(self.info))
 
         # BlueRepairSDK used to have a bounding cylinder filter but
         # I don't know what is it good at so I have commented
@@ -317,24 +323,21 @@ class Repair(object):
         cut_leaves_ids = {section: len(section.points)
                           for section in cut_sections_in_bounding_cylinder}
 
-        try:
-            for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
-                type_ = self.repair_type_map[section]
-                if type_ in {RepairType.basal, RepairType.oblique, RepairType.tuft}:
-                    origin = self._get_origin(section)
-                    if section.type == NeuriteType.basal_dendrite:
-                        _continuation(section, origin)
-                    self._grow(section, self._get_order_offset(section), origin)
-                elif type_ == RepairType.axon:
-                    axon.repair(self.neuron, section, intact_axonal_sections,
-                                self.donated_intact_axon_sections, self.max_y_extent)
-                elif type_ == RepairType.trunk:
-                    L.info('Trunk repair is not (nor has ever been) implemented')
-                else:
-                    raise Exception('Unknown type: {}'.format(type_))
-
-        except StopIteration:
-            pass
+        for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
+            type_ = self.repair_type_map[section]
+            L.info('Repairing: %s, %s', type_, section.id)
+            if type_ in {RepairType.basal, RepairType.oblique, RepairType.tuft}:
+                origin = self._get_origin(section)
+                if section.type == NeuriteType.basal_dendrite:
+                    _continuation(section, origin)
+                self._grow(section, self._get_order_offset(section), origin)
+            elif type_ == RepairType.axon:
+                axon.repair(self.neuron, section, intact_axonal_sections,
+                            self.donated_intact_axon_sections, self.max_y_extent)
+            elif type_ == RepairType.trunk:
+                L.info('Trunk repair is not (nor has ever been) implemented')
+            else:
+                raise Exception('Unknown type: {}'.format(type_))
 
         if plot_file is not None:
             plot_repaired_neuron(self.neuron, cut_leaves_ids, plot_file)
@@ -412,7 +415,7 @@ class Repair(object):
         if self.repair_type_map[branch] == RepairType.oblique:
             return branch.points[0, COLS.XYZ]
         if self.repair_type_map[branch] == RepairType.tuft:
-            return self.apical_section.points[-1]
+            return self.apical_section.points[-1, COLS.XYZ]
         return self.neuron.soma.center
 
     def _get_order_offset(self, branch):
@@ -552,8 +555,6 @@ class Repair(object):
                 for child in section.children:
                     self.repair_type_map[child] = self.repair_type_map[section]
                     self._grow(child, order_offset, origin)
-        else:
-            L.info('Terminating')
 
     def _fill_statistics_for_intact_subtrees(self):
         '''Compute statistics'''

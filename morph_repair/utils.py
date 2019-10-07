@@ -64,7 +64,7 @@ class RepairJSON(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def _direction(section):
+def direction(section):
     '''Return the direction vector of a section
 
     Args:
@@ -73,10 +73,10 @@ def _direction(section):
     return np.diff(section.points[[0, -1]], axis=0)[0]
 
 
-def _section_length(section):
+def section_length(section):
     '''Section length
 
     Args:
         section (morphio.mut.Section): section
     '''
-    return np.linalg.norm(_direction(section))
+    return np.linalg.norm(direction(section))

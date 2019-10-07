@@ -30,25 +30,25 @@ class DummySection:
 
 def test_is_cut_section():
     section = SIMPLE.neurites[0].root_node
-    assert_equal(test_module.is_cut_section(section, [[2, 2, 2]]),
+    assert_equal(test_module.is_cut_section(section, np.array([[2, 2, 2]])),
                  False)
 
-    assert_equal(test_module.is_cut_section(section, [[0, 0, 0]]),
+    assert_equal(test_module.is_cut_section(section, np.array([[0, 0, 0]])),
                  True)
 
 
 def test_is_branch_intact():
     neurite = SIMPLE.neurites[0]
-    assert_equal(test_module.is_branch_intact(neurite.root_node, [[2, 2, 2]]),
+    assert_equal(test_module.is_branch_intact(neurite.root_node, np.array([[2, 2, 2]])),
                  True)
 
-    assert_equal(test_module.is_branch_intact(neurite.root_node, [[0, 0, 0]]),
+    assert_equal(test_module.is_branch_intact(neurite.root_node, np.array([[0, 0, 0]])),
                  False)
 
 
 def test__find_intact_sub_trees():
     obj = Repair(SIMPLE_PATH)
-    obj.cut_leaves = [[2, 2, 2]]
+    obj.cut_leaves = np.array([[2, 2, 2]])
     obj._fill_repair_type_map()
 
     assert_equal(len(obj._find_intact_sub_trees()), 2)
@@ -68,7 +68,7 @@ def test__find_intact_sub_trees():
 
 
 def test_section_length():
-    assert_equal(test_module._section_length(SIMPLE.neurites[0].root_node), 5)
+    assert_equal(test_module.section_length(SIMPLE.neurites[0].root_node), 5)
 
 
 def test_branching_angles():

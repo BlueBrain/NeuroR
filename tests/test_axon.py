@@ -31,10 +31,10 @@ def test_tree_distance():
     assert_raises(Exception, test_module._tree_distance, SLICE.neurites[0].root_node,
                   SLICE.neurites[1].root_node)
 
-def test__children_length():
+def test__downstream_pathlength():
     root = SIMPLE.root_sections[0]
-    assert_equal(test_module._children_length(root), 16)
-    assert_equal(test_module._children_length(root.children[0]), 5)
+    assert_equal(test_module._downstream_pathlength(root), 16)
+    assert_equal(test_module._downstream_pathlength(root.children[0]), 5)
 
 
 def test__similar_section():

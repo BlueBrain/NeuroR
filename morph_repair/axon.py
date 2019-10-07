@@ -7,7 +7,7 @@ from neurom.features.sectionfunc import branch_order, strahler_order
 from neurom import COLS
 from morph_tool.transform import align, translate
 
-from morph_repair.utils import _section_length
+from morph_repair.utils import section_length
 
 L = logging.getLogger('morph-repair')
 
@@ -56,14 +56,16 @@ def _tree_distance(sec1, sec2):
     return dist
 
 
-def _children_length(section):
-    '''Reimplementation of:
+def _downstream_pathlength(section):
+    '''The sum of this section and its descendents's pathlengths
+
+    Reimplementation of the C++ function "children_length":
 
     https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n112
     '''
-    ret = _section_length(section)
+    ret = section_length(section)
     for child in section.children:
-        ret += _children_length(child)
+        ret += _downstream_pathlength(child)
     return ret
 
 
@@ -88,12 +90,12 @@ def _similar_section(intact_axons, section):
 
 def _sort_intact_sections_by_score(section, similar_section, axon_branches):
     '''Returns an array of sections sorted by their score'''
-    reference = _children_length(similar_section) - _section_length(section)
+    reference = _downstream_pathlength(similar_section) - section_length(section)
 
     def score(branch):
         '''The score. The interpretation is something like the absolute difference in
         remaining children length'''
-        return -abs(reference - _children_length(branch))
+        return -abs(reference - _downstream_pathlength(branch))
     return sorted(axon_branches, key=score)
 
 
@@ -140,6 +142,8 @@ def repair(morphology, section, intact_sections, axon_branches, y_extent):
 
     strahler_orders = {intact_section: strahler_order(intact_section)
                        for intact_section in intact_sections + branch_pool}
+
+    L.info('Branch pool count: %s', len(branch_pool))
     for branch in branch_pool:
         if (branch in already_used or strahler_orders[similar] != strahler_orders[branch]):
             continue
