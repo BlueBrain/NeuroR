@@ -1,0 +1,12 @@
+# SWC structure:
+# index, type, x, y, z, radius, parent
+
+
+ 1  1  0  0 0 1. -1
+ 2  3  0  0 0 1.  1
+ 3  3  0  5 0 1.  2
+ 4  2  1  5 0 1.  3
+ 5  2  1  5 1 1.  4
+ 6  2  1  5 2 0.  5  # leave with a 0 diameter
+ 7  2  1  5 3 0.  6
+ 8  2  2  7 0 0.  3

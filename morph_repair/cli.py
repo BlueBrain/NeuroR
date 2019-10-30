@@ -3,6 +3,8 @@ import logging
 
 import click
 
+from morphio.mut import Morphology  # pylint: disable=import-error
+
 logging.basicConfig()
 logger = logging.getLogger('morph-repair')
 
@@ -150,3 +152,14 @@ def report(folders, title):
     else:
         title = ['Plot {}'.format(i) for i in range(1, len(folders) + 1)]
     view_all(folders, title)
+
+
+@cli.command(short_help='Fix zero diameters')
+@click.argument('input_file')
+@click.argument('output_file')
+def zero_diameters(input_file, output_file):
+    '''Output a morphology where the zero diameters have been removed'''
+    from morph_repair.zero_diameter_fixer import fix_zero_diameters
+    neuron = Morphology(input_file)
+    fix_zero_diameters(neuron)
+    neuron.write(output_file)

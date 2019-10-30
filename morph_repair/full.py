@@ -11,7 +11,7 @@ from morph_repair.main import repair
 from morph_repair.unravel import unravel_all
 from morph_repair.view import view_all
 
-L = logging.getLogger('repair')
+L = logging.getLogger('morph-repair')
 
 
 def _get_folders(root_dir,
