@@ -36,6 +36,9 @@ def test_sanitize():
         assert_raises(CorruptedMorphology, sanitize,
                       Path(PATH, 'no-soma.asc'), Path(tmp_folder, 'no-soma.asc'))
 
+        assert_raises(CorruptedMorphology, sanitize,
+                      Path(PATH, 'negative-diameters.asc'), Path(tmp_folder, 'negative-diameter.asc'))
+
 
 def test_sanitize_all():
     with setup_tempdir('test-sanitize') as tmp_folder:
