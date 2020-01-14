@@ -5,10 +5,15 @@ from tqdm import tqdm
 
 import numpy as np
 
-from morphio import MorphioError, set_maximum_warnings
+import morphio
+from morphio import MorphioError, set_maximum_warnings, SomaType
 from morphio.mut import Morphology  # pylint: disable=import-error
 
 L = logging.getLogger('morph-repair')
+
+
+class CorruptedMorphology(Exception):
+    '''Exception for morphologies that should not be used'''
 
 
 def iter_morphologies(folder):
@@ -19,13 +24,17 @@ def iter_morphologies(folder):
 def sanitize(input_neuron, output_path):
     '''Sanitize one morphology.
 
-    Note: it currently only fixes non zero segments but may do more in the future
+    - fixes non zero segments
+    - raises if the morphology has no soma
 
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
     '''
-    fix_non_zero_segments(input_neuron).write(str(output_path))
+    neuron = morphio.Morphology(input_neuron)
+    if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
+        raise CorruptedMorphology('{} has no soma'.format(input_neuron))
+    fix_non_zero_segments(neuron).write(str(output_path))
 
 
 def sanitize_all(input_folder, output_folder):
@@ -41,23 +50,23 @@ def sanitize_all(input_folder, output_folder):
     for path in tqdm(list(iter_morphologies(Path(input_folder)))):
         try:
             sanitize(path, Path(output_folder, path.name))
-        except MorphioError:
+        except (MorphioError, CorruptedMorphology):
             in_errors.append(path)
     L.info('Files in error:')
     L.info(in_errors)
 
 
-def fix_non_zero_segments(filename):
+def fix_non_zero_segments(neuron):
     '''Return a neuron with zero length segments removed
 
     Sections composed of a single zero length segment are deleted
     Args:
-        input_folder (str|pathlib.Path): input neuron
+        neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
 
     Returns:
         a fixed morphio.mut.Morphology
     '''
-    neuron = Morphology(filename)
+    neuron = Morphology(neuron)
     to_be_deleted = list()
     for section in neuron.iter():
         points = section.points

@@ -1,11 +1,12 @@
 import os
 from os.path import dirname
 from pathlib import Path
-from morph_repair.sanitize import fix_non_zero_segments, sanitize, sanitize_all
+from morph_repair.sanitize import fix_non_zero_segments, sanitize, sanitize_all, CorruptedMorphology
 
 from morphio import Morphology
 from numpy.testing import assert_equal, assert_array_equal
 
+from nose.tools import assert_raises
 from .utils import setup_tempdir
 
 PATH = Path(dirname(__file__), 'data')
@@ -31,6 +32,9 @@ def test_sanitize():
                             [1., 1., 0.],
                             [2., 0., 0.],
                             [3., 0., 0.]])
+
+        assert_raises(CorruptedMorphology, sanitize,
+                      Path(PATH, 'no-soma.asc'), Path(tmp_folder, 'no-soma.asc'))
 
 
 def test_sanitize_all():
