@@ -269,13 +269,17 @@ class Repair(object):
         self.donated_intact_axon_sections = list()
         self.cut_leaves = cut_plane.cut_leaves_coordinates
         self.neuron = load_neuron(inputfile)
-        self.apical_section = None
         self.repair_type_map = dict()
         self.max_y_cylindrical_extent = _max_y_dendritic_cylindrical_extent(self.neuron)
         self.max_y_extent = max(np.max(section.points[:, COLS.Y])
                                 for section in self.neuron.iter())
 
         self.info = dict()
+        apical_section_id, _ = apical_point_section_segment(self.neuron)
+        if apical_section_id:
+            self.apical_section = self.neuron.sections[apical_section_id]
+        else:
+            self.apical_section = None
 
     def run(self, outputfile, plot_file=None):
         '''Run'''
@@ -296,12 +300,6 @@ class Repair(object):
                 [section for section in iter_sections(plane.morphology)
                  if section.type == SectionType.axon and
                  (no_cut_plane or is_branch_intact(section, plane.cut_leaves_coordinates))])
-
-        apical_section_id, _ = apical_point_section_segment(self.neuron)
-        if apical_section_id:
-            self.apical_section = self.neuron.sections[apical_section_id]
-        else:
-            self.apical_section = None
 
         self._fill_repair_type_map()
         self._fill_statistics_for_intact_subtrees()
@@ -354,7 +352,7 @@ class Repair(object):
         '''
         root_obliques = (section for section in iter_sections(self.neuron)
                          if (self.repair_type_map[section] == RepairType.oblique and
-                             not section.is_root and
+                             not section.is_root() and
                              self.repair_type_map[section.parent] == RepairType.trunk))
         intacts = [oblique for oblique in root_obliques
                    if is_branch_intact(oblique, self.cut_leaves)]
@@ -374,7 +372,11 @@ class Repair(object):
                      is_branch_intact(neurite.root_node, self.cut_leaves))]
         obliques = self._find_intact_obliques()
 
-        return basals + obliques + axons
+        tufts = [section for section in iter_sections(self.neuron)
+                 if (self.repair_type_map[section] == RepairType.tuft and
+                     not is_cut_section(section, self.cut_leaves))]
+
+        return basals + obliques + axons + tufts
 
     def _intact_branching_angles(self, branches):
         '''
@@ -382,7 +384,7 @@ class Repair(object):
         1st key: section type, 2nd key: branching order
 
         Args:
-            neurites (List[Neurite])
+            branches (List[Neurite])
 
         Returns:
             Dict[SectionType, Dict[int, List[int]]]: Branching angles
@@ -449,8 +451,6 @@ class Repair(object):
 
         Args:
             branches: a collection of Neurite or Section that will be traversed
-            origin: The origin of the Sholl sphere. If none, the origin is set as the
-                first point of each branch
 
         Note: This is based on
         https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n93
@@ -580,7 +580,7 @@ class Repair(object):
             elif section.type == SectionType.axon:
                 self.repair_type_map[section] = RepairType.axon
 
-        if self.apical_section:
+        if self.apical_section is not None:
             for section in self.apical_section.ipreorder():
                 self.repair_type_map[section] = RepairType.tuft
 

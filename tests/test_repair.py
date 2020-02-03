@@ -65,6 +65,15 @@ def test__find_intact_sub_trees():
     assert_array_equal([section.id for section in intact_sub_trees],
                        [0, 34])
 
+    obj = Repair(DATA_PATH / 'test-cut-apical' / 'simple-apical-cut.swc',
+                 plane=str(DATA_PATH / 'test-cut-apical' / 'cut-plane.json'))
+    obj._fill_repair_type_map()
+    intact_sub_trees = obj._find_intact_sub_trees()
+    assert_array_equal([section.id for section in intact_sub_trees],
+                       [1, 0, 3])
+    assert_array_equal([obj.repair_type_map[section] for section in intact_sub_trees],
+                       [RepairType.basal, RepairType.axon, RepairType.tuft])
+
 
 def test_section_length():
     assert_equal(test_module.section_length(SIMPLE.neurites[0].root_node), 5)

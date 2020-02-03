@@ -1,0 +1,22 @@
+{
+  "cut-leaves": [
+    [
+      1.0,
+      30.0,
+      0.0
+    ]
+  ],
+  "status": "The probability that there is in fact NO cut plane is high: -log(p) = 4.0 !",
+  "details": {
+    "-LogP": 4.0,
+    "bin-width": 5
+  },
+  "cut-plane": {
+    "a": 0.0,
+    "b": 1.0,
+    "c": 0.0,
+    "d": -33.0,
+    "upward": true,
+    "comment": "Equation: a*X + b*Y + c*Z + d > 0"
+  }
+}
