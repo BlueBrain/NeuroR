@@ -44,20 +44,32 @@ def sanitize(input_neuron, output_path):
 def sanitize_all(input_folder, output_folder):
     '''Sanitize all morphologies in input_folder and its sub-directories.
 
+    Note: the sub-directory structure is maintained.
+
+    - fixes non zero segments
+    - raises if the morphology has no soma
+    - raises if the morphology has negative diameters
+
     Args:
         input_folder (str|pathlib.Path): input neuron
-        output_path (str|pathlib.Path): output name
+        output_folder (str|pathlib.Path): output name
     '''
     set_maximum_warnings(0)
 
-    in_errors = list()
+    errored_paths = list()
     for path in tqdm(list(iter_morphologies(Path(input_folder)))):
+        relative_path = path.relative_to(input_folder)
+        output_dir = output_folder / relative_path.parent
+        if not output_dir.exists():
+            output_dir.mkdir(parents=True)
         try:
-            sanitize(path, Path(output_folder, path.name))
+            sanitize(path, output_dir / path.name)
         except (MorphioError, CorruptedMorphology):
-            in_errors.append(path)
-    L.info('Files in error:')
-    L.info(in_errors)
+            errored_paths.append(str(path))
+    if errored_paths:
+        L.info('Files in error:')
+        for path in errored_paths:
+            L.info(path)
 
 
 def fix_non_zero_segments(neuron):

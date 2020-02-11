@@ -1,23 +1,22 @@
 import json
-import os
-from os.path import join as joinp
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from mock import patch, MagicMock
 import numpy as np
-from neurom import COLS, load_neuron, NeuriteType
-from nose.tools import assert_dict_equal, ok_, assert_raises
-from numpy.testing import assert_array_almost_equal, assert_equal, assert_array_equal
+from neurom import COLS, NeuriteType, load_neuron
+from nose.tools import assert_dict_equal, assert_raises, ok_
+from numpy.testing import (assert_array_almost_equal, assert_array_equal,
+                           assert_equal)
 
 import morph_repair.main as test_module
-from morphio import SectionType
+from mock import patch
 from morph_repair.main import Action, Repair, RepairType
+from morphio import SectionType
 
-from .utils import setup_tempdir
+DATA_PATH = Path(__file__).parent / 'data'
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
-
-SIMPLE_PATH = os.path.join(DATA_PATH, 'simple.swc')
-SLICE_PATH = os.path.join(DATA_PATH, 'neuron-slice.h5')
+SIMPLE_PATH = DATA_PATH / 'simple.swc'
+SLICE_PATH = DATA_PATH / 'neuron-slice.h5'
 SIMPLE = load_neuron(SIMPLE_PATH)
 SLICE = load_neuron(SLICE_PATH)
 
@@ -199,7 +198,7 @@ def test_last_segment_vector():
 
 def test__grow_until_sholl_sphere():
     np.random.seed(0)
-    neuron = load_neuron(os.path.join(DATA_PATH, 'simple.swc'))
+    neuron = load_neuron(DATA_PATH / 'simple.swc')
     section = neuron.neurites[0].root_node
     test_module._grow_until_sholl_sphere(section, SIMPLE.soma.center, 0)
     assert_array_almost_equal(section.points[:, COLS.XYZ],
@@ -229,7 +228,7 @@ def test__compute_sholl_data():
 
 
 def test__fill_repair_type_map():
-    obj = Repair(os.path.join(DATA_PATH, 'repair_type.asc'))
+    obj = Repair(DATA_PATH / 'repair_type.asc')
     obj.apical_section = obj.neuron.sections[3]
     # Pre check to be sure that the apical point is the one it should be
     assert_array_almost_equal(obj.apical_section.points,
@@ -264,13 +263,13 @@ def json_compatible_dict(dict_):
     return result
 
 def test__compute_statistics_for_intact_subtrees():
-    input_file = os.path.join(DATA_PATH, 'neuron-slice.h5')
+    input_file = DATA_PATH / 'neuron-slice.h5'
     obj = Repair(input_file,
                  plane=test_module.CutPlane.find(input_file, bin_width=15))
     obj._fill_repair_type_map()
     obj._fill_statistics_for_intact_subtrees()
 
-    with open(os.path.join(DATA_PATH, 'neuron-slice-sholl-data.json')) as f:
+    with open(DATA_PATH / 'neuron-slice-sholl-data.json') as f:
         expected = json.load(f)
 
     basal_data = expected['SectionType.basal_dendrite']
@@ -296,9 +295,9 @@ def test__grow():
     assert_equal(len(obj.neuron.sections), 8)
 
 def test_repair_axon():
-    filename = os.path.join(DATA_PATH, 'real-with-axon.asc')
-    with setup_tempdir('test-cli-axon') as tmp_folder:
-        outfilename = os.path.join(tmp_folder, 'out.asc')
+    filename = DATA_PATH / 'real-with-axon.asc'
+    with TemporaryDirectory('test-cli-axon') as tmp_folder:
+        outfilename = Path(tmp_folder, 'out.asc')
         test_module.repair(filename, outfilename, axons=[filename])
         neuron_in = load_neuron(filename)
         neuron_out = load_neuron(outfilename)

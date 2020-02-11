@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import numpy as np
 from neurom import load_neuron
@@ -8,11 +8,11 @@ from numpy.testing import assert_array_equal, assert_equal
 from morphio.mut import Morphology
 from morph_repair.zero_diameter_fixer import fix_zero_diameters, fix_in_between, Point, fix_from_downstream, fix_from_upstream, fix_neurite
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+DATA_PATH = Path(__file__).parent / 'data'
 
 
 def test_fix_in_between():
-    neuron = Morphology(os.path.join(DATA_PATH, 'zero-diameter-middle-of-neurite.asc'))
+    neuron = Morphology(DATA_PATH / 'zero-diameter-middle-of-neurite.asc')
     root = neuron.root_sections[0]
     point = Point(root, 0)
 
@@ -26,7 +26,7 @@ def test_fix_in_between():
 
 
 def test_fix_from_downstream():
-    neuron = Morphology(os.path.join(DATA_PATH, 'zero-diameter-middle-of-neurite.asc'))
+    neuron = Morphology(DATA_PATH / 'zero-diameter-middle-of-neurite.asc')
     root = neuron.root_sections[0]
     point = Point(root, 0)
 
@@ -36,7 +36,7 @@ def test_fix_from_downstream():
                        "The diameters should not have been modified")
 
 
-    neuron = Morphology(os.path.join(DATA_PATH, 'zero-diameter-beginning-of-neurite.swc'))
+    neuron = Morphology(DATA_PATH / 'zero-diameter-beginning-of-neurite.swc')
     root = neuron.root_sections[0]
     point = Point(root, 0)
 
@@ -46,7 +46,7 @@ def test_fix_from_downstream():
                        'Diameters should not have been changed '
                        'since the whole neurite has a null diameter')
 
-    neuron = Morphology(os.path.join(DATA_PATH, 'zero-diameter-beginning-of-neurite.swc'))
+    neuron = Morphology(DATA_PATH / 'zero-diameter-beginning-of-neurite.swc')
     root = neuron.root_sections[1]
     point = Point(root, 0)
 
@@ -56,7 +56,7 @@ def test_fix_from_downstream():
 
 
 def test_fix_from_upstream():
-    neuron = Morphology(os.path.join(DATA_PATH, 'zero-diameter-end-of-neurite.swc'))
+    neuron = Morphology(DATA_PATH / 'zero-diameter-end-of-neurite.swc')
     root = neuron.root_sections[0]
     point = Point(root, 0)
     leaf = root.children[0]
@@ -66,7 +66,7 @@ def test_fix_from_upstream():
 
 
 def test_fix_zero_diameters():
-    neuron = Morphology(os.path.join(DATA_PATH, 'zero-diameter-end-of-neurite.swc'))
+    neuron = Morphology(DATA_PATH / 'zero-diameter-end-of-neurite.swc')
     fix_zero_diameters(neuron)
     leaf = neuron.root_sections[0].children[0]
     assert_array_equal(leaf.diameters, np.array([2, 2, 2, 2, 2], dtype=np.float32))

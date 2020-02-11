@@ -1,18 +1,18 @@
-import os
+from pathlib import Path
 
 from neurom import load_neuron
 from nose.tools import assert_raises, ok_
 from numpy.testing import assert_array_equal, assert_equal
 
 from morph_tool import diff
-import morph_repair.main as test_module
 from morphio import SectionType
+
 import morph_repair.axon as test_module
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+DATA_PATH = Path(__file__).parent / 'data'
 
-SIMPLE_PATH = os.path.join(DATA_PATH, 'simple.swc')
-SLICE_PATH = os.path.join(DATA_PATH, 'neuron-slice.h5')
+SIMPLE_PATH = DATA_PATH / 'simple.swc'
+SLICE_PATH = DATA_PATH / 'neuron-slice.h5'
 SIMPLE = load_neuron(SIMPLE_PATH)
 SLICE = load_neuron(SLICE_PATH)
 
@@ -50,7 +50,7 @@ def test__sort_intact_sections_by_score():
 
 
 def test__repair():
-    neuron = load_neuron(os.path.join(DATA_PATH, 'valid.h5'))
+    neuron = load_neuron(Path(DATA_PATH, 'valid.h5'))
     axon = neuron.root_sections[0]
     assert_equal(axon.type, SectionType.axon)
     test_module.repair(neuron, axon, [axon], [axon], y_extent=10000)
@@ -59,7 +59,7 @@ def test__repair():
 
 
 def test__repair_no_intact_axon():
-    filename = os.path.join(DATA_PATH, 'valid.h5')
+    filename = Path(DATA_PATH, 'valid.h5')
     neuron = load_neuron(filename)
     axon = neuron.root_sections[0]
     test_module.repair(neuron, axon, [], [axon], y_extent=10000)

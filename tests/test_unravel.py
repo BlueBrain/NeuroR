@@ -1,5 +1,5 @@
-from os.path import dirname
-from os.path import join as joinp
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas as pd
@@ -8,11 +8,9 @@ from numpy.testing import assert_array_almost_equal
 
 import morph_repair.unravel as test_module
 
-from .utils import setup_tempdir
+PATH = Path(__file__).parent / 'data'
 
-PATH = joinp(dirname(__file__), 'data')
-
-SIMPLE = load_neuron(joinp(PATH, 'simple.swc'))
+SIMPLE = load_neuron(PATH / 'simple.swc')
 
 def test_get_principal_direction():
     assert_array_almost_equal(test_module._get_principal_direction([[0.,0,0], [1,1,2]]),
@@ -24,7 +22,7 @@ def test_get_principal_direction():
                               np.array([1, 0, 0]))
 
 def test_unravel():
-    neuron, mapping = test_module.unravel(joinp(PATH, 'simple.asc'))
+    neuron, mapping = test_module.unravel(PATH / 'simple.asc')
     assert_array_almost_equal(neuron.root_sections[0].points,
                               np.array([[ 0.      ,  0.      ,  0.      ],
                                         [ 1.404784, -0.163042,  0.      ],
@@ -56,9 +54,9 @@ def test_unravel():
 
 
 def test_unravel_plane():
-    with setup_tempdir('test-unravel-plane'):
-        mapping = pd.read_csv(joinp(PATH, 'mapping.csv'))
-        plane = test_module.unravel_plane(joinp(PATH, 'neuron-slice-plane.json'), mapping)
+    with TemporaryDirectory('test-unravel-plane'):
+        mapping = pd.read_csv(PATH / 'mapping.csv')
+        plane = test_module.unravel_plane(str(PATH / 'neuron-slice-plane.json'), mapping)
         assert_array_almost_equal(plane.cut_leaves_coordinates,
                                   [[-111.24885559,   -1.29032707,   55.46524429],
                                    [-156.59031677,   23.12454224,   53.51153946],
