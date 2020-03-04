@@ -6,7 +6,7 @@ import pandas as pd
 from neurom import load_neuron
 from numpy.testing import assert_array_almost_equal
 
-import morph_repair.unravel as test_module
+import neuror.unravel as test_module
 
 PATH = Path(__file__).parent / 'data'
 

@@ -7,7 +7,7 @@ from mock import patch
 from nose.tools import assert_raises, ok_
 from numpy.testing import assert_equal
 
-from morph_repair.full import full
+from neuror.full import full
 
 DATA_PATH = Path(__file__).parent / 'data'
 

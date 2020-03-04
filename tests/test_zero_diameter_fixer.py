@@ -6,7 +6,7 @@ from nose.tools import assert_raises, ok_
 from numpy.testing import assert_array_equal, assert_equal
 
 from morphio.mut import Morphology
-from morph_repair.zero_diameter_fixer import fix_zero_diameters, fix_in_between, Point, fix_from_downstream, fix_from_upstream, fix_neurite
+from neuror.zero_diameter_fixer import fix_zero_diameters, fix_in_between, Point, fix_from_downstream, fix_from_upstream, fix_neurite
 
 DATA_PATH = Path(__file__).parent / 'data'
 

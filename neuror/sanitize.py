@@ -9,7 +9,7 @@ import morphio
 from morphio import MorphioError, set_maximum_warnings, SomaType
 from morphio.mut import Morphology  # pylint: disable=import-error
 
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 
 class CorruptedMorphology(Exception):

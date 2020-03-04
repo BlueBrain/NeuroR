@@ -7,10 +7,10 @@ from pathlib import Path
 
 from morph_tool.utils import iter_morphology_files
 
-from morph_repair.main import repair
-from morph_repair.unravel import unravel_all
+from neuror.main import repair
+from neuror.unravel import unravel_all
 
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 
 def _get_folders(root_dir,
@@ -114,7 +114,7 @@ def full(root_dir,
                plots_dir=folders['plots'])
 
     try:
-        from morph_repair.view import view_all
+        from neuror.view import view_all
         view_all([folders['raw'], folders['unravelled'], folders['repaired']],
                  titles=['raw', 'unravelled', 'repaired'],
                  output_pdf=str(Path(folders['plots'], 'report.pdf')))

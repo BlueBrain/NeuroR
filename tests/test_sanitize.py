@@ -1,5 +1,5 @@
 from pathlib import Path
-from morph_repair.sanitize import fix_non_zero_segments, sanitize, sanitize_all, CorruptedMorphology
+from neuror.sanitize import fix_non_zero_segments, sanitize, sanitize_all, CorruptedMorphology
 
 from morphio import Morphology
 from numpy.testing import assert_equal, assert_array_equal

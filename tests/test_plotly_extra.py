@@ -6,8 +6,8 @@ from click.testing import CliRunner
 from nose.tools import ok_
 from numpy.testing import assert_equal
 
-from morph_repair.cli import cli
-from morph_repair.full import full
+from neuror.cli import cli
+from neuror.full import full
 
 from .test_full import assert_output_exists
 
@@ -16,7 +16,7 @@ DATA = Path(__file__).parent / 'data'
 
 def test_full_custom_plots_dir():
     try:
-        from morph_repair.view import plot_repaired_neuron
+        from neuror.view import plot_repaired_neuron
     except ImportError:
         print('Skipping this test as [plotly] extra is not installed here')
         return
@@ -34,7 +34,7 @@ def test_full_custom_plots_dir():
 
 def test_report():
     try:
-        from morph_repair.view import plot_repaired_neuron
+        from neuror.view import plot_repaired_neuron
     except ImportError:
         print('Skipping this test as [plotly] extra is not installed here')
         return

@@ -7,9 +7,9 @@ from neurom.features.sectionfunc import branch_order, strahler_order
 from neurom import COLS
 from morph_tool.transform import align, translate
 
-from morph_repair.utils import section_length
+from neuror.utils import section_length
 
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 
 def _tree_distance(sec1, sec2):

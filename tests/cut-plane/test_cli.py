@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 from numpy.testing import assert_array_almost_equal
 
-from morph_repair.cut_plane.cli import cli
+from neuror.cut_plane.cli import cli
 
 DATA = Path(__file__).parent.parent / 'data'
 

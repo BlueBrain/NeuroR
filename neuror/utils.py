@@ -6,7 +6,7 @@ import numpy as np
 
 from neurom import NeuriteType
 
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 
 def unit_vector(vector):

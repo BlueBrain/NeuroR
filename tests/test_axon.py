@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, assert_equal
 from morph_tool import diff
 from morphio import SectionType
 
-import morph_repair.axon as test_module
+import neuror.axon as test_module
 
 DATA_PATH = Path(__file__).parent / 'data'
 

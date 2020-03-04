@@ -8,9 +8,9 @@ from nose.tools import assert_dict_equal, assert_raises, ok_
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
                            assert_equal)
 
-import morph_repair.main as test_module
+import neuror.main as test_module
 from mock import patch
-from morph_repair.main import Action, Repair, RepairType
+from neuror.main import Action, Repair, RepairType
 from morphio import SectionType
 
 DATA_PATH = Path(__file__).parent / 'data'
@@ -90,7 +90,7 @@ def test_branching_angles():
     # Test skip too short child sections
     tiny_child = DummySection([[0, 0, 0], [0, 0, 1e-9]])
     parent = DummySection([[0, 0, 0], [0, 0, 1]], children=[tiny_child])
-    with patch('morph_repair.main.branch_order'):
+    with patch('neuror.main.branch_order'):
         assert_equal(test_module._branching_angles(parent),
                      [])
 

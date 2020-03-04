@@ -11,8 +11,8 @@ from neurom import load_neuron
 from neurom.geom import bounding_box
 from pyquaternion import Quaternion
 
-from morph_repair.cut_plane.detection import CutPlane, _minimize
-from morph_repair.cut_plane.planes import _get_displaced_pos
+from neuror.cut_plane.detection import CutPlane, _minimize
+from neuror.cut_plane.planes import _get_displaced_pos
 
 try:
     import dash
@@ -22,8 +22,8 @@ try:
     from plotly_helper.neuron_viewer import NeuronBuilder
 except ImportError:
     raise ImportError(
-        'morph-repair[plotly] is not installed.'
-        ' Please install it by doing: pip install morph-repair[plotly]')
+        'neuror[plotly] is not installed.'
+        ' Please install it by doing: pip install neuror[plotly]')
 
 
 # Copy of: https://codepen.io/chriddyp/pen/bWLwgP.css

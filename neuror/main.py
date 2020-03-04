@@ -16,9 +16,9 @@ from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
 from scipy.spatial.distance import cdist
 
-from morph_repair import axon
-from morph_repair.cut_plane import CutPlane
-from morph_repair.utils import direction, rotation_matrix, section_length
+from neuror import axon
+from neuror.cut_plane import CutPlane
+from neuror.utils import direction, rotation_matrix, section_length
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
@@ -31,7 +31,7 @@ BIFURCATION_ANGLE = 0
 # are not found in the NeuroM neuron
 EPSILON = 1e-6
 
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 
 class Action(Enum):
@@ -337,7 +337,7 @@ class Repair(object):
 
         if plot_file is not None:
             try:
-                from morph_repair.view import plot_repaired_neuron
+                from neuror.view import plot_repaired_neuron
                 plot_repaired_neuron(self.neuron, cut_leaves_ids, plot_file)
             except ImportError:
                 L.warning('Skipping writing plots as [plotly] extra is not installed')

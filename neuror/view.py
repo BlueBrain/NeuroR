@@ -11,14 +11,14 @@ from matplotlib.backends.backend_pdf import \
 from neurom import geom, load_neuron
 from neurom.view.view import plot_neuron
 
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 try:
     from plotly_helper.neuron_viewer import NeuronBuilder
 except ImportError:
     raise ImportError(
-        'morph-repair[plotly] is not installed.'
-        ' Please install it by doing: pip install morph-repair[plotly]')
+        'neuror[plotly] is not installed.'
+        ' Please install it by doing: pip install neuror[plotly]')
 
 matplotlib.use('Agg')
 

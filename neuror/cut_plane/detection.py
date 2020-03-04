@@ -15,7 +15,7 @@ from neurom.core.dataformat import COLS
 from scipy.optimize import minimize
 from scipy.special import factorial
 
-from morph_repair.cut_plane.planes import HalfSpace, PlaneEquation
+from neuror.cut_plane.planes import HalfSpace, PlaneEquation
 
 L = logging.getLogger(__name__)
 
@@ -278,8 +278,8 @@ def plot(neuron, result):
         from plotly_helper.shapes import line
     except ImportError:
         raise ImportError(
-            'morph-repair[plotly] is not installed.'
-            ' Please install it by doing: pip install morph-repair[plotly]')
+            'neuror[plotly] is not installed.'
+            ' Please install it by doing: pip install neuror[plotly]')
 
     bbox = geom.bounding_box(neuron)
 

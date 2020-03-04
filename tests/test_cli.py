@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from nose.tools import assert_equal
 from click.testing import CliRunner
 
-from morph_repair.cli import cli
+from neuror.cli import cli
 
 DATA = Path(__file__).parent / 'data'
 

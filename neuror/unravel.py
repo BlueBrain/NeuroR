@@ -13,10 +13,10 @@ import pandas as pd
 from morph_tool.utils import iter_morphology_files
 from scipy.spatial.ckdtree import cKDTree
 
-from morph_repair.cut_plane import CutPlane
-from morph_repair.utils import RepairJSON
+from neuror.cut_plane import CutPlane
+from neuror.utils import RepairJSON
 
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 
 def _get_principal_direction(points):

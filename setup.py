@@ -1,4 +1,4 @@
-"""Morph-repair setup.py"""
+"""neuror setup.py"""
 import imp
 import sys
 
@@ -8,7 +8,7 @@ if sys.version_info < (3, 6):
     sys.exit("Sorry, Python < 3.6 is not supported")
 
 
-VERSION = imp.load_source("morph_repair.version", "morph_repair/version.py").VERSION
+VERSION = imp.load_source("neuror.version", "neuror/version.py").VERSION
 
 
 setup(
@@ -35,8 +35,8 @@ setup(
     },
     packages=find_packages(),
     license="BBP-internal-confidential",
-    name='morph-repair',
-    entry_points={'console_scripts': ['morph-repair=morph_repair.cli:cli']},
+    name='NeuroR',
+    entry_points={'console_scripts': ['neuror=neuror.cli:cli']},
     python_requires='>=3.6',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

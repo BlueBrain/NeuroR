@@ -10,10 +10,10 @@ from morphio.mut import Morphology  # pylint: disable=import-error
 from neurom import load_neuron
 from neurom.utils import NeuromJSON
 
-from morph_repair.cut_plane.detection import CutPlane
+from neuror.cut_plane.detection import CutPlane
 
 logging.basicConfig()
-L = logging.getLogger('morph-repair')
+L = logging.getLogger('neuror')
 
 
 @click.group()
@@ -68,7 +68,7 @@ def repair():
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
 def file(input_file, output_file, plot_file, axon_donor, plane):
     '''Repair dendrites of a cut neuron'''
-    from morph_repair.main import repair  # pylint: disable=redefined-outer-name
+    from neuror.main import repair  # pylint: disable=redefined-outer-name
     repair(input_file, output_file, axons=axon_donor, plane=plane, plot_file=plot_file)
 
 
@@ -88,7 +88,7 @@ def file(input_file, output_file, plot_file, axon_donor, plane):
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
 def folder(input_dir, output_dir, plot_dir, axon_donor, planes):
     '''Repair dendrites of all neurons in a directory'''
-    from morph_repair.full import repair_all
+    from neuror.full import repair_all
     repair_all(input_dir, output_dir, axons=axon_donor, planes_dir=planes, plots_dir=plot_dir)
 
 
@@ -123,7 +123,7 @@ def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
     - repaired_dir: ROOT_DIR/repaired/ where repaired morphologies will be written
     - plots_dir: ROOT_DIR/plots where the plots will be put
     '''
-    from morph_repair.full import full  # pylint: disable=redefined-outer-name
+    from neuror.full import full  # pylint: disable=redefined-outer-name
     full(root_dir,
          seed=seed,
          window_half_length=window_half_length,
@@ -144,7 +144,7 @@ def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
 @click.option('--window-half-length', default=5)
 def file(input_file, output_file, mapping_file, window_half_length):
     '''Unravel a cell'''
-    from morph_repair.unravel import unravel  # pylint: disable=redefined-outer-name
+    from neuror.unravel import unravel  # pylint: disable=redefined-outer-name
     neuron, mapping = unravel(input_file, window_half_length=window_half_length)
     neuron.write(output_file)
     if mapping_file is not None:
@@ -163,7 +163,7 @@ def file(input_file, output_file, mapping_file, window_half_length):
 @click.option('--window-half-length', default=5)
 def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_half_length):
     '''Unravel all cells in a folder'''
-    from morph_repair.unravel import unravel_all
+    from neuror.unravel import unravel_all
     unravel_all(input_dir, output_dir, window_half_length, raw_planes_dir, unravelled_planes_dir)
 
 
@@ -172,7 +172,7 @@ def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_
 @click.option('--title', '-t', multiple=True)
 def report(folders, title):
     '''Generate a PDF with plots of pre and post repair neurons'''
-    from morph_repair.view import view_all
+    from neuror.view import view_all
     if not folders:
         print('Need to pass at least one folder')
         return
@@ -189,7 +189,7 @@ def report(folders, title):
 @click.argument('output_file')
 def zero_diameters(input_file, output_file):
     '''Output a morphology where the zero diameters have been removed'''
-    from morph_repair.zero_diameter_fixer import fix_zero_diameters
+    from neuror.zero_diameter_fixer import fix_zero_diameters
     neuron = Morphology(input_file)
     fix_zero_diameters(neuron)
     neuron.write(output_file)
@@ -201,7 +201,7 @@ def zero_diameters(input_file, output_file):
 @click.argument('output_file')
 def file(input_file, output_file):
     '''Sanitize a raw morphology.'''
-    from morph_repair.sanitize import sanitize  # pylint: disable=redefined-outer-name
+    from neuror.sanitize import sanitize  # pylint: disable=redefined-outer-name
     sanitize(input_file, output_file)
 
 
@@ -211,7 +211,7 @@ def file(input_file, output_file):
 @click.argument('output_folder')
 def folder(input_folder, output_folder):
     '''Sanitize all morphologies in the folder.'''
-    from morph_repair.sanitize import sanitize_all
+    from neuror.sanitize import sanitize_all
     sanitize_all(input_folder, output_folder)
 
 
@@ -245,7 +245,7 @@ def hint(filename):
 
        cut-plane compute hint ./tests/data/Neuron_slice.h5
 """
-    from morph_repair.cut_plane.viewer import app, set_neuron
+    from neuror.cut_plane.viewer import app, set_neuron
     set_neuron(filename)
     app.run_server(debug=True)
 
@@ -273,7 +273,7 @@ def _export_cut_plane(filename, output, width, display, searched_axes, fix_posit
     _check_results(result)
 
     if display:
-        from morph_repair.cut_plane.detection import plot
+        from neuror.cut_plane.detection import plot
         plot(load_neuron(filename), result)
 
 

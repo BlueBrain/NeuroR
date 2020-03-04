@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import morph_repair.cut_plane.detection as test_module
+import neuror.cut_plane.detection as test_module
 import neurom as nm
 import numpy as np
 from mock import MagicMock
@@ -9,7 +9,7 @@ from nose.tools import (assert_almost_equal, assert_equal, assert_not_equal,
                         assert_raises, ok_)
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from morph_repair.cut_plane.detection import _minimize, _success_function
+from neuror.cut_plane.detection import _minimize, _success_function
 
 DATA = Path(__file__).parent.parent / 'data'
 
