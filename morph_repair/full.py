@@ -3,13 +3,12 @@ The module to run the full repair
 '''
 import logging
 import os
+from pathlib import Path
 
-from cut_plane.utils import iter_morphology_files
-from pathlib2 import Path
+from morph_tool.utils import iter_morphology_files
 
 from morph_repair.main import repair
 from morph_repair.unravel import unravel_all
-from morph_repair.view import view_all
 
 L = logging.getLogger('morph-repair')
 
@@ -113,6 +112,11 @@ def full(root_dir,
                seed=seed,
                planes_dir=folders['unravelled_planes'],
                plots_dir=folders['plots'])
-    view_all([folders['raw'], folders['unravelled'], folders['repaired']],
-             titles=['raw', 'unravelled', 'repaired'],
-             output_pdf=str(Path(folders['plots'], 'report.pdf')))
+
+    try:
+        from morph_repair.view import view_all
+        view_all([folders['raw'], folders['unravelled'], folders['repaired']],
+                 titles=['raw', 'unravelled', 'repaired'],
+                 output_pdf=str(Path(folders['plots'], 'report.pdf')))
+    except ImportError:
+        L.warning('Skipping writing plots as [plotly] extra is not installed')

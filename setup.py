@@ -17,16 +17,22 @@ setup(
     version=VERSION,
     install_requires=[
         'click>=0.7.0',
-        'scipy>=1.1.0',
-        'morphio>=2.1.1',
-        'neurom @ git+https://git@github.com/BlueBrain/NeuroM.git@mut_morphio#egg=neurom-2.0.0',
-        'plotly_helper>=0.0.1',
         'matplotlib>=2.2.3',
         'morph-tool>=0.1.14',
-        'pathlib2>=2.3.3',
+        'morphio>=2.1.1',
+        'neurom @ git+https://git@github.com/BlueBrain/NeuroM.git@mut_morphio#egg=neurom-2.0.0',
         'pandas>=0.24.2',
-        'cut-plane>=0.0.6',
+        'pyquaternion>=0.9.2',
+        'scipy>=1.2.0',
     ],
+    extras_require={
+        'plotly': [
+            'dash-core-components>=0.46.0',  # HTML components
+            'dash-table>=3.6.0',  # Interactive DataTable component (new!)
+            'dash>=0.41.0',  # The core dash backend
+            'plotly-helper>=0.0.2',
+        ]
+    },
     packages=find_packages(),
     license="BBP-internal-confidential",
     name='morph-repair',

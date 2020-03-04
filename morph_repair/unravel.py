@@ -5,15 +5,15 @@ has been shrunk because of the dehydratation caused by the slicing'''
 import json
 import logging
 import os
-from scipy.spatial.ckdtree import cKDTree
+from pathlib import Path
+
+import morphio
 import numpy as np
 import pandas as pd
+from morph_tool.utils import iter_morphology_files
+from scipy.spatial.ckdtree import cKDTree
 
-from pathlib2 import Path
-import morphio
-from cut_plane import CutPlane
-from cut_plane.utils import iter_morphology_files
-
+from morph_repair.cut_plane import CutPlane
 from morph_repair.utils import RepairJSON
 
 L = logging.getLogger('morph-repair')

@@ -3,24 +3,22 @@
 It is based on the BlueRepairSDK's implementation
 '''
 import logging
-from collections import defaultdict, Counter, OrderedDict
+from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
 
-import numpy as np
-from scipy.spatial.distance import cdist
-
-from morphio import PointLevel, SectionType
-from cut_plane import CutPlane
 import neurom as nm
-from neurom import (NeuriteType, iter_neurites, iter_sections, load_neuron)
+import numpy as np
+from morph_tool import apical_point_section_segment
+from morphio import PointLevel, SectionType
+from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
-from morph_tool import apical_point_section_segment
+from scipy.spatial.distance import cdist
 
-from morph_repair.utils import rotation_matrix, section_length, direction
-from morph_repair.view import plot_repaired_neuron
 from morph_repair import axon
+from morph_repair.cut_plane import CutPlane
+from morph_repair.utils import direction, rotation_matrix, section_length
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
@@ -338,7 +336,12 @@ class Repair(object):
                 raise Exception('Unknown type: {}'.format(type_))
 
         if plot_file is not None:
-            plot_repaired_neuron(self.neuron, cut_leaves_ids, plot_file)
+            try:
+                from morph_repair.view import plot_repaired_neuron
+                plot_repaired_neuron(self.neuron, cut_leaves_ids, plot_file)
+            except ImportError:
+                L.warning('Skipping writing plots as [plotly] extra is not installed')
+
         self.neuron.write(outputfile)
         L.info('Repair successful for %s', self.inputfile)
 

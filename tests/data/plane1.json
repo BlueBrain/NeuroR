@@ -1,0 +1,1 @@
+[{"cut-leaves": [[10, 10, 10], [1, 0, 20]], "status": "ok", "details": {"-LogP": 70, "bin-width": 8}, "cut-plane": {"a": 4, "b": 7, "c": 8, "d": 1, "comment": "Equation: a*X + b*Y + c*Z + d = 0"}}]

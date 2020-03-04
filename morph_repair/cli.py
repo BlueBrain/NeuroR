@@ -1,12 +1,19 @@
 '''The morph-tool command line launcher'''
+import json
 import logging
+import os
+from pprint import pprint
 
 import click
-
+from morph_tool.utils import iter_morphology_files
 from morphio.mut import Morphology  # pylint: disable=import-error
+from neurom import load_neuron
+from neurom.utils import NeuromJSON
+
+from morph_repair.cut_plane.detection import CutPlane
 
 logging.basicConfig()
-logger = logging.getLogger('morph-repair')
+L = logging.getLogger('morph-repair')
 
 
 @click.group()
@@ -15,7 +22,7 @@ logger = logging.getLogger('morph-repair')
 def cli(verbose):
     '''The CLI entry point'''
     level = (logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)]
-    logger.setLevel(level)
+    L.setLevel(level)
 
 
 @cli.group()
@@ -37,8 +44,17 @@ def sanitize():
     '''
 
 
+@cut_plane.group()
+def compute():
+    '''CLI utilities to detect cut planes'''
+
+
+@cut_plane.group()
+def repair():
+    '''CLI utilities to repair cut planes'''
+
 # pylint: disable=function-redefined
-@cut_plane.command(short_help='Repair one morphology')
+@repair.command(short_help='Repair one morphology')
 @click.argument('input_file', type=click.Path(exists=True, file_okay=True))
 @click.argument('output_file')
 @click.option('--plot_file', type=click.Path(file_okay=True), default=None,
@@ -52,12 +68,12 @@ def sanitize():
                     'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
 def file(input_file, output_file, plot_file, axon_donor, plane):
     '''Repair dendrites of a cut neuron'''
-    from morph_repair.main import repair
+    from morph_repair.main import repair  # pylint: disable=redefined-outer-name
     repair(input_file, output_file, axons=axon_donor, plane=plane, plot_file=plot_file)
 
 
 # pylint: disable=function-redefined
-@cut_plane.command(short_help='Repair all morphologies in a folder')
+@repair.command(short_help='Repair all morphologies in a folder')
 @click.argument('input_dir')
 @click.argument('output_dir', type=click.Path(exists=True, file_okay=False, writable=True))
 @click.option('--plot_dir', default=None, type=click.Path(exists=True, file_okay=False,
@@ -77,7 +93,7 @@ def folder(input_dir, output_dir, plot_dir, axon_donor, planes):
 
 
 # pylint: disable=too-many-arguments
-@cut_plane.command(short_help='Unravel and repair one morphology')
+@repair.command(short_help='Unravel and repair one morphology')
 @click.argument('root_dir', type=click.Path(exists=True, file_okay=True))
 @click.option('--window-half-length', default=5)
 @click.option('--raw-dir', default=None, help='Folder of input raw morphologies')
@@ -151,7 +167,7 @@ def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_
     unravel_all(input_dir, output_dir, window_half_length, raw_planes_dir, unravelled_planes_dir)
 
 
-@cli.command(short_help='Generate PDF')
+@cli.command(short_help='Generate PDF with morphology plots')
 @click.argument('folders', nargs=-1)
 @click.option('--title', '-t', multiple=True)
 def report(folders, title):
@@ -197,3 +213,167 @@ def folder(input_folder, output_folder):
     '''Sanitize all morphologies in the folder.'''
     from morph_repair.sanitize import sanitize_all
     sanitize_all(input_folder, output_folder)
+
+
+@cut_plane.group()
+def compute():
+    '''CLI utilities to compute cut planes'''
+
+
+def _check_results(result):
+    '''Check the result status'''
+    if not result:
+        L.error('Empty results')
+        return -1
+
+    status = result.get('status')
+    if status.lower() != 'ok':
+        L.warning('Incorrect status: %s', status)
+        return 1
+
+    return 0
+
+
+@compute.command(short_help='Find a 3D cut plane by providing a manual hint')
+@click.argument('filename', type=str, required=True)
+def hint(filename):
+    """Launch the app to manually search for the cut plane. After running the command,
+    either click the link in the console or open your browser and go to the address
+    shown in the console.
+
+    Example::
+
+       cut-plane compute hint ./tests/data/Neuron_slice.h5
+"""
+    from morph_repair.cut_plane.viewer import app, set_neuron
+    set_neuron(filename)
+    app.run_server(debug=True)
+
+
+def _export_cut_plane(filename, output, width, display, searched_axes, fix_position):
+    '''Find the position of the cut plane (it assumes the plane is aligned along X, Y or Z) for
+    morphology FILENAME.
+
+    It returns the cut plane and the positions of all cut terminations.
+'''
+    if os.path.isdir(filename):
+        raise Exception('filename ({}) should not be a directory'.format(filename))
+
+    result = CutPlane.find(filename,
+                           width,
+                           searched_axes=searched_axes,
+                           fix_position=fix_position).to_json()
+
+    if not output:
+        pprint(result)
+    else:
+        with open(output, 'w') as output_file:
+            json.dump(result, output_file, cls=NeuromJSON)
+
+    _check_results(result)
+
+    if display:
+        from morph_repair.cut_plane.detection import plot
+        plot(load_neuron(filename), result)
+
+
+@compute.command(short_help='Compute a cut plane for morphology FILENAME')
+@click.argument('filename', type=str, required=True)
+@click.option('-o', '--output',
+              help=('Output name for the JSON file (default=STDOUT)'))
+@click.option('-w', '--width', type=float, default=3,
+              help='The bin width (in um) of the 1D distributions')
+@click.option('-d', '--display', is_flag=True, default=False,
+              help='Flag to enable the display control plots')
+@click.option('-p', '--plane', type=click.Choice(['x', 'y', 'z']), default=None,
+              help='Force the detection along the given plane')
+@click.option('--position', type=float, default=None,
+              help='Force the position. Requires --plane to be set as well')
+def file(filename, output, width, display, plane, position):
+    '''Find the position of the cut plane (it assumes the plane is aligned along X, Y or Z) for
+    morphology FILENAME.
+
+    It returns the cut plane and the positions of all cut terminations.
+    Compute a cut plane and outputs it either as a STDOUT stream or in a file
+    if ``-o`` option is passed.
+    The control plots can be displayed by passing the ``-d`` option.
+    The bin width can be changed with the ``-w`` option (see below)
+
+    Description of the algorithm:
+
+    #. The distribution of all points along X, Y and Z is computed
+       and put into 3 histograms.
+    #. For each histogram we look at the first and last empty bins
+       (that is, the last bin before the histogram starts rising,
+       and the first after it reaches zero again). Under the assumption
+       that there is no cut plane, the posteriori probability
+       of observing this empty bin given the value of the non-empty
+       neighbour bin is then computed.
+    #. The lowest probability of the 6 probabilities (2 for each axes)
+       corresponds to the cut plane.
+
+    .. image:: ../../images/distrib_1d.png
+       :align: center
+
+    Returns:
+       A dictionary with the following items:
+
+       :status: 'ok' if everything went right, else an informative string
+       :cut_plane: a tuple (plane, position) where 'plane' is 'X', 'Y' or 'Z'
+           and 'position' is the position
+       :cut_leaves: an np.array of all termination points in the cut plane
+       :figures: if 'display' option was used, a dict where values are tuples (fig, ax)
+           for each figure
+       :details: A dict currently only containing -LogP of the bin where the cut plane was found
+
+    Example::
+
+       cut-plane compute file -d tests/data/Neuron_slice.h5  -o my-plane.json -w 10
+    '''
+    _export_cut_plane(filename, output, width, display, plane or ('x', 'y', 'z'), position)
+
+
+@compute.command(short_help='Compute cut planes for morphologies located in INPUT_DIR')
+@click.argument('input_dir')
+@click.argument('output_dir', type=click.Path(exists=True, file_okay=False, writable=True))
+@click.option('-w', '--width', type=float, default=3,
+              help='The bin width (in um) of the 1D distributions')
+@click.option('-d', '--display', is_flag=True, default=False,
+              help='Flag to enable the display control plots')
+@click.option('-p', '--plane', type=click.Choice(['x', 'y', 'z']), default=None,
+              help='Force the detection along the given plane')
+def folder(input_dir, output_dir, width, display, plane):
+    '''Compute cut planes for all morphology in INPUT_DIR and save them into OUTPUT_DIR
+
+    See "cut-plane compute --help" for more information'''
+    for f in iter_morphology_files(input_dir):
+        L.info('Seaching cut plane for file: %s', f)
+        inputfilename = os.path.join(input_dir, f)
+        outfilename = os.path.join(output_dir, os.path.basename(f) + '.json')
+        try:
+            _export_cut_plane(inputfilename, outfilename, width, display=display,
+                              searched_axes=(plane or ('X', 'Y', 'Z')),
+                              fix_position=None)
+        except Exception as e:  # noqa, pylint: disable=broad-except
+            L.warning('Cut plane computation for %s failed', f)
+            L.warning(e, exc_info=True)
+
+
+@cut_plane.command()
+@click.argument('out_filename', nargs=1)
+@click.argument('plane_paths', nargs=-1)
+def join(out_filename, plane_paths):
+    '''Merge cut-planes from json files located at PLANE_PATHS into one.
+    The output is writen at OUT_FILENAME
+
+    Example::
+
+       cut-plane join result.json plane1.json plane2.json plane3.json
+    '''
+    data = []
+    for plane in plane_paths:
+        with open(plane) as in_f:
+            data += json.load(in_f)
+
+    with open(out_filename, 'w') as out_f:
+        json.dump(data, out_f)

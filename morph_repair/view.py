@@ -4,18 +4,23 @@ import os
 from datetime import datetime
 
 import matplotlib
+import matplotlib.pyplot as plt  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
 import numpy as np
-from plotly_helper.neuron_viewer import NeuronBuilder
-
-from neurom import load_neuron, geom
+from matplotlib.backends.backend_pdf import \
+    PdfPages  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
+from neurom import geom, load_neuron
 from neurom.view.view import plot_neuron
-
 
 L = logging.getLogger('morph-repair')
 
+try:
+    from plotly_helper.neuron_viewer import NeuronBuilder
+except ImportError:
+    raise ImportError(
+        'morph-repair[plotly] is not installed.'
+        ' Please install it by doing: pip install morph-repair[plotly]')
+
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
-from matplotlib.backends.backend_pdf import PdfPages  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
 
 
 def get_common_bounding_box(neurons):
