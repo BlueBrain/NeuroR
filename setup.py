@@ -13,7 +13,7 @@ VERSION = imp.load_source("neuror.version", "neuror/version.py").VERSION
 
 setup(
     description='A morphology repair tool',
-    author='BBP Neuroscientific Software Engineering',
+    author='bbp-ou-nse',
     version=VERSION,
     install_requires=[
         'click>=0.7.0',
