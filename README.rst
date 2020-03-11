@@ -73,3 +73,15 @@ Prior to running *pip install*, we recommend updating *pip* in your virtual envi
 .. code:: console
 
     $ pip install --upgrade pip setuptools
+
+Contributing
+============
+
+If you want to improve the project or you see any issue, every contribution is welcome.
+Please check the `contribution guidelines <CONTRIBUTING.md>`__ for more information.
+
+License
+=======
+
+NeuroR is licensed under the terms of the GNU Lesser General Public License version 3.
+Refer to COPYING.LESSER and COPYING for details.
