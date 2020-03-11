@@ -312,7 +312,7 @@ def file(filename, output, width, display, plane, position):
     #. The lowest probability of the 6 probabilities (2 for each axes)
        corresponds to the cut plane.
 
-    .. image:: ../../images/distrib_1d.png
+    .. image:: /_images/distrib_1d.png
        :align: center
 
     Returns:
