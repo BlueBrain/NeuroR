@@ -104,9 +104,9 @@ def full(root_dir,
 
     unravel_all(folders['raw'],
                 folders['unravelled'],
-                window_half_length,
                 folders['raw_planes'],
-                folders['unravelled_planes'])
+                folders['unravelled_planes'],
+                window_half_length=window_half_length)
     repair_all(folders['unravelled'],
                folders['repaired'],
                seed=seed,

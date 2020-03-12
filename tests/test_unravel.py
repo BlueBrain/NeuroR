@@ -4,13 +4,13 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pandas as pd
 from neurom import load_neuron
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.unravel as test_module
 
-PATH = Path(__file__).parent / 'data'
+DATA = Path(__file__).parent / 'data'
 
-SIMPLE = load_neuron(PATH / 'simple.swc')
+SIMPLE = load_neuron(DATA / 'simple.swc')
 
 def test_get_principal_direction():
     assert_array_almost_equal(test_module._get_principal_direction([[0.,0,0], [1,1,2]]),
@@ -22,7 +22,7 @@ def test_get_principal_direction():
                               np.array([1, 0, 0]))
 
 def test_unravel():
-    neuron, mapping = test_module.unravel(PATH / 'simple.asc')
+    neuron, mapping = test_module.unravel(DATA / 'simple.asc')
     assert_array_almost_equal(neuron.root_sections[0].points,
                               np.array([[ 0.      ,  0.      ,  0.      ],
                                         [ 1.404784, -0.163042,  0.      ],
@@ -55,8 +55,8 @@ def test_unravel():
 
 def test_unravel_plane():
     with TemporaryDirectory('test-unravel-plane'):
-        mapping = pd.read_csv(PATH / 'mapping.csv')
-        plane = test_module.unravel_plane(str(PATH / 'neuron-slice-plane.json'), mapping)
+        mapping = pd.read_csv(DATA / 'mapping.csv')
+        plane = test_module.unravel_plane(str(DATA / 'neuron-slice-plane.json'), mapping)
         assert_array_almost_equal(plane.cut_leaves_coordinates,
                                   [[-111.24885559,   -1.29032707,   55.46524429],
                                    [-156.59031677,   23.12454224,   53.51153946],
@@ -70,3 +70,15 @@ def test_unravel_plane():
                                    [  -7.5544219 ,   15.30504322,   51.06955719],
                                    [  32.2554512 ,   56.86440277,   49.46508026],
                                    [  -4.24387503,   47.21520996,   52.44573212]])
+
+def test_unravel_plane():
+    with TemporaryDirectory('test-unravel-plane') as output:
+        output = Path(output)
+
+        input = DATA / 'input-unravel-all'
+        raw_planes = input / 'raw-planes'
+        unravel_planes = output / 'unravelled-planes'
+        unravel_planes.mkdir()
+
+        test_module.unravel_all(input, output, raw_planes, unravel_planes)
+        assert_array_equal(list(output.rglob('*.h5')), [output / 'Neuron_slice.h5'])

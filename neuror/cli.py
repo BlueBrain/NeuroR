@@ -11,6 +11,7 @@ from neurom import load_neuron
 from neurom.utils import NeuromJSON
 
 from neuror.cut_plane.detection import CutPlane
+from neuror.unravel import DEFAULT_WINDOW_HALF_LENGTH
 
 logging.basicConfig()
 L = logging.getLogger('neuror')
@@ -95,7 +96,7 @@ def folder(input_dir, output_dir, plot_dir, axon_donor, planes):
 # pylint: disable=too-many-arguments
 @repair.command(short_help='Unravel and repair one morphology')
 @click.argument('root_dir', type=click.Path(exists=True, file_okay=True))
-@click.option('--window-half-length', default=5)
+@click.option('--window-half-length', default=DEFAULT_WINDOW_HALF_LENGTH)
 @click.option('--raw-dir', default=None, help='Folder of input raw morphologies')
 @click.option('--raw-planes-dir', default=None, help='Folder of input raw cut planes')
 @click.option('--unravelled-dir', default=None, help='Folder of unravelled morphologies')
@@ -141,7 +142,7 @@ def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
 @click.option('--mapping-file', type=click.Path(file_okay=True), default=None,
               help=('Path to the file that contains the coordinate mapping before '
                     'and after unravelling'))
-@click.option('--window-half-length', default=5)
+@click.option('--window-half-length', default=DEFAULT_WINDOW_HALF_LENGTH)
 def file(input_file, output_file, mapping_file, window_half_length):
     '''Unravel a cell'''
     from neuror.unravel import unravel  # pylint: disable=redefined-outer-name
@@ -160,11 +161,12 @@ def file(input_file, output_file, mapping_file, window_half_length):
               help='The path to raw cut planes (if None, defaults to INPUT_DIR/planes)')
 @click.option('--unravelled-plane-dir', type=click.Path(exists=True, file_okay=False), default=None,
               help='The path to unravelled cut planes (if None, defaults to OUTPUT_DIR/planes)')
-@click.option('--window-half-length', default=5)
+@click.option('--window-half-length', default=DEFAULT_WINDOW_HALF_LENGTH)
 def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_half_length):
     '''Unravel all cells in a folder'''
     from neuror.unravel import unravel_all
-    unravel_all(input_dir, output_dir, window_half_length, raw_planes_dir, unravelled_planes_dir)
+    unravel_all(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir,
+                window_half_length=window_half_length)
 
 
 @cli.command(short_help='Generate PDF with morphology plots')

@@ -5,3 +5,4 @@ coverage.xml
 .coverage
 doc/build
 .tox
+examples/data/output

@@ -18,6 +18,8 @@ from neuror.utils import RepairJSON
 
 L = logging.getLogger('neuror')
 
+DEFAULT_WINDOW_HALF_LENGTH = 5
+
 
 def _get_principal_direction(points):
     '''Return the principal direction of a point cloud
@@ -58,7 +60,7 @@ def _unravel_section(sec, new_section, window_half_length):
     new_section.points = unravelled_points
 
 
-def unravel(filename, window_half_length=5):
+def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
     '''Return an unravelled neuron
 
     Segment are unravelled iteratively
@@ -115,7 +117,10 @@ def unravel_plane(input_plane, mapping):
     return plane
 
 
-def unravel_all(raw_dir, unravelled_dir, window_half_length, raw_planes_dir, unravelled_planes_dir):
+def unravel_all(raw_dir, unravelled_dir,
+                raw_planes_dir,
+                unravelled_planes_dir,
+                window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
     '''Repair all morphologies in input folder
     '''
     if not os.path.exists(raw_planes_dir):
@@ -124,10 +129,9 @@ def unravel_all(raw_dir, unravelled_dir, window_half_length, raw_planes_dir, unr
     if not os.path.exists(unravelled_planes_dir):
         os.mkdir(unravelled_planes_dir)
 
-    for f in iter_morphology_files(raw_dir):
-        L.info('Unravelling: %s', f)
-        inputfilename = Path(raw_dir, f)
-        outfilename = Path(unravelled_dir, os.path.basename(f))
+    for inputfilename in iter_morphology_files(raw_dir):
+        L.info('Unravelling: %s', inputfilename)
+        outfilename = Path(unravelled_dir, inputfilename.name)
         raw_plane = str(Path(raw_planes_dir, inputfilename.name).with_suffix('.json'))
         unravelled_plane = Path(unravelled_planes_dir, inputfilename.name).with_suffix('.json')
 

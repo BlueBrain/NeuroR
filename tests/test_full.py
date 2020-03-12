@@ -30,7 +30,7 @@ def assert_output_exists(root_dir,
 
 
 def test_full():
-    with TemporaryDirectory('test-cli-full') as tmp_folder:
+    with TemporaryDirectory('test-full') as tmp_folder:
         test_folder = Path(tmp_folder, 'test-full-repair')
         shutil.copytree(DATA_PATH / 'test-full-repair', test_folder)
         full(test_folder)
@@ -38,7 +38,7 @@ def test_full():
 
 
 def test_full_custom_raw_dir():
-    with TemporaryDirectory('test-cli-full') as tmp_folder:
+    with TemporaryDirectory('test-full-custom-raw-dir') as tmp_folder:
         test_folder = Path(tmp_folder, 'test-full-repair')
         shutil.copytree(DATA_PATH / 'test-full-repair', test_folder)
 
@@ -52,7 +52,7 @@ def test_full_custom_raw_dir():
 
 
 def test_full_custom_unravel_dir():
-    with TemporaryDirectory('test-cli-full') as tmp_folder:
+    with TemporaryDirectory('test-full-custum-unravel-dir') as tmp_folder:
         test_folder = Path(tmp_folder, 'test-full-repair')
         shutil.copytree(DATA_PATH / 'test-full-repair', test_folder)
 
@@ -62,7 +62,7 @@ def test_full_custom_unravel_dir():
 
 
 def test_full_custom_unravelled_planes_dir():
-    with TemporaryDirectory('test-cli-full') as tmp_folder:
+    with TemporaryDirectory('test-full-custom-unravelled-planes-dir') as tmp_folder:
         test_folder = Path(tmp_folder, 'test-full-repair')
         shutil.copytree(DATA_PATH / 'test-full-repair', test_folder)
 
@@ -72,7 +72,7 @@ def test_full_custom_unravelled_planes_dir():
 
 
 def test_full_custom_repaired_dir():
-    with TemporaryDirectory('test-cli-full') as tmp_folder:
+    with TemporaryDirectory('test-full-custom-repaired-dir') as tmp_folder:
         test_folder = Path(tmp_folder, 'test-full-repair')
         shutil.copytree(DATA_PATH / 'test-full-repair', test_folder)
 
