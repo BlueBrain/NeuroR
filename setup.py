@@ -5,7 +5,7 @@ if sys.version_info < (3, 6):
     sys.exit("Sorry, Python < 3.6 is not supported")
 
 import imp
-import pathlib
+from pathlib import Path
 
 from setuptools import setup, find_packages
 
