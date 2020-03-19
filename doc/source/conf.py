@@ -17,6 +17,7 @@ import neuror
 project = 'NeuroR'
 version = neuror.__version__
 release = version
+copyright = "Blue Brain Project/EPFL 2005-2020. All rights reserved."
 
 # -- General configuration ---------------------------------------------------
 
@@ -41,9 +42,9 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx-bluebrain-theme'
-html_title = 'NeuroR'
-html_show_sourcelink = False
+html_theme = 'sphinx_rtd_theme'
+#html_title = 'NeuroR'
+#html_show_sourcelink = False
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
