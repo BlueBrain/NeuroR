@@ -11,7 +11,11 @@ Citation
 
 NeuroR implements the methods discussed in the following paper:
 
-`Anwar H., Riachi I., Schürmann F., Markram H. (2009). “An approach to capturing neuron morphological diversity,” in Computational Neuroscience: Realistic Modeling for Experimentalistsed. De Schutter E., editor. (Cambridge: The MIT Press) 211–232 DOI: 10.7551/mitpress/9780262013277.003.0010 <https://doi.org/10.7551/mitpress/9780262013277.003.0010>`__
+   Anwar H., Riachi I., Schürmann F., Markram H. (2009). “An approach to capturing neuron morphological diversity,”
+   in Computational Neuroscience: Realistic Modeling for Experimentalistsed. De Schutter E.,
+   editor. (Cambridge: The MIT Press) 211–232
+
+   `DOI: 10.7551/mitpress/9780262013277.003.0010 <https://doi.org/10.7551/mitpress/9780262013277.003.0010>`__
 
 Morphology repair with NeuroR
 -----------------------------
@@ -105,7 +109,7 @@ Contributing
 ------------
 
 If you want to improve the project or you see any issue, every contribution is welcome.
-Please check the `contribution guidelines <CONTRIBUTING.md>`__ for more information.
+Please check the `contribution guidelines <https://github.com/BlueBrain/NeuroR/blob/master/CONTRIBUTING.md>`__ for more information.
 
 License
 -------

@@ -42,7 +42,8 @@ setup(
             'dash-table>=3.6.0',  # Interactive DataTable component (new!)
             'dash>=0.41.0',  # The core dash backend
             'plotly-helper>=0.0.2',
-        ]
+        ],
+        'docs': ['sphinx', 'sphinx-click', 'sphinx_rtd_theme'],
     },
     packages=find_packages(),
     entry_points={'console_scripts': ['neuror=neuror.cli:cli']},
