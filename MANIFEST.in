@@ -1,3 +1,7 @@
 graft tests
 
+include COPYING
+include COPYING.LESSER
+include README.rst
+
 global-exclude *.py[co] .DS_Store
