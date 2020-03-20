@@ -1,27 +1,24 @@
 """neuror setup.py"""
+import imp
 import sys
+
+from setuptools import setup, find_packages
 
 if sys.version_info < (3, 6):
     sys.exit("Sorry, Python < 3.6 is not supported")
 
-import imp
-from pathlib import Path
-
-from setuptools import setup, find_packages
-
 VERSION = imp.load_source("neuror.version", "neuror/version.py").VERSION
 
 # read the contents of the README file
-readme_path = Path(__file__).resolve().parent / "README.rst"
-with open(readme_path, encoding='utf-8') as f:
-    long_description = f.read()
+with open("README.rst", encoding='utf-8') as f:
+    README = f.read()
 
 setup(
     name='NeuroR',
     author='Blue Brain Project, EPFL',
     version=VERSION,
     description='A morphology repair tool',
-    long_description=long_description,
+    long_description=README,
     long_description_content_type="text/x-rst",
     url="https://github.com/bluebrain/neuror",
     license="LGPLv3",
