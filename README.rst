@@ -9,6 +9,10 @@ NeuroR is a collection of tools to repair morphologies.
 Citation
 --------
 
+Cite NeuroR with the following DOI:
+   .. image:: https://zenodo.org/badge/244944511.svg
+   :target: https://zenodo.org/badge/latestdoi/244944511
+
 NeuroR implements the methods discussed in the following paper:
 
    Anwar H., Riachi I., Schürmann F., Markram H. (2009). “An approach to capturing neuron morphological diversity,”
@@ -16,6 +20,9 @@ NeuroR implements the methods discussed in the following paper:
    editor. (Cambridge: The MIT Press) 211–232
 
    `DOI: 10.7551/mitpress/9780262013277.003.0010 <https://doi.org/10.7551/mitpress/9780262013277.003.0010>`__
+   
+   
+
 
 Morphology repair with NeuroR
 -----------------------------
