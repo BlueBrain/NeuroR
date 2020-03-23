@@ -11,7 +11,7 @@ Citation
 
 Cite NeuroR with the following DOI:
 
-   .. image:: https://zenodo.org/badge/244944511.svg
+.. image:: https://zenodo.org/badge/244944511.svg
    :target: https://zenodo.org/badge/latestdoi/244944511
 
 NeuroR implements the methods discussed in the following paper:
