@@ -18,8 +18,7 @@ with open(readme_path, encoding='utf-8') as f:
 
 setup(
     name='NeuroR',
-    author='bbp-ou-nse',
-    author_email="bbp-ou-nse@groupes.epfl.ch",
+    author='Blue Brain Project',
     version=VERSION,
     description='A morphology repair tool',
     long_description=long_description,
