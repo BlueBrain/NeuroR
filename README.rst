@@ -6,6 +6,11 @@ Introduction
 
 NeuroR is a collection of tools to repair morphologies.
 
+You can try NeuroR's functionality on MyBinder:
+
+- Cut-plane detection - |cutplane|
+- Morphology repair - |repair|
+
 Citation
 --------
 
@@ -21,9 +26,6 @@ NeuroR implements the methods discussed in the following paper:
    editor. (Cambridge: The MIT Press) 211–232
 
    `DOI: 10.7551/mitpress/9780262013277.003.0010 <https://doi.org/10.7551/mitpress/9780262013277.003.0010>`__
-   
-   
-
 
 Morphology repair with NeuroR
 -----------------------------
@@ -124,3 +126,9 @@ License
 
 NeuroR is licensed under the terms of the GNU Lesser General Public License version 3.
 Refer to COPYING.LESSER and COPYING for details.
+
+.. |cutplane| image:: https://mybinder.org/badge_logo.svg
+                 :target: https://mybinder.org/v2/gh/BlueBrain/NeuroR/master?filepath=examples%2Fcut-plane-detection.ipynb
+
+.. |repair| image:: https://mybinder.org/badge_logo.svg
+               :target: https://mybinder.org/v2/gh/BlueBrain/NeuroR/master?filepath=examples%2Frepair.ipynb
