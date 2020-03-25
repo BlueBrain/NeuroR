@@ -271,7 +271,13 @@ def _get_points(neuron):
 
 
 def plot(neuron, result, inline=False):
-    '''Plot the neuron, the cut plane and the cut leaves'''
+    '''Plot the neuron, the cut plane and the cut leaves.
+
+    Args:
+        neuron (Neuron): the neuron to be plotted
+        result (dict): the cut plane object in dictionary form
+        inline (bool): if True, plot as an interactive plot (for example in a Jupyter notebook)
+    '''
     try:
         from plotly_helper.neuron_viewer import NeuronBuilder
         from plotly_helper.object_creator import scatter
