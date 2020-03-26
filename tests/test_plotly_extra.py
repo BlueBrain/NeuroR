@@ -1,3 +1,4 @@
+'''Tests in this file are to be run only with the [plotly] extra installed'''
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -15,12 +16,6 @@ DATA = Path(__file__).parent / 'data'
 
 
 def test_full_custom_plots_dir():
-    try:
-        from neuror.view import plot_repaired_neuron
-    except ImportError:
-        print('Skipping this test as [plotly] extra is not installed here')
-        return
-
     with TemporaryDirectory('test-cli-full') as tmp_folder:
         test_folder = Path(tmp_folder, 'test-full-repair')
         shutil.copytree(DATA / 'test-full-repair', test_folder)
@@ -33,12 +28,6 @@ def test_full_custom_plots_dir():
 
 
 def test_report():
-    try:
-        from neuror.view import plot_repaired_neuron
-    except ImportError:
-        print('Skipping this test as [plotly] extra is not installed here')
-        return
-
     with TemporaryDirectory('test-report') as folder:
         runner = CliRunner()
         result = runner.invoke(cli, ['report', str(DATA), folder])
