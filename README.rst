@@ -103,7 +103,9 @@ NeuroR is distributed as a Python package available on PyPi:
 
 .. code-block:: console
 
-    $ pip install neuror[plotly]
+    $ pip install --pre neuror[plotly]
+
+Note: NeuroR relies on the experimental version 2 of NeuroM, hence the ``--pre`` option.
 
 Only Python 3.6 and above are supported.
 
