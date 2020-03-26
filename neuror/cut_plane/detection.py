@@ -292,7 +292,8 @@ def plot(neuron, result, inline=False):
     plane = result['cut-plane']
 
     for display_plane, idx in [('xz', 0), ('yz', 1), ('3d', None)]:
-        builder = NeuronBuilder(neuron, display_plane, inline=inline, line_width=4, title='{}'.format(neuron.name))
+        builder = NeuronBuilder(neuron, display_plane, inline=inline,
+                                line_width=4, title='{}'.format(neuron.name))
         if idx is not None:
             if plane['a'] == 0 and plane['b'] == 0:
                 builder.helper.add_shapes([
