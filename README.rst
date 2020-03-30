@@ -1,3 +1,5 @@
+|banner|
+
 NeuroR
 ======
 
@@ -126,3 +128,6 @@ License
 
 NeuroR is licensed under the terms of the GNU Lesser General Public License version 3.
 Refer to COPYING.LESSER and COPYING for details.
+
+.. substitutions
+.. |banner| image:: doc/source/_images/BlueBrainNeuroR.png
