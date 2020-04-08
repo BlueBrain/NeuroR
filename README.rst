@@ -1,3 +1,5 @@
+|banner|
+
 NeuroR
 ======
 
@@ -134,3 +136,6 @@ Refer to COPYING.LESSER and COPYING for details.
 
 .. |repair| image:: https://mybinder.org/badge_logo.svg
                :target: https://mybinder.org/v2/gh/BlueBrain/NeuroR/master?filepath=examples%2Frepair.ipynb
+
+.. substitutions
+.. |banner| image:: doc/source/_images/BlueBrainNeuroR.png
