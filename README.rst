@@ -1,5 +1,7 @@
 |banner|
 
+|build| |license| |docs| |doi|
+
 NeuroR
 ======
 
@@ -16,10 +18,7 @@ You can try NeuroR's functionality on MyBinder:
 Citation
 --------
 
-Cite NeuroR with the following DOI:
-
-.. image:: https://zenodo.org/badge/244944511.svg
-   :target: https://zenodo.org/badge/latestdoi/244944511
+Cite NeuroR with the following DOI: |doi|
 
 NeuroR implements the methods discussed in the following paper:
 
@@ -129,7 +128,21 @@ License
 -------
 
 NeuroR is licensed under the terms of the GNU Lesser General Public License version 3.
-Refer to COPYING.LESSER and COPYING for details.
+Refer to `COPYING.LESSER <https://github.com/BlueBrain/NeuroR/blob/master/COPYING.LESSER>`__
+and `COPYING <https://github.com/BlueBrain/NeuroR/blob/master/COPYING>`__ for details.
+
+.. |build| image:: https://travis-ci.com/BlueBrain/NeuroR.svg?branch=master
+              :target: https://travis-ci.com/BlueBrain/NeuroR
+
+.. |license| image:: https://img.shields.io/pypi/l/neuror
+                :target: https://github.com/BlueBrain/NeuroR/blob/master/COPYING.LESSER
+
+.. |docs| image:: https://readthedocs.org/projects/neuror/badge/?version=latest
+             :target: https://neuror.readthedocs.io/en/latest/?badge=latest
+             :alt: Documentation Status
+
+.. |doi| image:: https://zenodo.org/badge/244944511.svg
+            :target: https://zenodo.org/badge/latestdoi/244944511
 
 .. |cutplane| image:: https://mybinder.org/badge_logo.svg
                  :target: https://mybinder.org/v2/gh/BlueBrain/NeuroR/master?filepath=examples%2Fcut-plane-detection.ipynb
