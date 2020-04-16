@@ -10,12 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import neuror
+from pkg_resources import get_distribution
 
 # -- Project information -----------------------------------------------------
 
 project = 'NeuroR'
-version = neuror.__version__
+version = get_distribution('neuror').version
 release = version
 
 # -- General configuration ---------------------------------------------------
