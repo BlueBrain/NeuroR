@@ -2,6 +2,7 @@
 import logging
 from pathlib import Path
 from multiprocessing import Pool
+from functools import partial
 
 import numpy as np
 from tqdm import tqdm
@@ -42,7 +43,7 @@ def sanitize(input_neuron, output_path):
     fix_non_zero_segments(neuron).write(str(output_path))
 
 
-def _sanitize_one(args):
+def _sanitize_one(path, input_folder, output_folder):
     '''Function to be called by sanitize_all to catch all exceptions
     and return path if in error
 
@@ -79,11 +80,11 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
     set_maximum_warnings(0)
 
     morphologies = list(iter_morphologies(Path(input_folder)))
-    args = ((morphology, input_folder, output_folder) for morphology in morphologies)
+    func = partial(_sanitize_one, input_folder=input_folder, output_folder=output_folder)
     if nprocesses == 1:
-        results = map(_sanitize_one, args)
+        results = map(func, morphologies)
     else:
-        results = Pool(nprocesses).imap_unordered(_sanitize_one, args, chunksize=100)
+        results = Pool(nprocesses).imap_unordered(func, morphologies, chunksize=100)
     errored_paths = list(filter(None, tqdm(results, total=len(morphologies))))
     if errored_paths:
         L.info('Files in error:')
