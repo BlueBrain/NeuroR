@@ -1,9 +1,10 @@
 '''Module for the sanitization of raw morphologies.'''
 import logging
 from pathlib import Path
-from tqdm import tqdm
+from multiprocessing import Pool
 
 import numpy as np
+from tqdm import tqdm
 
 import morphio
 from morphio import MorphioError, set_maximum_warnings, SomaType
@@ -41,7 +42,28 @@ def sanitize(input_neuron, output_path):
     fix_non_zero_segments(neuron).write(str(output_path))
 
 
-def sanitize_all(input_folder, output_folder):
+def _sanitize_one(args):
+    '''Function to be called by sanitize_all to catch all exceptions
+    and return path if in error
+
+    Since Pool.imap_unordered only supports one argument, the argument
+    is a tuple: (path, input_folder, output_folder).
+    '''
+    path, input_folder, output_folder = args
+    relative_path = path.relative_to(input_folder)
+    output_dir = output_folder / relative_path.parent
+    if not output_dir.exists():
+        # exist_ok=True since there can be race conditions because of Pool
+        output_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        sanitize(path, output_dir / path.name)
+    except (MorphioError, CorruptedMorphology):
+        return str(path)
+    else:
+        return None
+
+
+def sanitize_all(input_folder, output_folder, nprocesses=1):
     '''Sanitize all morphologies in input_folder and its sub-directories.
 
     Note: the sub-directory structure is maintained.
@@ -56,16 +78,13 @@ def sanitize_all(input_folder, output_folder):
     '''
     set_maximum_warnings(0)
 
-    errored_paths = list()
-    for path in tqdm(list(iter_morphologies(Path(input_folder)))):
-        relative_path = path.relative_to(input_folder)
-        output_dir = output_folder / relative_path.parent
-        if not output_dir.exists():
-            output_dir.mkdir(parents=True)
-        try:
-            sanitize(path, output_dir / path.name)
-        except (MorphioError, CorruptedMorphology):
-            errored_paths.append(str(path))
+    morphologies = list(iter_morphologies(Path(input_folder)))
+    args = ((morphology, input_folder, output_folder) for morphology in morphologies)
+    if nprocesses == 1:
+        results = map(_sanitize_one, args)
+    else:
+        results = Pool(nprocesses).imap_unordered(_sanitize_one, args, chunksize=100)
+    errored_paths = list(filter(None, tqdm(results, total=len(morphologies))))
     if errored_paths:
         L.info('Files in error:')
         for path in errored_paths:

@@ -46,3 +46,11 @@ def test_sanitize_all():
         assert_array_equal(list(sorted(tmp_folder.rglob('*.asc'))),
                            [tmp_folder / 'a.asc',
                             tmp_folder / 'sub-folder/sub-sub-folder/c.asc'])
+
+    with TemporaryDirectory('test-sanitize') as tmp_folder:
+        tmp_folder = Path(tmp_folder)
+        sanitize_all(PATH / 'input-sanitize-all', tmp_folder, nprocesses=2)
+
+        assert_array_equal(list(sorted(tmp_folder.rglob('*.asc'))),
+                           [tmp_folder / 'a.asc',
+                            tmp_folder / 'sub-folder/sub-sub-folder/c.asc'])

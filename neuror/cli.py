@@ -211,10 +211,11 @@ def file(input_file, output_file):
 @sanitize.command(short_help='Sanitize all morphologies in a folder')
 @click.argument('input_folder')
 @click.argument('output_folder')
-def folder(input_folder, output_folder):
+@click.option('--nprocesses', default=1, help='The number of processes to spawn')
+def folder(input_folder, output_folder, nprocesses):
     '''Sanitize all morphologies in the folder.'''
     from neuror.sanitize import sanitize_all
-    sanitize_all(input_folder, output_folder)
+    sanitize_all(input_folder, output_folder, nprocesses=nprocesses)
 
 
 @cut_plane.group()
