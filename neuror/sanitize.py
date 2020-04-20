@@ -50,7 +50,6 @@ def _sanitize_one(path, input_folder, output_folder):
     Since Pool.imap_unordered only supports one argument, the argument
     is a tuple: (path, input_folder, output_folder).
     '''
-    path, input_folder, output_folder = args
     relative_path = path.relative_to(input_folder)
     output_dir = output_folder / relative_path.parent
     if not output_dir.exists():
