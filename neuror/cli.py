@@ -349,16 +349,15 @@ def folder(input_dir, output_dir, width, display, plane):
     '''Compute cut planes for all morphology in INPUT_DIR and save them into OUTPUT_DIR
 
     See "cut-plane compute --help" for more information'''
-    for f in iter_morphology_files(input_dir):
-        L.info('Seaching cut plane for file: %s', f)
-        inputfilename = os.path.join(input_dir, f)
-        outfilename = os.path.join(output_dir, os.path.basename(f) + '.json')
+    for inputfilename in iter_morphology_files(input_dir):
+        L.info('Seaching cut plane for file: %s', inputfilename)
+        outfilename = os.path.join(output_dir, inputilename.name + '.json')
         try:
             _export_cut_plane(inputfilename, outfilename, width, display=display,
                               searched_axes=(plane or ('X', 'Y', 'Z')),
                               fix_position=None)
         except Exception as e:  # noqa, pylint: disable=broad-except
-            L.warning('Cut plane computation for %s failed', f)
+            L.warning('Cut plane computation for %s failed', inputfilename)
             L.warning(e, exc_info=True)
 
 

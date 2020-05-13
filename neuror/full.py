@@ -34,10 +34,8 @@ def _get_folders(root_dir,
 
 def repair_all(input_dir, output_dir, seed=0, axons=None, planes_dir=None, plots_dir=None):
     '''Repair all morphologies in input folder'''
-    for f in iter_morphology_files(input_dir):
-        L.info(f)
-        inputfilename = Path(input_dir, f)
-        outfilename = Path(output_dir, os.path.basename(f))
+    for inputfilename in iter_morphology_files(input_dir):
+        outfilename = Path(output_dir, inputfilename.name)
         if planes_dir:
             plane = str(Path(planes_dir, inputfilename.name).with_suffix('.json'))
         else:
@@ -53,7 +51,7 @@ def repair_all(input_dir, output_dir, seed=0, axons=None, planes_dir=None, plots
             repair(str(inputfilename), str(outfilename),
                    seed=seed, axons=axons, plane=plane, plot_file=plot_file)
         except Exception as e:  # noqa, pylint: disable=broad-except
-            L.warning('%s failed', f)
+            L.warning('%s failed', inputfilename)
             L.warning(e, exc_info=True)
 
 
