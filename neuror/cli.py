@@ -54,6 +54,7 @@ def compute():
 def repair():
     '''CLI utilities to repair cut planes'''
 
+
 # pylint: disable=function-redefined
 @repair.command(short_help='Repair one morphology')
 @click.argument('input_file', type=click.Path(exists=True, file_okay=True))
