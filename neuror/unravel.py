@@ -56,6 +56,7 @@ def _unravel_section(sec, new_section, window_half_length):
         direction = _get_principal_direction(points[window_start:window_end])
 
         if sec.id == 116:
+            print("direction: {}".format(direction))
             print("window_end: {}".format(window_end))
         segment = points[window_center] - points[window_center - 1]
 
