@@ -74,6 +74,11 @@ def _unravel_section(sec, new_section, window_half_length):
 
         unravelled_points.append(direction + unravelled_points[window_center - 1])
 
+    if sec.id == 116:
+        assert_array_equal(unravelled_points[0],
+                           np.array([-45.7378959, 3.8497539, 1.7804824],
+                                       dtype=np.float32))
+
     new_section.points = unravelled_points
 
 
