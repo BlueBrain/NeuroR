@@ -41,6 +41,12 @@ def _unravel_section(sec, new_section, window_half_length):
     else:
         unravelled_points = [new_section.parent.points[-1]]
 
+
+    if sec.id == 116:
+        p_before = sec.points[0]
+        assert_array_equal(p_before, np.array([-47.119995,   0.12789488,  -2.1626291],
+                                    dtype=np.float32))
+
     for window_center in range(1, point_count):
         window_start = max(0, window_center - window_half_length - 1)
         window_end = min(point_count, window_center + window_half_length + 1)
@@ -60,6 +66,7 @@ def _unravel_section(sec, new_section, window_half_length):
     new_section.points = unravelled_points
 
 
+from numpy.testing import assert_array_equal
 def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
     '''Return an unravelled neuron
 
@@ -79,6 +86,10 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
     '''
     morph = morphio.Morphology(filename)
     new_morph = morphio.mut.Morphology(morph)  # pylint: disable=no-member
+    if 'C020600C1' in str(filename):
+        p_before = morph.section(116).points[0]
+        assert_array_equal(p_before, np.array([-47.119995,   0.12789488,  -2.1626291],
+                                    dtype=np.float32))
 
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
