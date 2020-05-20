@@ -82,3 +82,17 @@ def test_unravel_plane():
 
         test_module.unravel_all(input, output, raw_planes, unravel_planes)
         assert_array_equal(list(output.rglob('*.h5')), [output / 'Neuron_slice.h5'])
+
+
+from morphio import Morphology
+def test_unravel_digits():
+
+    filename = DATA / 'C020600C1.h5'
+    p_before = Morphology(filename).section(116).points[0]
+    assert_array_equal(p_before, np.array([-47.119995,   0.12789488,  -2.1626291],
+                                    dtype=np.float32))
+
+    neuron, _ = test_module.unravel(filename)
+    p = x, y, z = neuron.section(116).points[0]
+    assert_array_equal(p, np.array([-45.7378959, 3.8497539, 1.7804824],
+                                    dtype=np.float32))
