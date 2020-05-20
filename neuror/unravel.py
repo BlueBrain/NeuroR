@@ -49,17 +49,28 @@ def _unravel_section(sec, new_section, window_half_length):
 
     for window_center in range(1, point_count):
         window_start = max(0, window_center - window_half_length - 1)
+        if sec.id == 116:
+            print("window_start: {}".format(window_start))
         window_end = min(point_count, window_center + window_half_length + 1)
 
         direction = _get_principal_direction(points[window_start:window_end])
 
+        if sec.id == 116:
+            print("window_end: {}".format(window_end))
         segment = points[window_center] - points[window_center - 1]
+
+        if sec.id == 116:
+            print("segment: {}".format(segment))
+
 
         # make it span length the same as the original segment within the window
         direction *= np.linalg.norm(segment) / np.linalg.norm(direction)
-
+        if sec.id == 116:
+            print("direction: {}".format(direction))
         # point it in the same direction as before
         direction *= np.sign(np.dot(segment, direction))
+        if sec.id == 116:
+            print("direction: {}".format(direction))
 
         unravelled_points.append(direction + unravelled_points[window_center - 1])
 
