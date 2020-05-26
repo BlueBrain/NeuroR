@@ -73,7 +73,12 @@ def _unravel_section(sec, new_section, window_half_length):
         if sec.id == 0 and do_print:
             print("direction: {}".format(direction))
 
-        unravelled_points.append(direction + unravelled_points[window_center - 1])
+        if sec.id == 0 and do_print:
+            print("unravelled_points[window-1]: {}".format(unravelled_points[window_center - 1]))
+        p = direction + unravelled_points[window_center - 1]
+        if sec.id == 0 and do_print:
+            print("p: {}".format(p))
+        unravelled_points.append(p)
 
         if sec.id == 0 and do_print:
             print("unravelled_points[-1]: {}".format(unravelled_points[-1]))
