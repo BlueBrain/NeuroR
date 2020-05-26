@@ -40,51 +40,43 @@ def _unravel_section(sec, new_section, window_half_length):
         unravelled_points = [new_section.points[0]]
     else:
         unravelled_points = [new_section.parent.points[-1]]
-        print("unravelled_points: {}".format(unravelled_points))
+    print("unravelled_points: {}".format(unravelled_points))
 
-    do_print = False
-    if sec.id == 116 and do_print:
+    do_print = True
+    if sec.id == 0 and do_print:
         print("new_sec.is_root: {}".format(new_section.is_root))
         print("unravelled_points: {}".format(unravelled_points))
 
-    if sec.id == 116 and do_print:
-        p_before = sec.points[0]
-        assert_array_equal(p_before, np.array([-47.119995,   0.12789488,  -2.1626291],
-                                    dtype=np.float32))
-
     for window_center in range(1, point_count):
         window_start = max(0, window_center - window_half_length - 1)
-        if sec.id == 116 and do_print:
+        if sec.id == 0 and do_print:
             print("window_start: {}".format(window_start))
         window_end = min(point_count, window_center + window_half_length + 1)
 
         direction = _get_principal_direction(points[window_start:window_end])
 
-        if sec.id == 116 and do_print:
+        if sec.id == 0 and do_print:
             print("direction: {}".format(direction))
             print("window_end: {}".format(window_end))
         segment = points[window_center] - points[window_center - 1]
 
-        if sec.id == 116 and do_print:
+        if sec.id == 0 and do_print:
             print("segment: {}".format(segment))
 
 
         # make it span length the same as the original segment within the window
         direction *= np.linalg.norm(segment) / np.linalg.norm(direction)
-        if sec.id == 116 and do_print:
+        if sec.id == 0 and do_print:
             print("direction: {}".format(direction))
         # point it in the same direction as before
         direction *= np.sign(np.dot(segment, direction))
-        if sec.id == 116 and do_print:
+        if sec.id == 0 and do_print:
             print("direction: {}".format(direction))
 
         unravelled_points.append(direction + unravelled_points[window_center - 1])
 
-    if sec.id == 116 and do_print:
-        assert_array_equal(unravelled_points[0],
-                           np.array([-45.7378959, 3.8497539, 1.7804824],
-                                       dtype=np.float32))
-
+    if sec.id == 0 and do_print:
+        print("unravelled_points[-1]: {}".format(unravelled_points[-1]))
     new_section.points = unravelled_points
 
 
