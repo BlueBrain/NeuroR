@@ -41,6 +41,9 @@ def _unravel_section(sec, new_section, window_half_length):
     else:
         unravelled_points = [new_section.parent.points[-1]]
 
+    if sec.id == 116:
+        print("new_sec.is_root: {}".format(new_section.is_root))
+        print("unravelled_points: {}".format(unravelled_points))
 
     if sec.id == 116:
         p_before = sec.points[0]
