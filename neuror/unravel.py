@@ -131,7 +131,8 @@ def unravel_all(raw_dir, unravelled_dir,
     for inputfilename in iter_morphology_files(raw_dir):
         L.info('Unravelling: %s', inputfilename)
         outfilename = Path(unravelled_dir, inputfilename.name)
-        raw_plane = CutPlane.from_json(Path(raw_planes_dir, inputfilename.name).with_suffix('.json'))
+        raw_plane = CutPlane.from_json(
+            Path(raw_planes_dir, inputfilename.name).with_suffix('.json'))
         unravelled_plane = Path(unravelled_planes_dir, inputfilename.name).with_suffix('.json')
 
         try:
