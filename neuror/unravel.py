@@ -102,10 +102,9 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
     return new_morph, mapping
 
 
-def unravel_plane(input_plane, mapping):
+def unravel_plane(plane, mapping):
     '''Return a new CutPlane object where the cut-leaves
     position has been updated after unravelling'''
-    plane = CutPlane.from_json(input_plane)
     leaves = plane.cut_leaves_coordinates
     t = cKDTree(mapping[['x0', 'y0', 'z0']])
     distances, indices = t.query(leaves)
@@ -132,7 +131,7 @@ def unravel_all(raw_dir, unravelled_dir,
     for inputfilename in iter_morphology_files(raw_dir):
         L.info('Unravelling: %s', inputfilename)
         outfilename = Path(unravelled_dir, inputfilename.name)
-        raw_plane = str(Path(raw_planes_dir, inputfilename.name).with_suffix('.json'))
+        raw_plane = CutPlane.from_json(Path(raw_planes_dir, inputfilename.name).with_suffix('.json'))
         unravelled_plane = Path(unravelled_planes_dir, inputfilename.name).with_suffix('.json')
 
         try:
