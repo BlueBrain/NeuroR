@@ -56,7 +56,7 @@ def test_unravel():
 def test_unravel_plane():
     with TemporaryDirectory('test-unravel-plane'):
         mapping = pd.read_csv(DATA / 'mapping.csv')
-        plane = test_module.unravel_plane(str(DATA / 'neuron-slice-plane.json'), mapping)
+        plane = test_module.unravel_plane(CutPlane.from_json(DATA / 'neuron-slice-plane.json'), mapping)
         assert_array_almost_equal(plane.cut_leaves_coordinates,
                                   [[-111.24885559,   -1.29032707,   55.46524429],
                                    [-156.59031677,   23.12454224,   53.51153946],
