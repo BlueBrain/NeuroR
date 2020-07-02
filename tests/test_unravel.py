@@ -6,6 +6,7 @@ import pandas as pd
 from neurom import load_neuron
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
+from neuror.cut_plane.detection import CutPlane
 import neuror.unravel as test_module
 
 DATA = Path(__file__).parent / 'data'
@@ -56,6 +57,7 @@ def test_unravel():
 def test_unravel_plane():
     with TemporaryDirectory('test-unravel-plane'):
         mapping = pd.read_csv(DATA / 'mapping.csv')
+        input_plane = CutPlane.from_json(DATA / 'neuron-slice-plane.json')
         plane = test_module.unravel_plane(CutPlane.from_json(DATA / 'neuron-slice-plane.json'), mapping)
         assert_array_almost_equal(plane.cut_leaves_coordinates,
                                   [[-111.24885559,   -1.29032707,   55.46524429],
@@ -71,7 +73,15 @@ def test_unravel_plane():
                                    [  32.2554512 ,   56.86440277,   49.46508026],
                                    [  -4.24387503,   47.21520996,   52.44573212]])
 
-def test_unravel_plane():
+        input_plane.cut_leaves_coordinates = []
+        assert_array_almost_equal(test_module.unravel_plane(input_plane, mapping),
+                                  [])
+
+        input_plane.cut_leaves_coordinates = None
+        assert_array_almost_equal(test_module.unravel_plane(input_plane, mapping),
+                                  [])
+
+def test_unravel_all():
     with TemporaryDirectory('test-unravel-plane') as output:
         output = Path(output)
 

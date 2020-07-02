@@ -106,6 +106,10 @@ def unravel_plane(plane, mapping):
     '''Return a new CutPlane object where the cut-leaves
     position has been updated after unravelling'''
     leaves = plane.cut_leaves_coordinates
+
+    if not np.any(leaves):
+        return plane
+
     t = cKDTree(mapping[['x0', 'y0', 'z0']])
     distances, indices = t.query(leaves)
     not_matching_leaves = np.where(distances > 1e-5)[0]
