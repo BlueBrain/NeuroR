@@ -262,6 +262,7 @@ class Repair(object):
             else:
                 cut_plane = CutPlane.from_json(plane)
 
+
         self.inputfile = inputfile
         self.axon_donors = axons or list()
         self.donated_intact_axon_sections = list()
