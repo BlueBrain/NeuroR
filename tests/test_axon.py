@@ -42,6 +42,7 @@ def test__similar_section():
     similar = test_module._similar_section(SIMPLE.root_sections, root)
     assert_equal(similar.id, root.id)
 
+
 def test__sort_intact_sections_by_score():
     root = SIMPLE.root_sections[0]
 
@@ -53,15 +54,17 @@ def test__repair():
     neuron = load_neuron(Path(DATA_PATH, 'valid.h5'))
     axon = neuron.root_sections[0]
     assert_equal(axon.type, SectionType.axon)
-    test_module.repair(neuron, axon, [axon], [axon], y_extent=10000)
+    test_module.repair(neuron, axon, [axon], [axon], set(), y_extent=10000)
     assert_equal(len(axon.children), 1)
     assert_array_equal(axon.children[0].points[0], axon.points[-1])
+    ok_(not diff(neuron, DATA_PATH / 'axon-repair.h5'))
 
 
 def test__repair_no_intact_axon():
     filename = Path(DATA_PATH, 'valid.h5')
     neuron = load_neuron(filename)
     axon = neuron.root_sections[0]
-    test_module.repair(neuron, axon, [], [axon], y_extent=10000)
+    used_axon_branches = set()
+    test_module.repair(neuron, axon, [], [axon], used_axon_branches, y_extent=10000)
     # There should not be any repair
     ok_(not diff(neuron, filename))
