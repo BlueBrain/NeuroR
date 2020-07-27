@@ -288,16 +288,11 @@ class Repair(object):
             self.neuron.write(outputfile)
             return
 
-        # The only purpose of the 'keep_alive' variable is to keep
-        # morphologies alive. Otherwise sections become unusable
-        # https://github.com/BlueBrain/MorphIO/issues/29
-        keep_alive = []
         for axon_donor in self.axon_donors:
             plane = CutPlane.find(axon_donor)
             unravelled, mapping = unravel(plane.morphology)
             # MorphIO -> NeuroM conversion
             unravelled = Neuron(unravelled)
-            keep_alive.append(unravelled)
             plane = unravel_plane(plane, mapping)
             no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
