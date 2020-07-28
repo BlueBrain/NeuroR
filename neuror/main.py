@@ -12,12 +12,14 @@ import numpy as np
 from morph_tool import apical_point_section_segment
 from morphio import PointLevel, SectionType
 from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
+from neurom.core import Neuron
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
 from scipy.spatial.distance import cdist
 
 from neuror import axon
 from neuror.cut_plane import CutPlane
+from neuror.unravel import unravel, unravel_plane
 from neuror.utils import direction, rotation_matrix, section_length
 
 SEG_LENGTH = 5.0
@@ -279,23 +281,22 @@ class Repair(object):
         else:
             self.apical_section = None
 
-    def run(self, outputfile, plot_file=None):
+    def run(self, outputfile, plot_file=None):  # pylint: disable=too-many-locals
         '''Run'''
         if self.cut_leaves.size == 0:
             L.warning('No cut leaves. Nothing to repair for morphology %s', self.inputfile)
             self.neuron.write(outputfile)
             return
 
-        # The only purpose of the 'planes' variable is to keep
-        # each plane.morphology alive. Otherwise sections become unusable
-        # https://github.com/BlueBrain/MorphIO/issues/29
-        planes = []
         for axon_donor in self.axon_donors:
             plane = CutPlane.find(axon_donor)
-            planes.append(plane)
+            unravelled, mapping = unravel(plane.morphology)
+            # MorphIO -> NeuroM conversion
+            unravelled = Neuron(unravelled)
+            plane = unravel_plane(plane, mapping)
             no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
-                [section for section in iter_sections(plane.morphology)
+                [section for section in iter_sections(unravelled)
                  if section.type == SectionType.axon and
                  (no_cut_plane or is_branch_intact(section, plane.cut_leaves_coordinates))])
 
@@ -316,6 +317,8 @@ class Repair(object):
                 )
         ]
 
+        used_axon_branches = set()
+
         cut_leaves_ids = {section: len(section.points)
                           for section in cut_sections_in_bounding_cylinder}
 
@@ -329,7 +332,8 @@ class Repair(object):
                 self._grow(section, self._get_order_offset(section), origin)
             elif type_ == RepairType.axon:
                 axon.repair(self.neuron, section, intact_axonal_sections,
-                            self.donated_intact_axon_sections, self.max_y_extent)
+                            self.donated_intact_axon_sections, used_axon_branches,
+                            self.max_y_extent)
             elif type_ == RepairType.trunk:
                 L.info('Trunk repair is not (nor has ever been) implemented')
             else:

@@ -14,8 +14,12 @@ DATA = Path(__file__).parent / 'data'
 SIMPLE = load_neuron(DATA / 'simple.swc')
 
 def test_get_principal_direction():
-    assert_array_almost_equal(test_module._get_principal_direction([[0.,0,0], [1,1,2]]),
-                              np.array([-0.408248, -0.408248, -0.816497]))
+    direction = test_module._get_principal_direction([[0.,0,0], [1,1,2]])
+
+    # Trick since the PCA can return a vector in either of the 2 orientations
+    if direction[0] < 0:
+        direction *= -1
+    assert_array_almost_equal(direction, np.array([0.408248, 0.408248, 0.816497]))
 
     assert_array_almost_equal(test_module._get_principal_direction([[0., 0, 0],
                                                                     [10, -1, 0],

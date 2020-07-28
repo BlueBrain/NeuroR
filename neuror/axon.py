@@ -75,7 +75,7 @@ def _similar_section(intact_axons, section):
     https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_axon.cpp#n83
 
     Note:
-    I have *absolutely* no clue why sorting according to this metric
+    I have *absolutely* no clue why sorting by this metric
     '''
     dists = list()
     for root in intact_axons:
@@ -99,7 +99,7 @@ def _sort_intact_sections_by_score(section, similar_section, axon_branches):
     return sorted(axon_branches, key=score)
 
 
-def repair(morphology, section, intact_sections, axon_branches, y_extent):
+def repair(morphology, section, intact_sections, axon_branches, used_axon_branches, y_extent):
     '''Axonal repair
 
     Reimplementation of:
@@ -138,14 +138,12 @@ def repair(morphology, section, intact_sections, axon_branches, y_extent):
     similar = _similar_section(intact_sections, section)
     branch_pool = _sort_intact_sections_by_score(section, similar, axon_branches)
 
-    already_used = set()
-
     strahler_orders = {intact_section: strahler_order(intact_section)
                        for intact_section in intact_sections + branch_pool}
 
     L.info('Branch pool count: %s', len(branch_pool))
     for branch in branch_pool:
-        if (branch in already_used or strahler_orders[similar] != strahler_orders[branch]):
+        if (branch in used_axon_branches or strahler_orders[similar] != strahler_orders[branch]):
             continue
 
         L.info("Pasting axon branch with ID %s", branch.id)
@@ -160,7 +158,7 @@ def repair(morphology, section, intact_sections, axon_branches, y_extent):
             morphology.delete_section(appended)
         else:
             L.info('Section appended')
-            already_used.add(branch)
+            used_axon_branches.add(branch)
             return
 
     morphio.set_ignored_warning(morphio.Warning.wrong_duplicate, False)
