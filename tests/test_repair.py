@@ -57,7 +57,6 @@ def test__find_intact_sub_trees():
     obj._fill_repair_type_map()
     assert_raises(Exception, obj._find_intact_sub_trees)
 
-
     obj = Repair(SLICE_PATH,
                  plane=test_module.CutPlane.find(SLICE, bin_width=15))
     obj._fill_repair_type_map()
@@ -73,6 +72,14 @@ def test__find_intact_sub_trees():
                        [1, 0, 3])
     assert_array_equal([obj.repair_type_map[section] for section in intact_sub_trees],
                        [RepairType.basal, RepairType.axon, RepairType.tuft])
+
+    filename = DATA_PATH / 'no-intact-basals.h5'
+    obj = Repair(filename, plane=test_module.CutPlane.find(filename, bin_width=15))
+    obj._fill_repair_type_map()
+    intact_sub_trees = obj._find_intact_sub_trees()
+    basals = [section for section in intact_sub_trees
+              if section.type == NeuriteType.basal_dendrite]
+    assert_equal(len(basals), 4)
 
 
 def test_section_length():
@@ -315,3 +322,10 @@ def test_repair_axon():
         assert_array_equal(neuron_in.section(40).points[0],
                            neuron_out.section(40).points[0])
         ok_(len(neuron_out.section(40).points) > len(neuron_in.section(40).points))
+
+
+def test_repair_no_intact_axon():
+    filename = DATA_PATH / 'no-intact-basals.h5'
+    with TemporaryDirectory('test-cli-axon') as tmp_folder:
+        outfilename = Path(tmp_folder, 'out.asc')
+        test_module.repair(filename, outfilename, axons=[filename])

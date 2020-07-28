@@ -6,6 +6,7 @@ import logging
 from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
+import warnings
 
 import neurom as nm
 import numpy as np
@@ -372,7 +373,10 @@ class Repair(object):
                       is_branch_intact(neurite.root_node, self.cut_leaves))]
 
         if not basals:
-            raise Exception('No intact basal dendrites !')
+            warnings.warn("No intact basals found. Falling back on less strict selection.")
+            basals = [section for section in iter_sections(self.neuron)
+                      if (section.type == NeuriteType.basal_dendrite and
+                          is_cut_section(section, self.cut_leaves))]
 
         axons = [neurite.root_node for neurite in iter_neurites(self.neuron)
                  if (neurite.type == NeuriteType.axon and
