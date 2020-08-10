@@ -376,7 +376,7 @@ class Repair(object):
                       is_branch_intact(neurite.root_node, self.cut_leaves))]
 
         if not basals:
-            L.warnings("No intact basals found. Falling back on less strict selection.")
+            L.warning("No intact basals found. Falling back on less strict selection.")
             basals = [section for section in iter_sections(self.neuron)
                       if (section.type == NeuriteType.basal_dendrite and
                           is_cut_section(section, self.cut_leaves))]
