@@ -52,11 +52,6 @@ def test__find_intact_sub_trees():
 
     assert_equal(len(obj._find_intact_sub_trees()), 2)
 
-    obj = Repair(SIMPLE_PATH)
-    obj.cut_leaves = [[0, 0, 0]]
-    obj._fill_repair_type_map()
-    assert_raises(Exception, obj._find_intact_sub_trees)
-
     obj = Repair(SLICE_PATH,
                  plane=test_module.CutPlane.find(SLICE, bin_width=15))
     obj._fill_repair_type_map()
