@@ -366,13 +366,20 @@ class Repair(object):
         return intacts
 
     def _find_intact_sub_trees(self):
-        '''Returns intact neurites'''
+        '''Returns intact neurites
+
+        There is a fallback mechanism in case there are no intact basals:
+        https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#658
+        '''
         basals = [neurite.root_node for neurite in iter_neurites(self.neuron)
                   if (neurite.type == NeuriteType.basal_dendrite and
                       is_branch_intact(neurite.root_node, self.cut_leaves))]
 
         if not basals:
-            raise Exception('No intact basal dendrites !')
+            L.warning("No intact basals found. Falling back on less strict selection.")
+            basals = [section for section in iter_sections(self.neuron)
+                      if (section.type == NeuriteType.basal_dendrite and
+                          is_cut_section(section, self.cut_leaves))]
 
         axons = [neurite.root_node for neurite in iter_neurites(self.neuron)
                  if (neurite.type == NeuriteType.axon and
