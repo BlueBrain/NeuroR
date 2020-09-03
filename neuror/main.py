@@ -7,7 +7,7 @@ from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from nptyping import NDArray
 
 import neurom as nm
@@ -36,6 +36,8 @@ BIFURCATION_ANGLE = 0
 EPSILON = 1e-6
 
 L = logging.getLogger('neuror')
+
+AnyMorph = Union
 
 
 class Action(Enum):
@@ -255,20 +257,28 @@ class Repair(object):
                  inputfile: Path,
                  axons: Optional[Path] = None,
                  seed: Optional[int] = 0,
-                 cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None):
+                 cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
+                 legacy_detection: bool = None):
         '''Repair the input morphology
 
-        Note: based on
-        https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469
+        Args:
+            inputfile: the input neuron to repair
+            axons: donor axons whose section will be used to repair this axon
+            seed: the numpy seed
+            legacy_detection: if True, use the legacy cut plane detection
+                (see neuror.legacy_detection)
+
+        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
         '''
         np.random.seed(seed)
-
+        self.legacy_detection = legacy_detection
         self.inputfile = inputfile
         self.axon_donors = axons or list()
         self.donated_intact_axon_sections = list()
 
-        if cut_leaves_coordinates is None:
-            L.info('No cut plane specified. Calling CutPlane.find...')
+        if legacy_detection:
+            self.cut_leaves = CutPlane.find_legacy(inputfile, 'z').cut_leaves_coordinates
+        elif cut_leaves_coordinates is None:
             self.cut_leaves = CutPlane.find(inputfile, bin_width=15).cut_leaves_coordinates
         else:
             self.cut_leaves = np.asarray(cut_leaves_coordinates)
@@ -297,7 +307,10 @@ class Repair(object):
             return
 
         for axon_donor in self.axon_donors:
-            plane = CutPlane.find(axon_donor)
+            if self.legacy_detection:
+                plane = CutPlane.find_legacy(axon_donor, 'z')
+            else:
+                plane = CutPlane.find(axon_donor)
             no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
                 [section for section in iter_sections(plane.morphology)
@@ -359,7 +372,8 @@ class Repair(object):
 
         Root obliques are obliques with a section parent of type 'trunk'
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n193  # noqa, pylint: disable=line-too-long
+        Note: based on
+        https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n193
         '''
         root_obliques = (section for section in iter_sections(self.neuron)
                          if (self.repair_type_map[section] == RepairType.oblique and
@@ -612,6 +626,7 @@ def repair(inputfile: Path,
            axons: Optional[Path] = None,
            seed: int = 0,
            cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
+           legacy_detection: bool = None,
            plot_file: Optional[Path] = None):
     '''The repair function
 
@@ -639,7 +654,8 @@ def repair(inputfile: Path,
 
     if axons is None:
         axons = list()
-    obj = Repair(inputfile, axons=axons, seed=seed, cut_leaves_coordinates=cut_leaves_coordinates)
+    obj = Repair(inputfile, axons=axons, seed=seed, cut_leaves_coordinates=cut_leaves_coordinates,
+                 legacy_detection=legacy_detection)
     obj.run(outputfile, plot_file=plot_file)
 
     for warning in ignored_warnings:
