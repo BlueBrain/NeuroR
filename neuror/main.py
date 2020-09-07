@@ -290,13 +290,9 @@ class Repair(object):
 
         for axon_donor in self.axon_donors:
             plane = CutPlane.find(axon_donor)
-            unravelled, mapping = unravel(plane.morphology)
-            # MorphIO -> NeuroM conversion
-            unravelled = Neuron(unravelled)
-            plane = unravel_plane(plane, mapping)
             no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
-                [section for section in iter_sections(unravelled)
+                [section for section in iter_sections(plane.morphology)
                  if section.type == SectionType.axon and
                  (no_cut_plane or is_branch_intact(section, plane.cut_leaves_coordinates))])
 
