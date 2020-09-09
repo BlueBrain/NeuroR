@@ -10,27 +10,35 @@ from neuror.cli import cli
 DATA = Path(__file__).parent / 'data'
 
 
-def test_cli():
+def test_repair_file():
     runner = CliRunner()
-
     with TemporaryDirectory('test-file') as folder:
         result = runner.invoke(cli, ['cut-plane', 'repair', 'file',
                                      str(DATA / 'real.asc'),
-                                     '/tmp/test_repair_cli.asc'])
-        assert_equal(result.exit_code, 0)
-
-    with TemporaryDirectory('test-cli-folder') as folder:
-        result = runner.invoke(cli, ['cut-plane', 'repair', 'folder', str(DATA), folder])
-        assert_equal(result.exit_code, 0)
+                                     str(Path(folder, 'out.asc'))])
+        assert_equal(result.exit_code, 0, result.exception)
 
 
-def test_cli_full():
+def test_repair_folder():
     runner = CliRunner()
-    with TemporaryDirectory('test-cli-full') as tmp_folder:
-        test_folder = str(Path(tmp_folder, 'test-full-repair'))
-        shutil.copytree(DATA / 'test-full-repair', test_folder)
-        result = runner.invoke(cli, ['cut-plane', 'repair', 'full', test_folder])
-        assert_equal(result.exit_code, 0)
+    with TemporaryDirectory('test-cli-folder') as folder:
+        result = runner.invoke(cli, ['cut-plane', 'repair', 'folder',
+                                     str(DATA / 'input-repair-all'),
+                                     folder])
+        assert_equal(result.exit_code, 0, result.exception)
+        assert_equal(set(str(path.relative_to(folder)) for path in Path(folder).rglob('*')),
+                     {'simple.asc', 'simple2.asc'})
+
+
+def test_repair_with_plane():
+    runner = CliRunner()
+    input_path = DATA / 'input-repair-all'
+    with TemporaryDirectory('test-cli-folder') as folder:
+        result = runner.invoke(cli, ['cut-plane', 'repair', 'folder',
+                                     str(input_path),
+                                     folder,
+                                     '--cut-file-dir', str(input_path / 'planes')])
+        assert_equal(result.exit_code, 0, result.exc_info)
 
 
 def test_cli_axon():

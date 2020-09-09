@@ -20,10 +20,10 @@ try:
     import dash_core_components as dcc
     import dash_html_components as html
     from plotly_helper.neuron_viewer import NeuronBuilder
-except ImportError:
+except ImportError as e:
     raise ImportError(
         'neuror[plotly] is not installed.'
-        ' Please install it by doing: pip install neuror[plotly]')
+        ' Please install it by doing: pip install neuror[plotly]') from e
 
 
 # Copy of: https://codepen.io/chriddyp/pen/bWLwgP.css

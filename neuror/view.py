@@ -15,10 +15,10 @@ L = logging.getLogger('neuror')
 
 try:
     from plotly_helper.neuron_viewer import NeuronBuilder
-except ImportError:
+except ImportError as e:
     raise ImportError(
         'neuror[plotly] is not installed.'
-        ' Please install it by doing: pip install neuror[plotly]')
+        ' Please install it by doing: pip install neuror[plotly]') from e
 
 matplotlib.use('Agg')
 
