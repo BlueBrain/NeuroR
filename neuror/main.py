@@ -6,6 +6,9 @@ import logging
 from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
+from pathlib import Path
+from typing import Any, Optional
+from nptyping import NDArray
 
 import neurom as nm
 import numpy as np
@@ -30,7 +33,7 @@ NOISE_CONTINUATION = 0.7
 SOMA_REPULSION = 0.7
 BIFURCATION_ANGLE = 0
 
-# Epsilon needs not to be to small otherwise leaves stored in json files
+# Epsilon can not be to small otherwise leaves stored in json files
 # are not found in the NeuroM neuron
 EPSILON = 1e-6
 
@@ -249,7 +252,11 @@ def _max_y_dendritic_cylindrical_extent(neuron):
 class Repair(object):
     '''The repair class'''
 
-    def __init__(self, inputfile, axons=None, seed=0, cut_leaves_coordinates=None):
+    def __init__(self,
+                 inputfile: Path,
+                 axons: Optional[Path] = None,
+                 seed: Optional[int] = 0,
+                 cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None):
         '''Repair the input morphology
 
         Note: based on
@@ -280,7 +287,10 @@ class Repair(object):
         else:
             self.apical_section = None
 
-    def run(self, outputfile, plot_file=None):  # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals
+    def run(self,
+            outputfile: Path,
+            plot_file: Optional[Path] = None):
         '''Run'''
         if self.cut_leaves.size == 0:
             L.warning('No cut leaves. Nothing to repair for morphology %s', self.inputfile)
@@ -602,7 +612,12 @@ class Repair(object):
                 self.repair_type_map[section] = RepairType.trunk
 
 
-def repair(inputfile, outputfile, axons=None, seed=0, cut_leaves_coordinates=None, plot_file=None):
+def repair(inputfile: Path,
+           outputfile: Path,
+           axons: Optional[Path] = None,
+           seed: int = 0,
+           cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
+           plot_file: Optional[Path] = None):
     '''The repair function
 
     Args:

@@ -30,7 +30,7 @@ class CutPlane(HalfSpace):
 
     def __init__(self, coefs: List[float],
                  upward: bool,
-                 morphology: Union[str, Path, Neuron],
+                 morphology: Union[None, str, Path, Neuron],
                  bin_width: float):
         '''Cut plane ctor.
 
@@ -45,8 +45,10 @@ class CutPlane(HalfSpace):
 
         if isinstance(morphology, Neuron):
             self.morphology = morphology
-        elif morphology:
+        elif isinstance(morphology, (str, Path)):
             self.morphology = load_neuron(morphology)
+        elif morphology is not None:
+            raise Exception(f'Unsupported morphology type: {type(morphology)}')
 
         self.bin_width = bin_width
         self.cut_leaves_coordinates = None
