@@ -52,15 +52,15 @@ def test__find_intact_sub_trees():
 
     assert_equal(len(obj._find_intact_sub_trees()), 2)
 
-    obj = Repair(SLICE_PATH,
-                 plane=test_module.CutPlane.find(SLICE, bin_width=15))
+    points = test_module.CutPlane.find(SLICE, bin_width=15).cut_leaves_coordinates
+    obj = Repair(SLICE_PATH,cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     intact_sub_trees = obj._find_intact_sub_trees()
     assert_array_equal([section.id for section in intact_sub_trees],
                        [0, 34])
 
     obj = Repair(DATA_PATH / 'test-cut-apical' / 'simple-apical-cut.swc',
-                 plane=str(DATA_PATH / 'test-cut-apical' / 'cut-plane.json'))
+                 cut_leaves_coordinates=[[1.0, 30.0, 0.0]])
     obj._fill_repair_type_map()
     intact_sub_trees = obj._find_intact_sub_trees()
     assert_array_equal([section.id for section in intact_sub_trees],
@@ -69,7 +69,8 @@ def test__find_intact_sub_trees():
                        [RepairType.basal, RepairType.axon, RepairType.tuft])
 
     filename = DATA_PATH / 'no-intact-basals.h5'
-    obj = Repair(filename, plane=test_module.CutPlane.find(filename, bin_width=15))
+    points = test_module.CutPlane.find(filename, bin_width=15).cut_leaves_coordinates
+    obj = Repair(filename, cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     intact_sub_trees = obj._find_intact_sub_trees()
     basals = [section for section in intact_sub_trees
@@ -275,8 +276,8 @@ def json_compatible_dict(dict_):
 
 def test__compute_statistics_for_intact_subtrees():
     input_file = DATA_PATH / 'neuron-slice.h5'
-    obj = Repair(input_file,
-                 plane=test_module.CutPlane.find(input_file, bin_width=15))
+    points = test_module.CutPlane.find(input_file, bin_width=15).cut_leaves_coordinates
+    obj = Repair(input_file, cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     obj._fill_statistics_for_intact_subtrees()
 

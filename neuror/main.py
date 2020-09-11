@@ -6,20 +6,22 @@ import logging
 from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
+from pathlib import Path
+from typing import Any, Optional
+from nptyping import NDArray
 
 import neurom as nm
 import numpy as np
 from morph_tool import apical_point_section_segment
+import morphio
 from morphio import PointLevel, SectionType
 from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
-from neurom.core import Neuron
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
 from scipy.spatial.distance import cdist
 
 from neuror import axon
 from neuror.cut_plane import CutPlane
-from neuror.unravel import unravel, unravel_plane
 from neuror.utils import direction, rotation_matrix, section_length
 
 SEG_LENGTH = 5.0
@@ -29,7 +31,7 @@ NOISE_CONTINUATION = 0.7
 SOMA_REPULSION = 0.7
 BIFURCATION_ANGLE = 0
 
-# Epsilon needs not to be to small otherwise leaves stored in json files
+# Epsilon can not be to small otherwise leaves stored in json files
 # are not found in the NeuroM neuron
 EPSILON = 1e-6
 
@@ -44,9 +46,10 @@ class Action(Enum):
 
 
 class RepairType(Enum):
-    '''The types used for the repair
+    '''The types used for the repair.
 
-    based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22  # noqa, pylint: disable=line-too-long
+    based on
+    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22
     '''
     trunk = 0
     tuft = 1
@@ -248,26 +251,28 @@ def _max_y_dendritic_cylindrical_extent(neuron):
 class Repair(object):
     '''The repair class'''
 
-    def __init__(self, inputfile, axons=None, seed=0, plane=None):
+    def __init__(self,
+                 inputfile: Path,
+                 axons: Optional[Path] = None,
+                 seed: Optional[int] = 0,
+                 cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None):
         '''Repair the input morphology
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
+        Note: based on
+        https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469
         '''
         np.random.seed(seed)
-        if plane is None:
-            L.info('No cut plane specified. Calling CutPlane.find...')
-            cut_plane = CutPlane.find(inputfile, bin_width=15)
-            L.info('Found cut plane: %s', cut_plane)
-        else:
-            if isinstance(plane, CutPlane):
-                cut_plane = plane
-            else:
-                cut_plane = CutPlane.from_json(plane)
 
         self.inputfile = inputfile
         self.axon_donors = axons or list()
         self.donated_intact_axon_sections = list()
-        self.cut_leaves = cut_plane.cut_leaves_coordinates
+
+        if cut_leaves_coordinates is None:
+            L.info('No cut plane specified. Calling CutPlane.find...')
+            self.cut_leaves = CutPlane.find(inputfile, bin_width=15).cut_leaves_coordinates
+        else:
+            self.cut_leaves = np.asarray(cut_leaves_coordinates)
+
         self.neuron = load_neuron(inputfile)
         self.repair_type_map = dict()
         self.max_y_cylindrical_extent = _max_y_dendritic_cylindrical_extent(self.neuron)
@@ -281,7 +286,10 @@ class Repair(object):
         else:
             self.apical_section = None
 
-    def run(self, outputfile, plot_file=None):  # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals
+    def run(self,
+            outputfile: Path,
+            plot_file: Optional[Path] = None):
         '''Run'''
         if self.cut_leaves.size == 0:
             L.warning('No cut leaves. Nothing to repair for morphology %s', self.inputfile)
@@ -320,7 +328,7 @@ class Repair(object):
 
         for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
             type_ = self.repair_type_map[section]
-            L.info('Repairing: %s, %s', type_, section.id)
+            L.info('Repairing: %s, section id: %s', type_, section.id)
             if type_ in {RepairType.basal, RepairType.oblique, RepairType.tuft}:
                 origin = self._get_origin(section)
                 if section.type == NeuriteType.basal_dendrite:
@@ -599,9 +607,40 @@ class Repair(object):
                 self.repair_type_map[section] = RepairType.trunk
 
 
-def repair(inputfile, outputfile, axons=None, seed=0, plane=None, plot_file=None):
-    '''The repair function'''
+def repair(inputfile: Path,
+           outputfile: Path,
+           axons: Optional[Path] = None,
+           seed: int = 0,
+           cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
+           plot_file: Optional[Path] = None):
+    '''The repair function
+
+    Args:
+        inputfile: the input morph
+        outputfile: the output morph
+        axons: the axons
+        seed: the numpy seed
+        cut_leaves_coordinates: List of 3D coordinates from which to start the repair
+    '''
+    ignored_warnings = (
+        # We append the section at the wrong place and then we reposition them
+        # afterwards so we can ignore the warning
+        morphio.Warning.wrong_duplicate,
+
+        # the repair process creates new sections that may not have siblings
+        morphio.Warning.only_child,
+
+        # We are appending empty section and filling them later on
+        morphio.Warning.appending_empty_section
+    )
+
+    for warning in ignored_warnings:
+        morphio.set_ignored_warning(warning, True)
+
     if axons is None:
         axons = list()
-    obj = Repair(inputfile, axons=axons, seed=seed, plane=plane)
+    obj = Repair(inputfile, axons=axons, seed=seed, cut_leaves_coordinates=cut_leaves_coordinates)
     obj.run(outputfile, plot_file=plot_file)
+
+    for warning in ignored_warnings:
+        morphio.set_ignored_warning(warning, False)

@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from pprint import pprint
+from pathlib import Path
 
 import click
 from morph_tool.utils import iter_morphology_files
@@ -63,15 +64,21 @@ def repair():
               help='Where to save the plot')
 @click.option('-a', '--axon-donor', multiple=True,
               help='A morphology that provides a reference axon')
-@click.option('--plane',
+@click.option('--cut-file',
               type=click.Path(exists=True, file_okay=True), default=None,
-              help=('A custom cut plane to use. '
-                    'Cut planes are created by the code hosted at '
-                    'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
-def file(input_file, output_file, plot_file, axon_donor, plane):
+              help=('Path to a CSV whose columns represents the X, Y and Z '
+                    'coordinates of points from which to start the repair'))
+def file(input_file, output_file, plot_file, axon_donor, cut_file):
     '''Repair dendrites of a cut neuron'''
     from neuror.main import repair  # pylint: disable=redefined-outer-name
-    repair(input_file, output_file, axons=axon_donor, plane=plane, plot_file=plot_file)
+    import pandas
+
+    if cut_file:
+        cut_points = pandas.read_csv(Path(cut_file).with_suffix('.csv')).values
+    else:
+        cut_points = None
+    repair(input_file, output_file, axons=axon_donor, cut_leaves_coordinates=cut_points,
+           plot_file=plot_file)
 
 
 # pylint: disable=function-redefined
@@ -82,59 +89,15 @@ def file(input_file, output_file, plot_file, axon_donor, plane):
                                                           writable=True))
 @click.option('-a', '--axon-donor', multiple=True,
               help='A morphology that provides a reference axon')
-@click.option('--planes',
+@click.option('--cut-file-dir',
               type=click.Path(exists=True, file_okay=True), default=None,
-              help=('A folder containing cut planes for each morphology. '
-                    'The filename must be the morphology filename followed by ".csv". '
-                    'Cut planes are created by the code hosted at '
-                    'bbpcode.epfl.ch/nse/cut-plane using the CLI command "cut-plane compute" '))
-def folder(input_dir, output_dir, plot_dir, axon_donor, planes):
+              help=('A dir with the cut points CSV file for each morphology. '
+                    'See also "neuror cut-plane repair file --help".'))
+def folder(input_dir, output_dir, plot_dir, axon_donor, cut_file_dir):
     '''Repair dendrites of all neurons in a directory'''
     from neuror.full import repair_all
-    repair_all(input_dir, output_dir, axons=axon_donor, planes_dir=planes, plots_dir=plot_dir)
-
-
-# pylint: disable=too-many-arguments
-@repair.command(short_help='Unravel and repair one morphology')
-@click.argument('root_dir', type=click.Path(exists=True, file_okay=True))
-@click.option('--window-half-length', default=DEFAULT_WINDOW_HALF_LENGTH)
-@click.option('--raw-dir', default=None, help='Folder of input raw morphologies')
-@click.option('--raw-planes-dir', default=None, help='Folder of input raw cut planes')
-@click.option('--unravelled-dir', default=None, help='Folder of unravelled morphologies')
-@click.option('--unravelled-planes-dir', default=None, help='Folder of unravelled cut planes')
-@click.option('--repaired-dir', default=None, help='Folder of repaired morphologies')
-@click.option('--plots-dir', default=None, help='Folder of plots')
-@click.option('--seed', default=0, help='The numpy.random seed')
-def full(root_dir, window_half_length, raw_dir, raw_planes_dir, unravelled_dir,
-         unravelled_planes_dir, repaired_dir, plots_dir, seed):
-    '''
-    Perform the unravelling and repair in ROOT_DIR:
-
-    1) perform the unravelling of the neuron
-    2) update the cut points position after unravelling and writes it
-       in the unravelled/planes folder
-    3) repair the morphology
-
-    All output directories can be overriden with the corresponding arguments.
-    Here is the default structure:
-
-    - raw_dir: ROOT_DIR/raw/ with all raw morphologies to repair
-    - raw_planes_dir: RAW_DIR/planes with all cut planes
-    - unravelled_dir: ROOT_DIR/unravelled/ where unravelled morphologies will be written
-    - unravelled_planes_dir: UNRAVELLED_DIR/planes where unravelled planes will be written
-    - repaired_dir: ROOT_DIR/repaired/ where repaired morphologies will be written
-    - plots_dir: ROOT_DIR/plots where the plots will be put
-    '''
-    from neuror.full import full  # pylint: disable=redefined-outer-name
-    full(root_dir,
-         seed=seed,
-         window_half_length=window_half_length,
-         raw_dir=raw_dir,
-         raw_planes_dir=raw_planes_dir,
-         unravelled_dir=unravelled_dir,
-         unravelled_planes_dir=unravelled_planes_dir,
-         repaired_dir=repaired_dir,
-         plots_dir=plots_dir)
+    repair_all(input_dir, output_dir, axons=axon_donor, cut_points_dir=cut_file_dir,
+               plots_dir=plot_dir)
 
 
 @unravel.command(short_help='Unravel one morphology')
