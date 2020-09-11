@@ -132,9 +132,6 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
         L.info("No intact axon found. Not repairing!")
         return
 
-    # We append the section at the wrong place and then we re-place so we can ignore the warning
-    morphio.set_ignored_warning(morphio.Warning.wrong_duplicate, True)
-
     similar = _similar_section(intact_sections, section)
     branch_pool = _sort_intact_sections_by_score(section, similar, axon_branches)
 

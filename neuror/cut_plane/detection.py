@@ -30,7 +30,7 @@ class CutPlane(HalfSpace):
 
     def __init__(self, coefs: List[float],
                  upward: bool,
-                 morphology: Union[str, Path, Neuron],
+                 morphology: Union[None, str, Path, Neuron],
                  bin_width: float):
         '''Cut plane ctor.
 
@@ -41,12 +41,14 @@ class CutPlane(HalfSpace):
             morphology: the morphology
             bin_width: the bin width
         '''
-        super(CutPlane, self).__init__(coefs[0], coefs[1], coefs[2], coefs[3], upward)
+        super().__init__(coefs[0], coefs[1], coefs[2], coefs[3], upward)
 
         if isinstance(morphology, Neuron):
             self.morphology = morphology
-        elif morphology:
+        elif isinstance(morphology, (str, Path)):
             self.morphology = load_neuron(morphology)
+        elif morphology is not None:
+            raise Exception(f'Unsupported morphology type: {type(morphology)}')
 
         self.bin_width = bin_width
         self.cut_leaves_coordinates = None
@@ -182,7 +184,7 @@ class CutPlane(HalfSpace):
         return {'cut-leaves': self.cut_leaves_coordinates,
                 'status': self.status,
                 'details': {'-LogP': self.minus_log_prob, 'bin-width': self.bin_width},
-                'cut-plane': super(CutPlane, self).to_json()}
+                'cut-plane': super().to_json()}
 
     def histogram(self):
         '''Get the point distribution projected along the normal to the plane
@@ -282,10 +284,10 @@ def plot(neuron, result, inline=False):
         from plotly_helper.neuron_viewer import NeuronBuilder
         from plotly_helper.object_creator import scatter
         from plotly_helper.shapes import line
-    except ImportError:
+    except ImportError as e:
         raise ImportError(
             'neuror[plotly] is not installed.'
-            ' Please install it by doing: pip install neuror[plotly]')
+            ' Please install it by doing: pip install neuror[plotly]') from e
 
     bbox = geom.bounding_box(neuron)
 

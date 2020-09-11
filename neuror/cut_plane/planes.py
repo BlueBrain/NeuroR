@@ -99,7 +99,7 @@ class HalfSpace(PlaneEquation):
     '''
 
     def __init__(self, a, b, c, d, upward):
-        super(HalfSpace, self).__init__(a, b, c, d)
+        super().__init__(a, b, c, d)
         self.upward = upward
 
     def to_json(self):
