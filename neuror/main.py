@@ -16,14 +16,12 @@ from morph_tool import apical_point_section_segment
 import morphio
 from morphio import PointLevel, SectionType
 from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
-from neurom.core import Neuron
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
 from scipy.spatial.distance import cdist
 
 from neuror import axon
 from neuror.cut_plane import CutPlane
-from neuror.unravel import unravel, unravel_plane
 from neuror.utils import direction, rotation_matrix, section_length
 
 SEG_LENGTH = 5.0
@@ -48,9 +46,10 @@ class Action(Enum):
 
 
 class RepairType(Enum):
-    '''The types used for the repair
+    '''The types used for the repair.
 
-    based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22  # noqa, pylint: disable=line-too-long
+    based on
+    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22
     '''
     trunk = 0
     tuft = 1
@@ -299,13 +298,9 @@ class Repair(object):
 
         for axon_donor in self.axon_donors:
             plane = CutPlane.find(axon_donor)
-            unravelled, mapping = unravel(plane.morphology)
-            # MorphIO -> NeuroM conversion
-            unravelled = Neuron(unravelled)
-            plane = unravel_plane(plane, mapping)
             no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
-                [section for section in iter_sections(unravelled)
+                [section for section in iter_sections(plane.morphology)
                  if section.type == SectionType.axon and
                  (no_cut_plane or is_branch_intact(section, plane.cut_leaves_coordinates))])
 
