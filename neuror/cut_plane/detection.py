@@ -160,7 +160,11 @@ class CutPlane(HalfSpace):
 
     @classmethod
     def find_legacy(cls, neuron, axis):
-        ""
+        '''Find the cut points according to the legacy algorithm
+
+        As implemented in:
+        https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+        '''
         if not isinstance(neuron, Neuron):
             neuron = load_neuron(neuron)
 
