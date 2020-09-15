@@ -7,7 +7,7 @@ from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from nptyping import NDArray
 
 import neurom as nm
@@ -36,8 +36,6 @@ BIFURCATION_ANGLE = 0
 EPSILON = 1e-6
 
 L = logging.getLogger('neuror')
-
-AnyMorph = Union
 
 
 class Action(Enum):
