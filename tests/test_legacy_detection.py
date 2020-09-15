@@ -14,7 +14,9 @@ SIMPLE = load_neuron(DATA_PATH / 'simple.swc')
 
 def test_legacy():
     points, sign = tested.cut_detect(SIMPLE, 'y')
-    assert_array_equal(points, [-4, -4])
+    assert_array_equal(points,
+                       [[ 6., -4., 0.],
+                        [-5., -4., 0.]])
     assert_equal(sign, -1)
 
     assert_raises(Exception, tested.cut_detect, SIMPLE, 'z')

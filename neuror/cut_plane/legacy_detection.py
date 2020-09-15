@@ -46,9 +46,9 @@ def cut_detect(neuron, axis):
 
     cut_leaves = list()
     for leaf in iter_sections(neuron, iterator_type=Tree.ileaf):
-        coord = leaf.points[-1, axis]
+        coord = leaf.points[-1, COLS.XYZ]
 
-        if coord * sign > offset:
+        if coord[axis] * sign > offset:
             cut_leaves.append(coord)
 
     return cut_leaves, sign
