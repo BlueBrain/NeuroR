@@ -256,7 +256,7 @@ class Repair(object):
                  axons: Optional[Path] = None,
                  seed: Optional[int] = 0,
                  cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
-                 legacy_detection: bool = None):
+                 legacy_detection: bool = False):
         '''Repair the input morphology
 
         Args:
@@ -624,7 +624,7 @@ def repair(inputfile: Path,
            axons: Optional[Path] = None,
            seed: int = 0,
            cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
-           legacy_detection: bool = None,
+           legacy_detection: bool = False,
            plot_file: Optional[Path] = None):
     '''The repair function
 
