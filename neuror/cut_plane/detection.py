@@ -170,11 +170,11 @@ class CutPlane(HalfSpace):
 
         cut_leaves, side = cut_detect(neuron, axis)
 
-        plane = CutPlane([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
-                          int(axis.upper() == 'Z'), 0],
-                         upward=(side < 0),
-                         morphology=neuron,
-                         bin_width=0)
+        plane = cls([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
+                     int(axis.upper() == 'Z'), 0],
+                    upward=(side < 0),
+                    morphology=neuron,
+                    bin_width=0)
 
         plane.cut_leaves_coordinates = cut_leaves
         return plane
