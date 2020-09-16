@@ -16,6 +16,7 @@ from scipy.optimize import minimize
 from scipy.special import factorial
 
 from neuror.cut_plane.planes import HalfSpace, PlaneEquation
+from neuror.cut_plane.legacy_detection import cut_detect
 
 L = logging.getLogger(__name__)
 
@@ -156,6 +157,27 @@ class CutPlane(HalfSpace):
         else:
             best_plane.coefs[3] = coef_d
         return CutPlane(best_plane.coefs, best_plane.upward, neuron, best_plane.bin_width)
+
+    @classmethod
+    def find_legacy(cls, neuron, axis):
+        '''Find the cut points according to the legacy algorithm
+
+        As implemented in:
+        https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+        '''
+        if not isinstance(neuron, Neuron):
+            neuron = load_neuron(neuron)
+
+        cut_leaves, side = cut_detect(neuron, axis)
+
+        plane = cls([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
+                     int(axis.upper() == 'Z'), 0],
+                    upward=(side < 0),
+                    morphology=neuron,
+                    bin_width=0)
+
+        plane.cut_leaves_coordinates = cut_leaves
+        return plane
 
     @property
     def cut_sections(self):
