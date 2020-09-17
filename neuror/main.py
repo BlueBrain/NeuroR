@@ -304,11 +304,15 @@ class Repair(object):
             self.neuron.write(outputfile)
             return
 
+        # See https://github.com/BlueBrain/MorphIO/issues/161
+        keep_axons_alive = list()
+
         for axon_donor in self.axon_donors:
             if self.legacy_detection:
                 plane = CutPlane.find_legacy(axon_donor, 'z')
             else:
                 plane = CutPlane.find(axon_donor)
+            keep_axons_alive.append(plane)
             no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
                 [section for section in iter_sections(plane.morphology)
