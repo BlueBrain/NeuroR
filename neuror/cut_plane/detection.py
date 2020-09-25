@@ -173,9 +173,9 @@ class CutPlane(HalfSpace):
         plane = cls([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
                      int(axis.upper() == 'Z'), 0],
                     upward=(side < 0),
-                    morphology=neuron,
+                    morphology=None,
                     bin_width=0)
-
+        plane.morphology = load_neuron(neuron)
         plane.cut_leaves_coordinates = cut_leaves
         return plane
 
