@@ -180,10 +180,10 @@ def test_get_origin():
     obj = Repair(SIMPLE)
     section = obj.neuron.section(1)
     obj.repair_type_map = {section: RepairType.basal}
-    assert_equal(obj._get_origin(section), [0, 0, 0])
+    assert_array_equal(obj._get_origin(section), [0, 0, 0])
 
     obj.repair_type_map = {section: RepairType.oblique}
-    assert_equal(obj._get_origin(section), [0, 5, 0])
+    assert_array_equal(obj._get_origin(section), [0, 5, 0])
 
 def test_get_order_offset():
     obj = Repair(SIMPLE_PATH)
@@ -202,11 +202,11 @@ def test__get_sholl_layer():
 
 def test_last_segment_vector():
     section = SIMPLE.neurites[0].root_node
-    assert_equal(tested._last_segment_vector(section, True),
-                 [0, 1, 0])
+    assert_array_equal(tested._last_segment_vector(section, True),
+                       [0, 1, 0])
 
-    assert_equal(tested._last_segment_vector(section, False),
-                 [0, 5, 0])
+    assert_array_equal(tested._last_segment_vector(section, False),
+                       [0, 5, 0])
 
 
 def test__grow_until_sholl_sphere():
