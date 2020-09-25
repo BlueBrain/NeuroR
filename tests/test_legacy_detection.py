@@ -20,3 +20,9 @@ def test_legacy():
     assert_equal(sign, -1)
 
     assert_raises(Exception, tested.cut_detect, SIMPLE, 'z')
+
+
+from neuror.cut_plane import CutPlane
+def test_connard():
+    filename = '/gpfs/bbp.cscs.ch/project/proj83/home/gevaert/morph-release/morph_release_new_code-2020-09-02-cut-plane-25/out-legacy/02_ZeroDiameterFix/sm080523a1-5_idB.h5'
+    plane = CutPlane.find_legacy(filename, 'z')

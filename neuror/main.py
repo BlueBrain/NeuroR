@@ -313,7 +313,8 @@ class Repair(object):
             else:
                 plane = CutPlane.find(axon_donor)
             keep_axons_alive.append(plane)
-            no_cut_plane = (plane.minus_log_prob < 50)
+            # no_cut_plane = (plane.minus_log_prob < 50)
+            no_cut_plane = False
             self.donated_intact_axon_sections.extend(
                 [section for section in iter_sections(plane.morphology)
                  if section.type == SectionType.axon and
