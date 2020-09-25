@@ -11,7 +11,7 @@ from neurom import COLS, NeuriteType, load_neuron
 from nose.tools import assert_dict_equal, assert_equal, ok_
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-import neuror.main as tested
+import neuror.main as test_module
 from neuror.main import Action, Repair, RepairType
 
 DATA_PATH = Path(__file__).parent / 'data'
@@ -30,19 +30,19 @@ class DummySection:
 
 def test_is_cut_section():
     section = SIMPLE.neurites[0].root_node
-    assert_equal(tested.is_cut_section(section, np.array([[2, 2, 2]])),
+    assert_equal(test_module.is_cut_section(section, np.array([[2, 2, 2]])),
                  False)
 
-    assert_equal(tested.is_cut_section(section, np.array([[0, 0, 0]])),
+    assert_equal(test_module.is_cut_section(section, np.array([[0, 0, 0]])),
                  True)
 
 
 def test_is_branch_intact():
     neurite = SIMPLE.neurites[0]
-    assert_equal(tested.is_branch_intact(neurite.root_node, np.array([[2, 2, 2]])),
+    assert_equal(test_module.is_branch_intact(neurite.root_node, np.array([[2, 2, 2]])),
                  True)
 
-    assert_equal(tested.is_branch_intact(neurite.root_node, np.array([[0, 0, 0]])),
+    assert_equal(test_module.is_branch_intact(neurite.root_node, np.array([[0, 0, 0]])),
                  False)
 
 
@@ -53,7 +53,7 @@ def test__find_intact_sub_trees():
 
     assert_equal(len(obj._find_intact_sub_trees()), 2)
 
-    points = tested.CutPlane.find(SLICE, bin_width=15).cut_leaves_coordinates
+    points = test_module.CutPlane.find(SLICE, bin_width=15).cut_leaves_coordinates
     obj = Repair(SLICE_PATH,cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     intact_sub_trees = obj._find_intact_sub_trees()
@@ -70,7 +70,7 @@ def test__find_intact_sub_trees():
                        [RepairType.basal, RepairType.axon, RepairType.tuft])
 
     filename = DATA_PATH / 'no-intact-basals.h5'
-    points = tested.CutPlane.find(filename, bin_width=15).cut_leaves_coordinates
+    points = test_module.CutPlane.find(filename, bin_width=15).cut_leaves_coordinates
     obj = Repair(filename, cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     intact_sub_trees = obj._find_intact_sub_trees()
@@ -80,22 +80,22 @@ def test__find_intact_sub_trees():
 
 
 def test_section_length():
-    assert_equal(tested.section_length(SIMPLE.neurites[0].root_node), 5)
+    assert_equal(test_module.section_length(SIMPLE.neurites[0].root_node), 5)
 
 
 def test_branching_angles():
-    assert_equal(tested._branching_angles(SIMPLE.neurites[0].root_node),
+    assert_equal(test_module._branching_angles(SIMPLE.neurites[0].root_node),
                  [(0, 1.5707963267948966), (0, 1.5707963267948966)])
 
     # Test skip too short sections
-    assert_equal(tested._branching_angles(DummySection([[0, 0, 0], [0, 0, 1e-9]])),
+    assert_equal(test_module._branching_angles(DummySection([[0, 0, 0], [0, 0, 1e-9]])),
                  [])
 
     # Test skip too short child sections
     tiny_child = DummySection([[0, 0, 0], [0, 0, 1e-9]])
     parent = DummySection([[0, 0, 0], [0, 0, 1]], children=[tiny_child])
     with patch('neuror.main.branch_order'):
-        assert_equal(tested._branching_angles(parent),
+        assert_equal(test_module._branching_angles(parent),
                      [])
 
 
@@ -121,7 +121,7 @@ def test_intact_branching_angles():
     obj._fill_repair_type_map()
     branches = [neurite.root_node for neurite in obj.neuron.neurites]
     angles = obj._intact_branching_angles(branches)
-    assert_array_almost_equal(angles[tested.RepairType.basal][0],
+    assert_array_almost_equal(angles[test_module.RepairType.basal][0],
                               [1.5707963267948966, 1.5707963267948966])
 
 
@@ -131,33 +131,33 @@ def test__get_sholl_proba():
                                              Action.CONTINUATION: 4
                                              }}}}
 
-    assert_dict_equal(tested._get_sholl_proba(sholl_data, RepairType.axon, 0, 1),
+    assert_dict_equal(test_module._get_sholl_proba(sholl_data, RepairType.axon, 0, 1),
                       {Action.TERMINATION: 0.25,
                        Action.BIFURCATION: 0.25,
                        Action.CONTINUATION: 0.5})
 
     # No info for pseudo_order == 2, re-use data from pseudo_order == 1
-    assert_dict_equal(tested._get_sholl_proba(sholl_data, RepairType.axon, 0, 2),
+    assert_dict_equal(test_module._get_sholl_proba(sholl_data, RepairType.axon, 0, 2),
                       {Action.TERMINATION: 0.25,
                        Action.BIFURCATION: 0.25,
                        Action.CONTINUATION: 0.5})
 
     # No info for sholl_layer == 1, use default value
-    assert_dict_equal(tested._get_sholl_proba(sholl_data, RepairType.axon, 1, 2),
+    assert_dict_equal(test_module._get_sholl_proba(sholl_data, RepairType.axon, 1, 2),
                       {Action.TERMINATION: 1,
                        Action.BIFURCATION: 0,
                        Action.CONTINUATION: 0})
 
     # No data at all, use default value
-    assert_dict_equal(tested._get_sholl_proba({RepairType.axon: {1: {}}}, RepairType.axon, 1, 2),
+    assert_dict_equal(test_module._get_sholl_proba({RepairType.axon: {1: {}}}, RepairType.axon, 1, 2),
                       {Action.TERMINATION: 1,
                        Action.BIFURCATION: 0,
                        Action.CONTINUATION: 0})
 
 
 def test_continuation():
-    tested._continuation(DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [0, 0, 0])
-    tested._continuation(DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [1, 1, 1])
+    test_module._continuation(DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [0, 0, 0])
+    test_module._continuation(DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [1, 1, 1])
 
 
 def test_get_similar_child_diameters():
@@ -166,13 +166,13 @@ def test_get_similar_child_diameters():
     sections = [DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]], children=children)]
 
     similar_section = DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]], children=[])
-    assert_array_equal(tested._get_similar_child_diameters(sections, similar_section),
+    assert_array_equal(test_module._get_similar_child_diameters(sections, similar_section),
                        [20, 24])
 
     different_section = DummySection([[1.0, 1, 1, 42]],
                                      children=[DummySection([[1.0, 1, 1, 1]]),
                                                DummySection([[1.0, 1, 1, 2]])])
-    assert_array_equal(tested._get_similar_child_diameters(sections, different_section),
+    assert_array_equal(test_module._get_similar_child_diameters(sections, different_section),
                        [84, 84])
 
 
@@ -197,15 +197,15 @@ def test_get_order_offset():
 
 def test__get_sholl_layer():
     section = SIMPLE.neurites[0].root_node
-    assert_equal(tested._get_sholl_layer(section, SIMPLE.soma.center), 0)
+    assert_equal(test_module._get_sholl_layer(section, SIMPLE.soma.center), 0)
 
 
 def test_last_segment_vector():
     section = SIMPLE.neurites[0].root_node
-    assert_array_equal(tested._last_segment_vector(section, True),
+    assert_array_equal(test_module._last_segment_vector(section, True),
                        [0, 1, 0])
 
-    assert_array_equal(tested._last_segment_vector(section, False),
+    assert_array_equal(test_module._last_segment_vector(section, False),
                        [0, 5, 0])
 
 
@@ -213,7 +213,7 @@ def test__grow_until_sholl_sphere():
     np.random.seed(0)
     neuron = load_neuron(DATA_PATH / 'simple.swc')
     section = neuron.neurites[0].root_node
-    tested._grow_until_sholl_sphere(section, SIMPLE.soma.center, 0)
+    test_module._grow_until_sholl_sphere(section, SIMPLE.soma.center, 0)
     assert_array_almost_equal(section.points[:, COLS.XYZ],
                               np.array([[0., 0., 0.],
                                         [0., 5., 0.],
@@ -252,13 +252,13 @@ def test__fill_repair_type_map():
     obj._fill_repair_type_map()
     assert_dict_equal({sec.id: v for sec, v in obj.repair_type_map.items()},
                       {
-                          0: tested.RepairType.axon,
-                          1: tested.RepairType.trunk,
-                          2: tested.RepairType.oblique,
-                          3: tested.RepairType.trunk,
-                          4: tested.RepairType.tuft,
-                          5: tested.RepairType.tuft,
-                          6: tested.RepairType.basal,
+                          0: test_module.RepairType.axon,
+                          1: test_module.RepairType.trunk,
+                          2: test_module.RepairType.oblique,
+                          3: test_module.RepairType.trunk,
+                          4: test_module.RepairType.tuft,
+                          5: test_module.RepairType.tuft,
+                          6: test_module.RepairType.basal,
     })
 
 
@@ -277,7 +277,7 @@ def json_compatible_dict(dict_):
 
 def test__compute_statistics_for_intact_subtrees():
     input_file = DATA_PATH / 'neuron-slice.h5'
-    points = tested.CutPlane.find(input_file, bin_width=15).cut_leaves_coordinates
+    points = test_module.CutPlane.find(input_file, bin_width=15).cut_leaves_coordinates
     obj = Repair(input_file, cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     obj._fill_statistics_for_intact_subtrees()
@@ -311,7 +311,7 @@ def test_repair_axon():
     filename = DATA_PATH / 'real-with-axon.asc'
     with TemporaryDirectory('test-cli-axon') as tmp_folder:
         outfilename = Path(tmp_folder, 'out.asc')
-        tested.repair(filename, outfilename, axons=[filename])
+        test_module.repair(filename, outfilename, axons=[filename])
         neuron_in = load_neuron(filename)
         neuron_out = load_neuron(outfilename)
         axon = neuron_out.section(40)
@@ -325,7 +325,7 @@ def test_repair_no_intact_axon():
     filename = DATA_PATH / 'no-intact-basals.h5'
     with TemporaryDirectory('test-cli-axon') as tmp_folder:
         outfilename = Path(tmp_folder, 'out.asc')
-        tested.repair(filename, outfilename, axons=[filename])
+        test_module.repair(filename, outfilename, axons=[filename])
 
 
 def test_legacy_compare_with_legacy_result():
@@ -336,7 +336,7 @@ def test_legacy_compare_with_legacy_result():
     The arguments are the one used in the legacy morphology workflow.
     '''
     neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
-    obj = tested.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
+    obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
 
     cut_sections = [point_to_section_segment(neuron, point)[0]
                     for point in obj.cut_leaves]
