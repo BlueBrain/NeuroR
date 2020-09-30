@@ -375,3 +375,16 @@ def test_legacy_compare_with_legacy_result():
     expected_tufts = {135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216}
     actual_tufts = {section.id + offset for section in types[RepairType.tuft]}
     assert_equal(actual_tufts, expected_tufts)
+
+
+    expected_axons = {1, 2, 77, 3, 70, 4, 59, 5, 46, 6, 41, 7, 40, 8, 39, 9, 38, 10, 19, 11, 16, 12, 15, 13, 14, 17, 18, 20, 37, 21, 34, 22, 31, 23, 28, 24, 27, 25, 26, 29, 30, 32, 33, 35, 36, 42, 45, 43, 44, 47, 58, 48, 53, 49, 52, 50, 51, 54, 55, 56, 57, 60, 69, 61, 66, 62, 63, 64, 65, 67, 68, 71, 76, 72, 75, 73, 74, 78, 83, 79, 82, 80, 81, 84, 85, 86, 89, 87, 88}
+    actual_axons = {section.id + offset for section in types[RepairType.axon]}
+    assert_equal(actual_axons, expected_axons)
+
+
+    intacts = obj._find_intact_sub_trees()
+    assert_equal(list(filter(lambda sec: obj.repair_type_map[sec] == RepairType.trunk, intacts)),
+                 [])
+    assert_equal(list(filter(lambda sec: obj.repair_type_map[sec] == RepairType.oblique, intacts)),
+                 [])
+    print({sec.type for sec in intacts})
