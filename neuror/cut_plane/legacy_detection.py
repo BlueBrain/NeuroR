@@ -4,6 +4,7 @@ As implemented in:
 https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
 '''
 import logging
+import numpy as np
 
 from neurom import iter_sections
 from neurom.core import Tree
@@ -51,4 +52,4 @@ def cut_detect(neuron, axis):
         if coord[axis] * sign > offset:
             cut_leaves.append(coord)
 
-    return cut_leaves, sign
+    return np.array(cut_leaves), sign
