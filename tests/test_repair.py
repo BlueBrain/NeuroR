@@ -331,18 +331,19 @@ def test_repair_no_intact_axon():
 def test_legacy_compare_with_legacy_result():
     '''Comparing results with the old repair launch with the following commands:
 
-    repair --dounravel 0 --inputdir /gpfs/bbp.cscs.ch/project/proj83/home/bcoste/release/out-new/01_ConvertMorphologies --input rp120430_P-2_idA --overlap=true --incremental=false --restrict=true --distmethod=mirror
+    repair --dounravel 0 --inputdir /gpfs/bbp.cscs.ch/project/proj83/home/gevaert/morph-release/morph_release_old_code-2020-07-27/output/04_ZeroDiameterFix --input rp120430_P-2_idA --overlap=true --incremental=false --restrict=true --distmethod=mirror
 
     The arguments are the one used in the legacy morphology workflow.
     '''
     neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
 
-    cut_sections = [point_to_section_segment(neuron, point)[0]
-                    for point in obj.cut_leaves]
+    cut_sections = {point_to_section_segment(neuron, point)[0]
+                    for point in obj.cut_leaves}
 
-    legacy_cut_sections = [13,14,17,18,38,39,40,45,58,67,68,69,73,75,76,93,94,101,102,103,105,106,109,110,111,120,124,125,148,149,150,156,157,158,162,163,164,166,167,168,169,192,202,203,205,206,208]
-    assert_array_equal(cut_sections, legacy_cut_sections)
+    legacy_cut_sections = {13,14,17,18,38,39,40,45,58,67,68,69,73,75,76,93,94,101,102,103,105,106,109,110,111,120,124,125,148,149,150,156,157,158,162,163,164,166,167,168,169,192,202,203,205,206,208}
+    legacy_cut_sections = {13,14,17,18,38,39,40,45,58,67,68,69,73,75,76,93,94,101,102,103,105,106,109,110,111,120,124,125,148,149,150,156,157,158,162,163,164,166,167,168,169,192,201,202,203,205,206,208}
+    assert_equal(cut_sections, legacy_cut_sections)
 
     obj._fill_repair_type_map()
 
@@ -382,9 +383,14 @@ def test_legacy_compare_with_legacy_result():
     assert_equal(actual_axons, expected_axons)
 
 
-    intacts = obj._find_intact_sub_trees()
-    assert_equal(list(filter(lambda sec: obj.repair_type_map[sec] == RepairType.trunk, intacts)),
+    intacts = defaultdict(list)
+
+    for sec in obj._find_intact_sub_trees():
+        intacts[obj.repair_type_map[sec]].append(sec)
+
+    assert_equal([sec.id + offset for sec in intacts[RepairType.trunk]],
                  [])
-    assert_equal(list(filter(lambda sec: obj.repair_type_map[sec] == RepairType.oblique, intacts)),
-                 [])
-    print({sec.type for sec in intacts})
+    assert_equal([sec.id + offset for sec in intacts[RepairType.oblique]],
+                 [217])
+    assert_equal({sec.id + offset for sec in intacts[RepairType.tuft]},
+                 {135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 151, 152, 153, 154, 155, 159, 160, 161, 165, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 193, 194, 195, 196, 197, 198, 199, 200, 204, 207, 209, 210, 211, 212, 213, 214, 215, 216})
