@@ -22,7 +22,7 @@ from scipy.spatial.distance import cdist
 
 from neuror import axon
 from neuror.cut_plane import CutPlane
-from neuror.utils import direction, rotation_matrix, section_length
+from neuror.utils import direction, rotation_matrix, section_length, repair_type_map
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
@@ -43,19 +43,6 @@ class Action(Enum):
     BIFURCATION = 1
     CONTINUATION = 2
     TERMINATION = 3
-
-
-class RepairType(Enum):
-    '''The types used for the repair.
-
-    based on
-    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22
-    '''
-    trunk = 0
-    tuft = 1
-    oblique = 2
-    basal = 3
-    axon = 4
 
 
 def is_cut_section(section, cut_points):
@@ -608,21 +595,7 @@ class Repair(object):
 
         Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n242  # noqa, pylint: disable=line-too-long
         '''
-        for section in iter_sections(self.neuron):
-            if section.type == SectionType.apical_dendrite:
-                self.repair_type_map[section] = RepairType.oblique
-            elif section.type == SectionType.basal_dendrite:
-                self.repair_type_map[section] = RepairType.basal
-            elif section.type == SectionType.axon:
-                self.repair_type_map[section] = RepairType.axon
-
-        if self.apical_section is not None:
-            for section in self.apical_section.ipreorder():
-                self.repair_type_map[section] = RepairType.tuft
-
-            # The value for the apical section must be overriden to 'trunk'
-            for section in self.apical_section.iupstream():
-                self.repair_type_map[section] = RepairType.trunk
+        self.repair_type_map = repair_type_map(self.neuron, self.apical_section)
 
 
 def repair(inputfile: Path,
