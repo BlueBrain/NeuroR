@@ -17,7 +17,20 @@ from neuror.utils import repair_type_map, RepairType
 L = logging.getLogger(__name__)
 
 
-def internal_cut_detection(neuron, axis, offset):
+def ids(sections):
+    print([sec.id for sec in sections])
+
+
+def children_ids(section):
+    '''
+        https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#111
+
+    Except that it returns section instead of ids
+
+    '''
+    return list(section.ipreorder())
+
+def internal_cut_detection(neuron, axis):
     '''As in:
 
     https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
@@ -25,39 +38,35 @@ def internal_cut_detection(neuron, axis, offset):
 '''
     axis = {'x': COLS.X, 'y': COLS.Y, 'z': COLS.Z}[axis.lower()]
 
-    side = cut_detect(neuron, axis, 0)
-
     cut = defaultdict(lambda key: False)
+    side = cut_detect(neuron, cut, 0, axis)
 
     # reclassify cut points in tuft,based on apical point position
     apical_section_id, point_id = apical_point_section_segment(neuron)
     if apical_section_id is not None:
         apical_section = neuron.sections[apical_section_id]
         apical_offset = apical_section.points[point_id, axis]
-        cut_mark(apical_section.children, cut, apical_offset, side, axis)
+        cut_mark(children_ids(apical_section), cut, apical_offset, side, axis)
     else:
         apical_section = None
 
     extended_types = repair_type_map(neuron, apical_section)
     oblique_roots = get_obliques(neuron, extended_types)
 
+
     # reclassify points in obliques. based on the position of their root.
     for root in oblique_roots:
         offset = root.points[0]
 
         # z is hard coded in the original code as well
-        cut_mark(root.children, cut, 'z', side, axis)
+        cut_mark(root.children, cut, offset[COLS.Z], side, axis)
 
-    cut_leaves = list()
-    for leaf in iter_sections(neuron, iterator_type=Tree.ileaf):
-        coord = leaf.points[-1, COLS.XYZ]
-        if coord[axis] * side > offset:
-            cut_leaves.append(coord)
+    cut_leaves = np.array([sec.points[-1, COLS.XYZ] for sec, is_cut in cut.items() if is_cut])
 
-    return np.array(cut_leaves), side
+    return cut_leaves, side
 
 
-def cut_detect(neuron, axis, offset):
+def cut_detect(neuron, cut, offset, axis):
     '''Detect the cut leaves the old way
 
     The cut leaves are simply the leaves that live
@@ -83,6 +92,9 @@ def cut_detect(neuron, axis, offset):
     else:
         sign = -1
 
+    for leaf in iter_sections(neuron, iterator_type=Tree.ileaf):
+        if leaf.points[-1, axis] * sign > offset:
+            cut[leaf] = True
 
     return sign
 
@@ -90,7 +102,6 @@ def get_obliques(neuron, repair_type_map):
     '''https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#212'''
     return [section for section in iter_sections(neuron)
             if (repair_type_map[section] == RepairType.oblique and
-                not section.is_root and
                 repair_type_map[section.parent] == RepairType.trunk)]
 
 def cut_mark(sections, cut, offset, side, axis):
@@ -113,7 +124,5 @@ def cut_mark(sections, cut, offset, side, axis):
                 break
             mysec = mysec.parent
 
-        cut[sec] = ((r - offset) * side > 0 and \
-                    not growing_back and \
-                    sec.segments().size() > 1)
+        cut[sec] = (r - offset) * side > 0 and not growing_back
     return cut

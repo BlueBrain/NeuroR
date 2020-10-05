@@ -16,7 +16,7 @@ from scipy.optimize import minimize
 from scipy.special import factorial
 
 from neuror.cut_plane.planes import HalfSpace, PlaneEquation
-from neuror.cut_plane.legacy_detection import cut_detect
+from neuror.cut_plane.legacy_detection import internal_cut_detection
 
 L = logging.getLogger(__name__)
 
@@ -168,7 +168,7 @@ class CutPlane(HalfSpace):
         if not isinstance(neuron, Neuron):
             neuron = load_neuron(neuron)
 
-        cut_leaves, side = cut_detect(neuron, axis)
+        cut_leaves, side = internal_cut_detection(neuron, axis)
 
         plane = cls([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
                      int(axis.upper() == 'Z'), 0],

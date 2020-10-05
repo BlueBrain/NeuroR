@@ -22,7 +22,7 @@ from scipy.spatial.distance import cdist
 
 from neuror import axon
 from neuror.cut_plane import CutPlane
-from neuror.utils import direction, rotation_matrix, section_length, repair_type_map
+from neuror.utils import direction, rotation_matrix, section_length, repair_type_map, RepairType
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10

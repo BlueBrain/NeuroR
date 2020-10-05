@@ -12,7 +12,8 @@ from nose.tools import assert_dict_equal, assert_equal, ok_
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.main as test_module
-from neuror.main import Action, Repair, RepairType
+from neuror.main import Action, Repair
+from neuror.utils import RepairType
 
 DATA_PATH = Path(__file__).parent / 'data'
 

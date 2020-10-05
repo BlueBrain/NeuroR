@@ -23,8 +23,6 @@ class RepairType(Enum):
     axon = 4
 
 
-
-
 def repair_type_map(neuron, apical_section):
     extended_types = dict()
     for section in iter_sections(neuron):
