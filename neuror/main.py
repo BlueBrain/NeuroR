@@ -394,7 +394,7 @@ class Repair(object):
         obliques = self._find_intact_obliques()
 
         tufts = [section.id for section in iter_sections(self.neuron)
-                 if (self.repair_type_map[section] == RepairType.tuft)]
+                 if self.repair_type_map[section] == RepairType.tuft]
         tufts = [section for section in iter_sections(self.neuron)
                  if (self.repair_type_map[section] == RepairType.tuft and
                      not is_cut_section(section, self.cut_leaves))]

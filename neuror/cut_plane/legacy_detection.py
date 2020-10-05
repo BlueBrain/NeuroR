@@ -4,31 +4,28 @@ As implemented in:
 https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
 '''
 import logging
-import numpy as np
 from collections import defaultdict
 
+import numpy as np
 from morph_tool import apical_point_section_segment
 from neurom import iter_sections
 from neurom.core import Tree
 from neurom.core.dataformat import COLS
 
-from neuror.utils import repair_type_map, RepairType
+from neuror.utils import RepairType, repair_type_map
 
 L = logging.getLogger(__name__)
 
 
-def ids(sections):
-    print([sec.id for sec in sections])
-
-
 def children_ids(section):
     '''
-        https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#111
+    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#111
 
     Except that it returns section instead of ids
 
     '''
     return list(section.ipreorder())
+
 
 def internal_cut_detection(neuron, axis):
     '''As in:
@@ -52,7 +49,6 @@ def internal_cut_detection(neuron, axis):
 
     extended_types = repair_type_map(neuron, apical_section)
     oblique_roots = get_obliques(neuron, extended_types)
-
 
     # reclassify points in obliques. based on the position of their root.
     for root in oblique_roots:
@@ -98,14 +94,20 @@ def cut_detect(neuron, cut, offset, axis):
 
     return sign
 
-def get_obliques(neuron, repair_type_map):
-    '''https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#212'''
+
+def get_obliques(neuron, extended_types):
+    '''
+    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#212
+    '''
     return [section for section in iter_sections(neuron)
-            if (repair_type_map[section] == RepairType.oblique and
-                repair_type_map[section.parent] == RepairType.trunk)]
+            if (extended_types[section] == RepairType.oblique and
+                extended_types[section.parent] == RepairType.trunk)]
+
 
 def cut_mark(sections, cut, offset, side, axis):
-    '''https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#654'''
+    '''
+    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#654
+    '''
     for sec in sections:
         if sec.children:
             cut[sec] = False

@@ -10,6 +10,7 @@ from morphio import SectionType
 
 L = logging.getLogger('neuror')
 
+
 class RepairType(Enum):
     '''The types used for the repair.
 
@@ -24,6 +25,7 @@ class RepairType(Enum):
 
 
 def repair_type_map(neuron, apical_section):
+    '''Return a dict of extended types'''
     extended_types = dict()
     for section in iter_sections(neuron):
         if section.type == SectionType.apical_dendrite:
