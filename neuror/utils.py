@@ -1,12 +1,48 @@
 '''Utils module'''
 import logging
 import json
+from enum import Enum
 
 import numpy as np
 
-from neurom import NeuriteType
+from neurom import NeuriteType, iter_sections
+from morphio import SectionType
 
 L = logging.getLogger('neuror')
+
+
+class RepairType(Enum):
+    '''The types used for the repair.
+
+    based on
+    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22
+    '''
+    trunk = 0
+    tuft = 1
+    oblique = 2
+    basal = 3
+    axon = 4
+
+
+def repair_type_map(neuron, apical_section):
+    '''Return a dict of extended types'''
+    extended_types = dict()
+    for section in iter_sections(neuron):
+        if section.type == SectionType.apical_dendrite:
+            extended_types[section] = RepairType.oblique
+        elif section.type == SectionType.basal_dendrite:
+            extended_types[section] = RepairType.basal
+        elif section.type == SectionType.axon:
+            extended_types[section] = RepairType.axon
+
+    if apical_section is not None:
+        for section in apical_section.ipreorder():
+            extended_types[section] = RepairType.tuft
+
+        # The value for the apical section must be overriden to 'trunk'
+        for section in apical_section.iupstream():
+            extended_types[section] = RepairType.trunk
+    return extended_types
 
 
 def unit_vector(vector):
