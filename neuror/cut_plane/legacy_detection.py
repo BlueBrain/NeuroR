@@ -21,45 +21,10 @@ def children_ids(section):
     '''
     https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#111
 
-    Except that it returns section instead of ids
-
+    The original code returns the ids of the descendant sections
+    but this implementation return the Section objects instead.
     '''
     return list(section.ipreorder())
-
-
-def internal_cut_detection(neuron, axis):
-    '''As in:
-
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
-
-'''
-    axis = {'x': COLS.X, 'y': COLS.Y, 'z': COLS.Z}[axis.lower()]
-
-    cut = defaultdict(lambda key: False)
-    side = cut_detect(neuron, cut, 0, axis)
-
-    # reclassify cut points in tuft,based on apical point position
-    apical_section_id, point_id = apical_point_section_segment(neuron)
-    if apical_section_id is not None:
-        apical_section = neuron.sections[apical_section_id]
-        apical_offset = apical_section.points[point_id, axis]
-        cut_mark(children_ids(apical_section), cut, apical_offset, side, axis)
-    else:
-        apical_section = None
-
-    extended_types = repair_type_map(neuron, apical_section)
-    oblique_roots = get_obliques(neuron, extended_types)
-
-    # reclassify points in obliques. based on the position of their root.
-    for root in oblique_roots:
-        offset = root.points[0]
-
-        # z is hard coded in the original code as well
-        cut_mark(root.children, cut, offset[COLS.Z], side, axis)
-
-    cut_leaves = np.array([sec.points[-1, COLS.XYZ] for sec, is_cut in cut.items() if is_cut])
-
-    return cut_leaves, side
 
 
 def cut_detect(neuron, cut, offset, axis):
@@ -93,6 +58,44 @@ def cut_detect(neuron, cut, offset, axis):
             cut[leaf] = True
 
     return sign
+
+
+def internal_cut_detection(neuron, axis):
+    '''As in:
+
+    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+
+    Use cut_detect to get the side of the half space the points live in.
+    Then mark points which are children of the apical section.
+
+'''
+    axis = {'x': COLS.X, 'y': COLS.Y, 'z': COLS.Z}[axis.lower()]
+
+    cut = defaultdict(lambda key: False)
+    side = cut_detect(neuron, cut, 0, axis)
+
+    # reclassify cut points in tuft,based on apical point position
+    apical_section_id, point_id = apical_point_section_segment(neuron)
+    if apical_section_id is not None:
+        apical_section = neuron.sections[apical_section_id]
+        apical_offset = apical_section.points[point_id, axis]
+        cut_mark(children_ids(apical_section), cut, apical_offset, side, axis)
+    else:
+        apical_section = None
+
+    extended_types = repair_type_map(neuron, apical_section)
+    oblique_roots = get_obliques(neuron, extended_types)
+
+    # reclassify points in obliques. based on the position of their root.
+    for root in oblique_roots:
+        offset = root.points[0]
+
+        # FIXME: z is hard coded in the original code as well. It's probably a bug.
+        cut_mark(root.children, cut, offset[COLS.Z], side, axis)
+
+    cut_leaves = np.array([sec.points[-1, COLS.XYZ] for sec, is_cut in cut.items() if is_cut])
+
+    return cut_leaves, side
 
 
 def get_obliques(neuron, extended_types):
