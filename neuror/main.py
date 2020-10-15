@@ -491,13 +491,24 @@ class Repair(object):
                     section.points[[0, -1], COLS.XYZ] - origin, axis=1) // SHOLL_LAYER_SIZE).astype(
                         int)
                 per_type = data[repair_type]
-                for layer in range(min(first_layer, last_layer), max(first_layer, last_layer) + 1):
+
+                starting_layer = min(first_layer, last_layer)
+
+                # TODO: why starting_layer + 1 and not starting_layer ?
+                # bcoste The continuation from the starting layer should be taken into account
+                # But that's how it is done in:
+                # https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/morphstats.cpp#88
+                for layer in range(starting_layer + 1, max(first_layer, last_layer)):
                     if order not in per_type[layer]:
                         per_type[layer][order] = {Action.TERMINATION: 0,
                                                   Action.CONTINUATION: 0,
                                                   Action.BIFURCATION: 0}
                     per_type[layer][order][Action.CONTINUATION] += 1
 
+                if order not in per_type[last_layer]:
+                    per_type[last_layer][order] = {Action.TERMINATION: 0,
+                                                   Action.CONTINUATION: 0,
+                                                   Action.BIFURCATION: 0}
                 per_type[last_layer][order][Action.BIFURCATION if section.children else
                                             Action.TERMINATION] += 1
         return data

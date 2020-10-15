@@ -15,6 +15,8 @@ import neuror.main as test_module
 from neuror.main import Action, Repair
 from neuror.utils import RepairType
 
+from .expected_sholl_stats import SHOLL_STATS
+
 DATA_PATH = Path(__file__).parent / 'data'
 
 SIMPLE_PATH = DATA_PATH / 'simple.swc'
@@ -228,16 +230,16 @@ def test__compute_sholl_data():
     branches = [neurite.root_node for neurite in obj.neuron.neurites]
     sholl_data = obj._compute_sholl_data(branches)
     assert_dict_equal(sholl_data[RepairType.basal][0][0],
-                      {Action.TERMINATION: 0, Action.CONTINUATION: 1, Action.BIFURCATION: 1})
+                      {Action.TERMINATION: 0, Action.CONTINUATION: 0, Action.BIFURCATION: 1})
     assert_dict_equal(sholl_data[RepairType.basal][0][1],
-                      {Action.TERMINATION: 2, Action.CONTINUATION: 2, Action.BIFURCATION: 0})
+                      {Action.TERMINATION: 2, Action.CONTINUATION: 0, Action.BIFURCATION: 0})
     assert_dict_equal(sholl_data[RepairType.oblique], {})
     assert_dict_equal(sholl_data[RepairType.axon],
                       {0: {0: {Action.BIFURCATION: 1,
-                               Action.CONTINUATION: 1,
+                               Action.CONTINUATION: 0,
                                Action.TERMINATION: 0},
                            1: {Action.BIFURCATION: 0,
-                               Action.CONTINUATION: 2,
+                               Action.CONTINUATION: 0,
                                Action.TERMINATION: 2}}})
 
 
@@ -394,3 +396,30 @@ def test_legacy_compare_with_legacy_result():
                  [217])
     assert_equal({sec.id + offset for sec in intacts[RepairType.tuft]},
                  {135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 151, 152, 153, 154, 155, 159, 160, 161, 165, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 193, 194, 195, 196, 197, 198, 199, 200, 204, 207, 209, 210, 211, 212, 213, 214, 215, 216})
+
+
+def test_legacy_sholl_data():
+    '''Comparing results with the old repair launch with the following commands:
+
+    repair --dounravel 0 --inputdir /gpfs/bbp.cscs.ch/project/proj83/home/gevaert/morph-release/morph_release_old_code-2020-07-27/output/04_ZeroDiameterFix --input rp120430_P-2_idA --overlap=true --incremental=false --restrict=true --distmethod=mirror
+
+    The arguments are the one used in the legacy morphology workflow.
+    '''
+    neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
+    obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
+    obj._fill_repair_type_map()
+    obj._fill_statistics_for_intact_subtrees()
+
+    key_mapping = {
+        'basal': RepairType.basal,
+        'oblique': RepairType.oblique,
+        'tuft': RepairType.tuft
+    }
+    expected_stats = {key_mapping[k]: v for k,v in SHOLL_STATS.items()}
+
+    flattened = {(i, j): [obj.info['sholl'][RepairType.oblique][i][j][action] for action in
+                          [Action.BIFURCATION, Action.CONTINUATION, Action.TERMINATION]]
+                 for i in obj.info['sholl'][RepairType.oblique].keys()
+                 for j in obj.info['sholl'][RepairType.oblique][i].keys()}
+
+    assert_dict_equal(flattened, expected_stats[RepairType.oblique])
