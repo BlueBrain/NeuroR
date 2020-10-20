@@ -423,3 +423,56 @@ def test_legacy_sholl_data():
                  for j in obj.info['sholl'][RepairType.oblique][i].keys()}
 
     assert_dict_equal(flattened, expected_stats[RepairType.oblique])
+
+def test_legacy_compare_with_legacy_result2():
+    '''Comparing results with the old repair launch with the following commands:
+
+    repair --dounravel 0 --inputdir /gpfs/bbp.cscs.ch/project/proj83/home/gevaert/morph-release/morph_release_old_code-2020-07-27/output/04_ZeroDiameterFix --input vd100714B_idB --overlap=true --incremental=false --restrict=true --distmethod=mirror
+
+    The arguments are the one used in the legacy morphology workflow.
+    '''
+    neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5')
+    obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5', legacy_detection=True)
+
+    cut_sections = {point_to_section_segment(neuron, point)[0]
+                    for point in obj.cut_leaves}
+
+    legacy_cut_sections = {62,64,65,69,73,77,78,85,87,88,89,91,93,94,115,116,119,120,125,126,130,133,136,137,138,140,142,144,145,147,150,151,152,159,165,171,172,175,177,179,180,182,184,188,191,200,202,204,205,207,208,209,211,215,217,218,219,220,238,239,241,247,248,250,251,252,253,256,257,258,261,262,264,266,267,283,288,289,290,291,293,294,295,316,318,320,322,324,326,328,330,331,337,338,339,340,343,344,345,351,357,359,362,363,371,372,375,377,378,384,385,386,387,388,390,391,394,416,426,427,429,430,431,438,439,440,441,453,466,468,470,471,481,486,487,488,489,527,528,529,533,534,538,540,541,543,545,548,549,551,572,573,574,576,577,581,583,584,588,595,596,598,599,602,607,608,609,610,613,614,615,617,620,622,623,624,626,637,639,640,645,647,648,649,650,653,654,665,666,667,670,677,678,679,680,689,691,693,694,703,716,717,721,723,725,726}
+    assert_equal(cut_sections, legacy_cut_sections)
+
+    obj._fill_repair_type_map()
+
+    types = defaultdict(list)
+    for k, v in obj.repair_type_map.items():
+        types[v].append(k)
+
+
+    # offset due to the first section id in the old soft being the soma
+    offset = 1
+
+    assert_equal(obj.apical_section, None)
+
+    assert_equal({section.id + offset for section in types[RepairType.basal]},
+                 {650, 651, 668, 671, 702, 719, 652, 655, 653, 654, 656, 663, 657, 662, 658, 661, 659, 660, 664, 667, 665, 666, 669, 670, 672, 681, 673, 680, 674, 679, 675, 678, 676, 677, 682, 695, 683, 684, 685, 686, 687, 690, 688, 689, 691, 692, 693, 694, 696, 699, 697, 698, 700, 701, 703, 704, 705, 706, 707, 710, 708, 709, 711, 718, 712, 713, 714, 715, 716, 717, 720, 727, 721, 722, 723, 724, 725, 726, 728, 735, 729, 730, 731, 734, 732, 733, 736, 737, 738})
+
+    assert_array_equal([section.id + offset for section in types[RepairType.oblique]],
+                       [])
+    assert_array_equal([section.id + offset for section in types[RepairType.trunk]],
+                       [])
+
+    assert_equal({section.id + offset for section in types[RepairType.tuft]},
+                 set())
+
+    intacts = defaultdict(list)
+
+    for sec in obj._find_intact_sub_trees():
+        intacts[obj.repair_type_map[sec]].append(sec)
+
+    assert_equal([sec.id + offset for sec in intacts[RepairType.trunk]],
+                 [])
+    assert_equal([sec.id + offset for sec in intacts[RepairType.oblique]],
+                 [])
+    assert_equal({sec.id + offset for sec in intacts[RepairType.tuft]},
+                 set())
+    assert_equal({sec.id + offset for sec in intacts[RepairType.basal]},
+                 {651, 668, 671, 702, 719, 652, 655, 656, 663, 657, 662, 658, 661, 659, 660, 664, 669, 672, 681, 673, 674, 675, 676, 682, 695, 683, 684, 685, 686, 687, 690, 688, 692, 696, 699, 697, 698, 700, 701, 704, 705, 706, 707, 710, 708, 709, 711, 718, 712, 713, 714, 715, 720, 727, 722, 724, 728, 735, 729, 730, 731, 734, 732, 733, 736, 737, 738})
