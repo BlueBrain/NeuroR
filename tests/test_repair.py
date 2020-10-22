@@ -79,7 +79,7 @@ def test__find_intact_sub_trees():
     intact_sub_trees = obj._find_intact_sub_trees()
     basals = [section for section in intact_sub_trees
               if section.type == NeuriteType.basal_dendrite]
-    assert_equal(len(basals), 4)
+    assert_equal(len(basals), 78)
 
 
 def test_section_length():
