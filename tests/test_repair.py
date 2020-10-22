@@ -508,7 +508,7 @@ def test_legacy_compare_with_legacy_result2():
 
     # Since there is no apical dendrite, all of those are empty
     for extended_type in [RepairType.trunk, RepairType.oblique, RepairType.tuft]:
-        assert_equal(intacts[RepairType.trunk], [])
+        assert_equal(intacts[extended_type], [])
 
     assert_equal({sec.id + offset for sec in intacts[RepairType.basal]},
                  {651, 668, 671, 702, 719, 652, 655, 656, 663, 657, 662, 658, 661, 659, 660, 664,
