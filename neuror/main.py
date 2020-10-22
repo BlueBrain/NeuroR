@@ -386,7 +386,7 @@ class Repair(object):
             L.warning("No intact basals found. Falling back on less strict selection.")
             basals = [section for section in iter_sections(self.neuron)
                       if (section.type == NeuriteType.basal_dendrite and
-                          is_cut_section(section, self.cut_leaves))]
+                          not is_cut_section(section, self.cut_leaves))]
 
         axons = [neurite.root_node for neurite in iter_neurites(self.neuron)
                  if (neurite.type == NeuriteType.axon and
