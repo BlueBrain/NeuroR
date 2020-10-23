@@ -300,11 +300,10 @@ class Repair(object):
             else:
                 plane = CutPlane.find(axon_donor)
             keep_axons_alive.append(plane)
-            no_cut_plane = (plane.minus_log_prob < 50)
             self.donated_intact_axon_sections.extend(
                 [section for section in iter_sections(plane.morphology)
                  if section.type == SectionType.axon and
-                 (no_cut_plane or is_branch_intact(section, plane.cut_leaves_coordinates))])
+                 is_branch_intact(section, plane.cut_leaves_coordinates)])
 
         self._fill_repair_type_map()
         self._fill_statistics_for_intact_subtrees()
