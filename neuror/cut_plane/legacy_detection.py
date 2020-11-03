@@ -100,11 +100,13 @@ def internal_cut_detection(neuron, axis):
 
 def get_obliques(neuron, extended_types):
     '''
+    Returns the oblique roots.
+
     https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#212
     '''
     return [section for section in iter_sections(neuron)
             if (extended_types[section] == RepairType.oblique and
-                extended_types[section.parent] == RepairType.trunk)]
+                (section.parent is None or extended_types[section.parent] == RepairType.trunk))]
 
 
 def cut_mark(sections, cut, offset, side, axis):

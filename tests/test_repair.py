@@ -331,6 +331,14 @@ def test_repair_no_intact_axon():
         test_module.repair(filename, outfilename, axons=[filename])
 
 
+def test_repair_no_trunk():
+    '''Test repair when the morph has oblique sections but no trunk'''
+    filename = DATA_PATH / 'Fluo42_right.h5'
+    with TemporaryDirectory('test-no-trunk') as tmp_folder:
+        outfilename = Path(tmp_folder, 'out.asc')
+        test_module.repair(filename, outfilename, legacy_detection=True)
+
+
 def test_legacy_compare_with_legacy_result():
     '''Comparing results with the old repair launch with the following commands:
 
