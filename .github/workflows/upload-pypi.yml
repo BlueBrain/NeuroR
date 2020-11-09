@@ -18,8 +18,8 @@ jobs:
             python setup.py sdist
 
       - name: Publish distribution package to Test PyPI
-          uses: pypa/gh-action-pypi-publish@master
-          with:
-            user: __token__
-            password: ${{ secrets.TEST_PYPI_PASSWORD }}
-            repository_url: https://test.pypi.org/legacy/
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_PASSWORD }}
+          repository_url: https://test.pypi.org/legacy/
