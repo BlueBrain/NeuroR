@@ -3,6 +3,8 @@ name: Publish Python on TestPyPI and pypi
 #   push:
 #     tags:
 #       - '/^v\d+\.\d+\.\d+(-\S+)?$/'
+on:
+  pull_request:
 
 jobs:
   build-n-publish:
