@@ -1,8 +1,5 @@
 name: Publish Python on TestPyPI and pypi
-# on:
-#   push:
-#     tags:
-#       - '/^v\d+\.\d+\.\d+(-\S+)?$/'
+
 on:
   pull_request:
 
