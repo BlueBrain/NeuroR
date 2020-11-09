@@ -1,7 +1,9 @@
-name: Publish Python on TestPyPI and pypi
+name: Publish Python on TestPyPi
 
 on:
-  pull_request:
+  push:
+    tags:
+      - '/^v\d+\.\d+\.\d+(-\S+)?$/'
 
 jobs:
   build-n-publish:
