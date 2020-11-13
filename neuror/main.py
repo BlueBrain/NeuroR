@@ -7,7 +7,7 @@ from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 from nptyping import NDArray
 
 import neurom as nm
@@ -243,15 +243,19 @@ class Repair(object):
                  axons: Optional[Path] = None,
                  seed: Optional[int] = 0,
                  cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
-                 legacy_detection: bool = False):
+                 legacy_detection: bool = False,
+                 repair_flags: Optional[Dict[RepairType, bool]] = None):
         '''Repair the input morphology
 
         Args:
             inputfile: the input neuron to repair
             axons: donor axons whose section will be used to repair this axon
             seed: the numpy seed
+            cut_leaves_coordinates: List of 3D coordinates from which to start the repair
             legacy_detection: if True, use the legacy cut plane detection
                 (see neuror.legacy_detection)
+            repair_flags: a dict of flags where key is a RepairType and value is whether
+                it should be repaired or not. If not provided, all types will be repaired.
 
         Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
         '''
@@ -260,6 +264,7 @@ class Repair(object):
         self.inputfile = inputfile
         self.axon_donors = axons or list()
         self.donated_intact_axon_sections = list()
+        self.repair_flags = repair_flags or dict()
 
         if legacy_detection:
             self.cut_leaves = CutPlane.find_legacy(inputfile, 'z').cut_leaves_coordinates
@@ -281,7 +286,7 @@ class Repair(object):
         else:
             self.apical_section = None
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-branches
     def run(self,
             outputfile: Path,
             plot_file: Optional[Path] = None):
@@ -329,6 +334,8 @@ class Repair(object):
 
         for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
             type_ = self.repair_type_map[section]
+            if not self.repair_flags.get(type_, True):
+                continue
             L.info('Repairing: %s, section id: %s', type_, section.id)
             if type_ in {RepairType.basal, RepairType.oblique, RepairType.tuft}:
                 origin = self._get_origin(section)
@@ -612,7 +619,8 @@ def repair(inputfile: Path,
            seed: int = 0,
            cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
            legacy_detection: bool = False,
-           plot_file: Optional[Path] = None):
+           plot_file: Optional[Path] = None,
+           repair_flags: Optional[Dict[RepairType, bool]] = None):
     '''The repair function
 
     Args:
@@ -621,6 +629,9 @@ def repair(inputfile: Path,
         axons: the axons
         seed: the numpy seed
         cut_leaves_coordinates: List of 3D coordinates from which to start the repair
+        plot_file: the filename of the plot
+        repair_flags: a dict of flags where key is a RepairType and value is whether
+            it should be repaired or not. If not provided, all types will be repaired.
     '''
     ignored_warnings = (
         # We append the section at the wrong place and then we reposition them
@@ -640,7 +651,7 @@ def repair(inputfile: Path,
     if axons is None:
         axons = list()
     obj = Repair(inputfile, axons=axons, seed=seed, cut_leaves_coordinates=cut_leaves_coordinates,
-                 legacy_detection=legacy_detection)
+                 legacy_detection=legacy_detection, repair_flags=repair_flags)
     obj.run(outputfile, plot_file=plot_file)
 
     for warning in ignored_warnings:

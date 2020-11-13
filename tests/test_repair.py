@@ -323,6 +323,18 @@ def test_repair_axon():
                            neuron_out.section(40).points[0])
         ok_(len(neuron_out.section(40).points) > len(neuron_in.section(40).points))
 
+        # Test disactivating the axon repair
+        repair_flags = {RepairType.axon: False}
+        test_module.repair(filename, outfilename, axons=[filename], repair_flags=repair_flags)
+        neuron_out = load_neuron(outfilename)
+        axon = neuron_out.section(40)
+        ok_(axon.type == NeuriteType.axon)
+        assert_array_equal(neuron_in.section(40).points[0],
+                           neuron_out.section(40).points[0])
+
+        ok_(len(neuron_out.section(40).points) == len(neuron_in.section(40).points),
+            'The section should not have been regrown')
+
 
 def test_repair_no_intact_axon():
     filename = DATA_PATH / 'no-intact-basals.h5'
