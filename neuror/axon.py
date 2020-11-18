@@ -145,10 +145,16 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
 
         L.info("Pasting axon branch with ID %s", branch.id)
 
+        end_point = section.points[-1, COLS.XYZ]
         appended = section.append_section(branch)
         translation = section.points[-1, COLS.XYZ] - appended.points[0, COLS.XYZ]
         align(appended, translation)
         translate(appended, translation)
+
+        # Make sure the child section first point is exactly the end point of the parent section
+        appended_points = np.copy(appended.points)
+        appended_points[0] = end_point
+        appended.points = appended_points
 
         if any(np.any(section.points[:, COLS.Y] > y_extent) for section in appended.iter()):
             L.info("Discarded, exceeds y-limit")
