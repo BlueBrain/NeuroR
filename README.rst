@@ -88,15 +88,6 @@ The unravelling CLI sub-group is:
 
    neuror unravel
 
-.. admonition:: Info
-   :class: info
-
-   Unravelling is also part of the "full" process that performs unravelling and cut plane repair.
-   The corresponding CLI is:
-
-   .. code-block:: shell
-
-      neuror cut-plane repair full
 
 The unravelling algorithm can be described as follows:
 
