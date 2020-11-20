@@ -335,6 +335,7 @@ class Repair(object):
         for section in sorted(cut_sections_in_bounding_cylinder, key=section_path_length):
             type_ = self.repair_type_map[section]
             if not self.repair_flags.get(type_, True):
+                L.debug('Skipping repair because of the flag for type: %s', type_)
                 continue
             L.info('Repairing: %s, section id: %s', type_, section.id)
             if type_ in {RepairType.basal, RepairType.oblique, RepairType.tuft}:
