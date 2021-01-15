@@ -21,7 +21,6 @@ def iter_morphologies(folder):
     '''Recursively yield morphology files in folder and its sub-directories.'''
     return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
 
-
 class CorruptedMorphology(Exception):
     '''Exception for morphologies that should not be used'''
 
@@ -89,7 +88,7 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
     '''
     set_maximum_warnings(0)
 
-    morphologies = list(iter_morphologies(Path(input_folder)))
+    morphologies = iter_morphology_files(input_folder)
     func = partial(_sanitize_one, input_folder=input_folder, output_folder=output_folder)
     if nprocesses == 1:
         results = map(func, morphologies)
