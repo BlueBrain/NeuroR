@@ -9,17 +9,13 @@ import numpy as np
 from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
 from tqdm import tqdm
+from morph_tool.utils import iter_morphology_files
 
 L = logging.getLogger('neuror')
 
 
 class CorruptedMorphology(Exception):
     '''Exception for morphologies that should not be used'''
-
-
-def iter_morphologies(folder):
-    '''Recursively yield morphology files in folder and its sub-directories.'''
-    return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
 
 
 def sanitize(input_neuron, output_path):
@@ -85,7 +81,7 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
     '''
     set_maximum_warnings(0)
 
-    morphologies = list(iter_morphologies(Path(input_folder)))
+    morphologies = iter_morphology_files(input_folder)
     func = partial(_sanitize_one, input_folder=input_folder, output_folder=output_folder)
     if nprocesses == 1:
         results = map(func, morphologies)
