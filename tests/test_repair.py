@@ -466,6 +466,11 @@ def test_legacy_sholl_data():
 
     assert_dict_equal(flattened, expected_stats[RepairType.oblique])
 
+def test_repair_only_axon():
+    '''Test repairing a morph which has only an axon (but no dendrites) does not crash'''
+    test_module.Repair(DATA_PATH / 'just-axon.asc')
+    ok_(True)
+
 def test_legacy_compare_with_legacy_result2():
     '''Comparing results with the old repair launch with the following commands:
 

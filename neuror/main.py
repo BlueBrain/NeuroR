@@ -8,21 +8,21 @@ from enum import Enum
 from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Optional
-from nptyping import NDArray
 
+import morphio
 import neurom as nm
 import numpy as np
 from morph_tool import apical_point_section_segment
-import morphio
 from morphio import PointLevel, SectionType
 from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
+from nptyping import NDArray
 from scipy.spatial.distance import cdist
 
 from neuror import axon
 from neuror.cut_plane import CutPlane
-from neuror.utils import direction, rotation_matrix, section_length, repair_type_map, RepairType
+from neuror.utils import RepairType, direction, repair_type_map, rotation_matrix, section_length
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
@@ -209,6 +209,9 @@ def _continuation(sec, origin):
         radial_direction = sec.points[1, COLS.XYZ] - sec.points[0, COLS.XYZ]
         radial_direction /= np.linalg.norm(radial_direction)
 
+    # NOTE: This is not an equiprobability uniform generator
+    # It is not drawing a point inside a sphere but a cube.
+    # so the probability of drawing in direction of the corners is higher
     noise_direction = (2 * np.random.random(size=3) - 1)
 
     direction_ = section_direction + \
@@ -231,8 +234,9 @@ def _y_cylindrical_extent(section):
 
 def _max_y_dendritic_cylindrical_extent(neuron):
     '''Return the maximum distance of dendritic section ends and the origin in the XZ plane'''
-    return max(_y_cylindrical_extent(section) for section in neuron.iter()
-               if section.type in {SectionType.basal_dendrite, SectionType.apical_dendrite})
+    return max((_y_cylindrical_extent(section) for section in neuron.iter()
+                if section.type in {SectionType.basal_dendrite, SectionType.apical_dendrite}),
+               default=0)
 
 
 class Repair(object):
