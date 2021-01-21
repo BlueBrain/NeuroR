@@ -101,9 +101,9 @@ class CutPlane(HalfSpace):
         to the coordinate of the first and last point of the neuron.
 
         Description of the algorithm:
+
         1) The distribution of all points along X, Y and Z is computed
            and put into 3 histograms.
-
         2) For each histogram we look at the first and last empty bins
            (ie. the last bin before the histogram starts rising,
            and the first after it reaches zero again). Under the assumption
@@ -195,13 +195,15 @@ class CutPlane(HalfSpace):
 
     def to_json(self):
         '''Return a dictionary with the following items:
-            status: 'ok' if everything went right, else an informative string
-            cut_plane: a tuple (plane, position) where 'plane' is 'X', 'Y' or 'Z'
+
+            - status: 'ok' if everything went right, else an informative string
+            - cut_plane: a tuple (plane, position) where 'plane' is 'X', 'Y' or 'Z'
                        and 'position' is the position
-            cut_leaves: an np.array of all termination points in the cut plane
-            figures: if 'display' option was used, a dict where values are tuples (fig, ax)
+            - cut_leaves: an np.array of all termination points in the cut plane
+            - figures: if 'display' option was used, a dict where values are tuples (fig, ax)
                      for each figure
-            details: A dict currently only containing -LogP of the bin where the cut plane was found
+            - details: A dict currently only containing -LogP of the bin where the cut plane was
+                     found
         '''
         return {'cut-leaves': self.cut_leaves_coordinates,
                 'status': self.status,

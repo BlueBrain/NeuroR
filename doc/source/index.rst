@@ -6,5 +6,6 @@
 
    Home <self>
    commands
+   api
 
 .. |banner| image:: /_images/BlueBrainNeuroR.png
