@@ -1,16 +1,15 @@
 '''Module for the sanitization of raw morphologies.'''
 import logging
-from pathlib import Path
-from multiprocessing import Pool
 from functools import partial
-
-import numpy as np
-from tqdm import tqdm
+from multiprocessing import Pool
+from pathlib import Path
 
 import morphio
-from morphio import MorphioError, set_maximum_warnings, SomaType
+import numpy as np
+from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
 from morph_tool.utils import iter_morphology_files
+from tqdm import tqdm
 
 L = logging.getLogger('neuror')
 

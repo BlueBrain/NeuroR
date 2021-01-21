@@ -6,8 +6,8 @@ from operator import attrgetter
 from pathlib import Path
 from typing import List, Union
 
-import numpy as np
 import neurom as nm
+import numpy as np
 from neurom import geom, iter_sections, load_neuron
 from neurom.core import Tree
 from neurom.core._neuron import Neuron
@@ -15,8 +15,8 @@ from neurom.core.dataformat import COLS
 from scipy.optimize import minimize
 from scipy.special import factorial
 
-from neuror.cut_plane.planes import HalfSpace, PlaneEquation
 from neuror.cut_plane.legacy_detection import internal_cut_detection
+from neuror.cut_plane.planes import HalfSpace, PlaneEquation
 
 L = logging.getLogger(__name__)
 
