@@ -2,8 +2,8 @@ import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from nose.tools import assert_equal
 from click.testing import CliRunner
+from nose.tools import assert_equal
 
 from neuror.cli import cli
 

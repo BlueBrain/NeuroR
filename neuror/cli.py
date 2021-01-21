@@ -2,8 +2,8 @@
 import json
 import logging
 import os
-from pprint import pprint
 from pathlib import Path
+from pprint import pprint
 
 import click
 from morph_tool.utils import iter_morphology_files
@@ -70,8 +70,9 @@ def repair():
                     'coordinates of points from which to start the repair'))
 def file(input_file, output_file, plot_file, axon_donor, cut_file):
     '''Repair dendrites of a cut neuron'''
-    from neuror.main import repair  # pylint: disable=redefined-outer-name
     import pandas
+
+    from neuror.main import repair  # pylint: disable=redefined-outer-name
 
     if cut_file:
         cut_points = pandas.read_csv(Path(cut_file).with_suffix('.csv')).values

@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from neurom import load_neuron
-from nose.tools import assert_raises, assert_equal
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-from morph_tool.spatial import point_to_section_segment
 from morph_tool import apical_point_section_segment
+from morph_tool.spatial import point_to_section_segment
+from neurom import load_neuron
+from nose.tools import assert_equal, assert_raises
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.cut_plane.legacy_detection as test_module
 from neuror.utils import repair_type_map

@@ -1,12 +1,13 @@
 from pathlib import Path
 
 import numpy as np
+from morphio.mut import Morphology
 from neurom import load_neuron
 from nose.tools import assert_raises, ok_
 from numpy.testing import assert_array_equal, assert_equal
 
-from morphio.mut import Morphology
-from neuror.zero_diameter_fixer import fix_zero_diameters, fix_in_between, Point, fix_from_downstream, fix_from_upstream, fix_neurite
+from neuror.zero_diameter_fixer import (Point, fix_from_downstream, fix_from_upstream,
+                                        fix_in_between, fix_neurite, fix_zero_diameters)
 
 DATA_PATH = Path(__file__).parent / 'data'
 

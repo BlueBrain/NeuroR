@@ -7,7 +7,6 @@ from numpy.testing import assert_equal
 
 from neuror.cli import cli
 
-
 DATA = Path(__file__).parent / 'data'
 
 
