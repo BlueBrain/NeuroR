@@ -6,8 +6,9 @@ from datetime import datetime
 import matplotlib
 import matplotlib.pyplot as plt  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
 import numpy as np
-from matplotlib.backends.backend_pdf import \
-    PdfPages  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
+from matplotlib.backends.backend_pdf import (  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
+    PdfPages,
+)
 from neurom import geom, load_neuron
 from neurom.view.view import plot_neuron
 
