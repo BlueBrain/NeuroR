@@ -4,8 +4,8 @@ The module to run the full repair
 import logging
 from pathlib import Path
 
-from morph_tool.utils import iter_morphology_files
 import pandas as pd
+from morph_tool.utils import iter_morphology_files
 
 from neuror.main import repair
 

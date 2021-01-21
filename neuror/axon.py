@@ -1,11 +1,11 @@
 '''The axon repair module'''
 import logging
-import numpy as np
 
 import morphio
-from neurom.features.sectionfunc import branch_order, strahler_order
-from neurom import COLS
+import numpy as np
 from morph_tool.transform import align, translate
+from neurom import COLS
+from neurom.features.sectionfunc import branch_order, strahler_order
 
 from neuror.utils import section_length
 

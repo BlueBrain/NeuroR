@@ -1,12 +1,11 @@
 '''Utils module'''
-import logging
 import json
+import logging
 from enum import Enum
 
 import numpy as np
-
-from neurom import NeuriteType, iter_sections
 from morphio import SectionType
+from neurom import NeuriteType, iter_sections
 
 L = logging.getLogger('neuror')
 

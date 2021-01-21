@@ -16,9 +16,9 @@ from neuror.cut_plane.planes import _get_displaced_pos
 
 try:
     import dash
-    from dash.dependencies import Input, Output, State
     import dash_core_components as dcc
     import dash_html_components as html
+    from dash.dependencies import Input, Output, State
     from plotly_helper.neuron_viewer import NeuronBuilder
 except ImportError as e:
     raise ImportError(
