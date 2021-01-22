@@ -7,7 +7,7 @@ from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import morphio
 import neurom as nm
@@ -436,14 +436,10 @@ class Repair(object):
 
         If no data are available, fallback on aggregate data
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n329  # noqa, pylint: disable=line-too-long
+        ..note:: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n329  # noqa, pylint: disable=line-too-long
         '''
         angles = self.info['intact_branching_angles'][section_type]
-        accurate_data = angles[branching_order]
-        if accurate_data:
-            return accurate_data
-
-        return list(chain.from_iterable(angles.values()))
+        return angles[branching_order] or list(chain.from_iterable(angles.values()))
 
     def _get_origin(self, branch):
         '''Return what should be considered as the origin for this branch'''
@@ -621,7 +617,7 @@ class Repair(object):
 
 def repair(inputfile: Path,
            outputfile: Path,
-           axons: Optional[Path] = None,
+           axons: Optional[List[Path]] = None,
            seed: int = 0,
            cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
            legacy_detection: bool = False,
