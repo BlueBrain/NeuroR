@@ -46,6 +46,7 @@ def sanitize():
     more in the future.
     '''
 
+
 @cut_plane.group()
 def compute():
     '''CLI utilities to detect cut planes'''
@@ -69,7 +70,7 @@ def error_annotation():
 def file(input_file, output_file, error_summary_file):
     from neuror.error_annotation import annotate_single_morphology
 
-    if Path(input_file).suffix not in  ['.asc', '.ASC']:
+    if Path(input_file).suffix not in ['.asc', '.ASC']:
         raise Exception('Only .asc/.ASC files are allowed, please convert with morph-tool.')
 
     annotations, summary = annotate_single_morphology(input_file)
@@ -93,7 +94,7 @@ def folder(input_dir, output_dir, error_summary_file):
     morph_paths = iter_morphology_files(input_dir)
     annotations, summaries = annotate_morphologies(morph_paths)
     for morph_path, annotation in annotations.items():
-        output_file  = output_dir / Path(morph_path).name
+        output_file = output_dir / Path(morph_path).name
         shutil.copy(morph_path, output_file)
         with open(output_file, 'a') as morph_file:
             morph_file.write(annotations[morph_path])
