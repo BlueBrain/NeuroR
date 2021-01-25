@@ -46,6 +46,7 @@ def sanitize():
     more in the future.
     '''
 
+
 @cut_plane.group()
 def compute():
     '''CLI utilities to detect cut planes'''
