@@ -1,3 +1,4 @@
+"""Annotation errors on morphologies."""
 from functools import partial
 import logging
 from neurom.check import neuron_checks as nc
