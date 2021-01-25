@@ -68,6 +68,7 @@ def error_annotation():
 @click.option('--error_summary_file', type=click.Path(file_okay=True), default='error_summary.json',
               help='Path to json file to save error summary')
 def file(input_file, output_file, error_summary_file):
+    '''Annotate errors on a morphology.'''
     from neuror.error_annotation import annotate_single_morphology
 
     if Path(input_file).suffix not in ['.asc', '.ASC']:
@@ -87,7 +88,7 @@ def file(input_file, output_file, error_summary_file):
 @click.option('--error_summary_file', type=click.Path(file_okay=True), default='error_summary.json',
               help='Path to json file to save error summary')
 def folder(input_dir, output_dir, error_summary_file):
-    from morph_tool.utils import iter_morphology_files
+    '''Annotate errors on a morphologies in a folder.'''
     from neuror.error_annotation import annotate_morphologies
 
     output_dir = Path(output_dir)
@@ -97,7 +98,7 @@ def folder(input_dir, output_dir, error_summary_file):
         output_file = output_dir / Path(morph_path).name
         shutil.copy(morph_path, output_file)
         with open(output_file, 'a') as morph_file:
-            morph_file.write(annotations[morph_path])
+            morph_file.write(annotation)
     with open(error_summary_file, 'w') as summary_file:
         json.dump(summaries, summary_file, indent=4)
 
