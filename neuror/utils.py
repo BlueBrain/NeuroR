@@ -1,12 +1,11 @@
 '''Utils module'''
-import logging
 import json
+import logging
 from enum import Enum
 
 import numpy as np
-
-from neurom import NeuriteType, iter_sections
 from morphio import SectionType
+from neurom import NeuriteType, iter_sections
 
 L = logging.getLogger('neuror')
 
@@ -67,14 +66,16 @@ def rotation_matrix(axis, theta):  # pylint: disable=too-many-locals
 
 
 def angle_between(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+    """Returns the angle in radians between vectors 'v1' and 'v2'::
 
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
+    ..code::
+
+        >>> angle_between((1, 0, 0), (0, 1, 0))
+        1.5707963267948966
+        >>> angle_between((1, 0, 0), (1, 0, 0))
+        0.0
+        >>> angle_between((1, 0, 0), (-1, 0, 0))
+        3.141592653589793
     """
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)

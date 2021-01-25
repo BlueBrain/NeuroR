@@ -1,11 +1,11 @@
 '''The axon repair module'''
 import logging
-import numpy as np
 
 import morphio
-from neurom.features.sectionfunc import branch_order, strahler_order
-from neurom import COLS
+import numpy as np
 from morph_tool.transform import align, translate
+from neurom import COLS
+from neurom.features.sectionfunc import branch_order, strahler_order
 
 from neuror.utils import section_length
 
@@ -106,10 +106,9 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
     https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n727
 
     1) Find the most similar section in INTACT_SECTIONS list to SECTION
-    2) Sort AXON_BRANCHES according to a similarity score to the section found
-    at step 1
+    2) Sort AXON_BRANCHES according to a similarity score to the section found at step 1
     3) Loop through the sorted AXON_BRANCHES to find a section with same strahler orders
-    and that, when appended, does not extend further than Y_EXTENT
+       and that, when appended, does not extend further than Y_EXTENT
     4) Append the first section that meets the conditions of step 3)
     5) Mark this section as used and do not re-use it
 
@@ -121,11 +120,15 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
         axon_branches (List[Section]): a list a intact sections coming from donor morphologies
             These are the sections that will be appended
 
-    Note:
+    ..note::
        The original code used to have more parameters. In the context of the bbp-morphology-workflow
        it seems that some of the parameters were always used with the same value. This
        reimplementation assumes the following BlueRepairSDK options:
-        '--overlap=true', '--incremental=false', '--restrict=true', '--distmethod=mirror'
+
+        - --overlap=true
+        - --incremental=false
+        - --restrict=true
+        - --distmethod=mirror'
     '''
 
     if not intact_sections:

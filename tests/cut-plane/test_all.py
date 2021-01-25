@@ -4,13 +4,14 @@ from pathlib import Path
 
 import matplotlib
 import numpy as np
-from neuror.cut_plane import CutPlane
-from neuror.cut_plane.viewer import _get_displaced_pos
 from neurom import COLS, iter_sections, load_neuron
 from nose.tools import assert_not_equal, ok_
-from numpy.testing import (assert_almost_equal, assert_array_almost_equal,
-                           assert_equal, assert_allclose)
+from numpy.testing import (assert_allclose, assert_almost_equal, assert_array_almost_equal,
+                           assert_equal)
 from pyquaternion import Quaternion
+
+from neuror.cut_plane import CutPlane
+from neuror.cut_plane.viewer import _get_displaced_pos
 
 matplotlib.use('Agg')
 

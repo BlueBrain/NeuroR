@@ -1,11 +1,10 @@
 from pathlib import Path
 
+from morph_tool import diff
+from morphio import SectionType
 from neurom import load_neuron
 from nose.tools import assert_raises, ok_
 from numpy.testing import assert_array_equal, assert_equal
-
-from morph_tool import diff
-from morphio import SectionType
 
 import neuror.axon as test_module
 

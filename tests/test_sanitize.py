@@ -1,11 +1,11 @@
 from pathlib import Path
-from neuror.sanitize import fix_non_zero_segments, sanitize, sanitize_all, CorruptedMorphology
+from tempfile import TemporaryDirectory
 
 from morphio import Morphology
-from numpy.testing import assert_equal, assert_array_equal
-
 from nose.tools import assert_raises
-from tempfile import TemporaryDirectory
+from numpy.testing import assert_array_equal, assert_equal
+
+from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
 
 PATH = Path(__file__).parent / 'data'
 

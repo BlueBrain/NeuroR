@@ -9,7 +9,7 @@ import numpy as np
 from tqdm import tqdm
 
 import morphio
-from morphio import MorphioError, set_maximum_warnings, SomaType
+from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
 
 L = logging.getLogger('neuror')

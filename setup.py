@@ -38,7 +38,12 @@ setup(
             'dash>=0.41.0',  # The core dash backend
             'plotly-helper>=0.0.2',
         ],
-        'docs': ['sphinx', 'sphinx-click', 'sphinx-bluebrain-theme'],
+        'docs': [
+            'sphinx-autorun>=1.1.1',
+            'sphinx-bluebrain-theme>=0.2.4',
+            'sphinx-click>=2.5.0',
+            'sphinx>=2.0.0',
+        ],
     },
     packages=find_packages(),
     entry_points={'console_scripts': ['neuror=neuror.cli:cli']},

@@ -3,7 +3,6 @@ import numpy as np
 from neurom import COLS
 from pyquaternion import Quaternion
 
-
 A, B, C, D = range(4)
 ABC = slice(0, 3)
 

@@ -6,8 +6,8 @@ import pandas as pd
 from neurom import load_neuron
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from neuror.cut_plane.detection import CutPlane
 import neuror.unravel as test_module
+from neuror.cut_plane.detection import CutPlane
 
 DATA = Path(__file__).parent / 'data'
 

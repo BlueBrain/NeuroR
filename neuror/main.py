@@ -7,22 +7,22 @@ from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, Optional
-from nptyping import NDArray
+from typing import Any, Dict, List, Optional
 
+import morphio
 import neurom as nm
 import numpy as np
 from morph_tool import apical_point_section_segment
-import morphio
 from morphio import PointLevel, SectionType
 from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
 from neurom.core.dataformat import COLS
 from neurom.features.sectionfunc import branch_order, section_path_length
+from nptyping import NDArray
 from scipy.spatial.distance import cdist
 
 from neuror import axon
 from neuror.cut_plane import CutPlane
-from neuror.utils import direction, rotation_matrix, section_length, repair_type_map, RepairType
+from neuror.utils import RepairType, direction, repair_type_map, rotation_matrix, section_length
 
 SEG_LENGTH = 5.0
 SHOLL_LAYER_SIZE = 10
@@ -209,6 +209,9 @@ def _continuation(sec, origin):
         radial_direction = sec.points[1, COLS.XYZ] - sec.points[0, COLS.XYZ]
         radial_direction /= np.linalg.norm(radial_direction)
 
+    # NOTE: This is not an equiprobability uniform generator
+    # It is not drawing a point inside a sphere but a cube.
+    # so the probability of drawing in direction of the corners is higher
     noise_direction = (2 * np.random.random(size=3) - 1)
 
     direction_ = section_direction + \
@@ -231,8 +234,9 @@ def _y_cylindrical_extent(section):
 
 def _max_y_dendritic_cylindrical_extent(neuron):
     '''Return the maximum distance of dendritic section ends and the origin in the XZ plane'''
-    return max(_y_cylindrical_extent(section) for section in neuron.iter()
-               if section.type in {SectionType.basal_dendrite, SectionType.apical_dendrite})
+    return max((_y_cylindrical_extent(section) for section in neuron.iter()
+                if section.type in {SectionType.basal_dendrite, SectionType.apical_dendrite}),
+               default=0)
 
 
 class Repair(object):
@@ -432,14 +436,10 @@ class Repair(object):
 
         If no data are available, fallback on aggregate data
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n329  # noqa, pylint: disable=line-too-long
+        ..note:: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n329  # noqa, pylint: disable=line-too-long
         '''
         angles = self.info['intact_branching_angles'][section_type]
-        accurate_data = angles[branching_order]
-        if accurate_data:
-            return accurate_data
-
-        return list(chain.from_iterable(angles.values()))
+        return angles[branching_order] or list(chain.from_iterable(angles.values()))
 
     def _get_origin(self, branch):
         '''Return what should be considered as the origin for this branch'''
@@ -617,7 +617,7 @@ class Repair(object):
 
 def repair(inputfile: Path,
            outputfile: Path,
-           axons: Optional[Path] = None,
+           axons: Optional[List[Path]] = None,
            seed: int = 0,
            cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
            legacy_detection: bool = False,
