@@ -4,6 +4,9 @@ from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
 
+import numpy as np
+from tqdm import tqdm
+
 import morphio
 import numpy as np
 from morphio import MorphioError, SomaType, set_maximum_warnings
@@ -12,6 +15,11 @@ from tqdm import tqdm
 from morph_tool.utils import iter_morphology_files
 
 L = logging.getLogger('neuror')
+
+
+def iter_morphologies(folder):
+    '''Recursively yield morphology files in folder and its sub-directories.'''
+    return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
 
 
 class CorruptedMorphology(Exception):
@@ -81,7 +89,7 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
     '''
     set_maximum_warnings(0)
 
-    morphologies = iter_morphology_files(input_folder)
+    morphologies = list(iter_morphologies(Path(input_folder)))
     func = partial(_sanitize_one, input_folder=input_folder, output_folder=output_folder)
     if nprocesses == 1:
         results = map(func, morphologies)
