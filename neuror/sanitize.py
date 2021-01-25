@@ -88,7 +88,7 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
     '''
     set_maximum_warnings(0)
 
-    morphologies = iter_morphology_files(input_folder)
+    morphologies = list(iter_morphologies(Path(input_folder)))
     func = partial(_sanitize_one, input_folder=input_folder, output_folder=output_folder)
     if nprocesses == 1:
         results = map(func, morphologies)
