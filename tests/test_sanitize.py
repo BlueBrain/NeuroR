@@ -9,6 +9,7 @@ from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize
 
 PATH = Path(__file__).parent / 'data'
 
+
 def test_fix_non_zero_segments():
     neuron = fix_non_zero_segments(Path(PATH, 'simple-with-duplicates.asc'))
     assert_equal(len(neuron.root_sections), 1)
@@ -31,11 +32,22 @@ def test_sanitize():
                             [2., 0., 0.],
                             [3., 0., 0.]])
 
-        assert_raises(CorruptedMorphology, sanitize,
-                      Path(PATH, 'no-soma.asc'), Path(tmp_folder, 'no-soma.asc'))
+        for input_morph, expected_exception in [
+                ('no-soma.asc',
+                 '{} has no soma'.format(Path(PATH, 'no-soma.asc'))),
 
-        assert_raises(CorruptedMorphology, sanitize,
-                      Path(PATH, 'negative-diameters.asc'), Path(tmp_folder, 'negative-diameter.asc'))
+                ('negative-diameters.asc',
+                 '{} has negative diameters'.format(Path(PATH, 'negative-diameters.asc'))),
+
+                ('neurite-with-multiple-types.swc',
+                 ('{} has a neurite whose type changes along the way\n'
+                  'Child section (id: 5) has a different type (SectionType.basal_dendrite) '
+                  'than its parent (id: 3) (type: SectionType.axon)').format(
+                      Path(PATH, 'neurite-with-multiple-types.swc')))
+        ]:
+            with assert_raises(CorruptedMorphology) as cm:
+                sanitize(PATH / input_morph, Path(tmp_folder, 'output.asc'))
+            assert_equal(str(cm.exception), expected_exception)
 
 
 def test_sanitize_all():
