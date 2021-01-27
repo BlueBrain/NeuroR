@@ -28,6 +28,7 @@ def sanitize(input_neuron, output_path):
     - fixes non zero segments
     - raises if the morphology has no soma
     - raises if the morphology has negative diameters
+    - raises if the morphology has a neurite whose type changes along the way
 
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
@@ -37,7 +38,16 @@ def sanitize(input_neuron, output_path):
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology('{} has no soma'.format(input_neuron))
     if np.any(neuron.diameters < 0):
-        raise CorruptedMorphology('{} negative diameters'.format(input_neuron))
+        raise CorruptedMorphology('{} has negative diameters'.format(input_neuron))
+
+    for root in neuron.root_sections:  # pylint: disable=not-an-iterable
+        for section in root.iter():
+            if section.type != root.type:
+                raise CorruptedMorphology(f'{input_neuron} has a neurite whose type changes along '
+                                          'the way\n'
+                                          f'Child section (id: {section.id}) has a different type '
+                                          f'({section.type}) than its parent (id: '
+                                          f'{section.parent.id}) (type: {section.parent.type})')
 
     fix_non_zero_segments(neuron).write(str(output_path))
 
@@ -65,15 +75,13 @@ def _sanitize_one(path, input_folder, output_folder):
 def sanitize_all(input_folder, output_folder, nprocesses=1):
     '''Sanitize all morphologies in input_folder and its sub-directories.
 
-    Note: the sub-directory structure is maintained.
-
-    - fixes non zero segments
-    - raises if the morphology has no soma
-    - raises if the morphology has negative diameters
+    See :func:`~neuror.sanitize.sanitize` for more information on the sanitization process.
 
     Args:
         input_folder (str|pathlib.Path): input neuron
         output_folder (str|pathlib.Path): output name
+
+    .. note:: the sub-directory structure is maintained.
     '''
     set_maximum_warnings(0)
 
