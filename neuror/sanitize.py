@@ -9,6 +9,9 @@ from tqdm import tqdm
 
 import morphio
 import numpy as np
+from tqdm import tqdm
+
+import morphio
 from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
 from tqdm import tqdm
