@@ -9,6 +9,9 @@ from tqdm import tqdm
 
 import morphio
 import numpy as np
+from tqdm import tqdm
+
+import morphio
 from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
 from tqdm import tqdm
@@ -20,6 +23,10 @@ L = logging.getLogger('neuror')
 def iter_morphologies(folder):
     '''Recursively yield morphology files in folder and its sub-directories.'''
     return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
+
+class CorruptedMorphology(Exception):
+    '''Exception for morphologies that should not be used'''
+
 
 class CorruptedMorphology(Exception):
     '''Exception for morphologies that should not be used'''
