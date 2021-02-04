@@ -622,7 +622,7 @@ class Repair(object):
         self.repair_type_map = repair_type_map(self.neuron, self.apical_section)
 
 
-def repair(inputfile: Path,
+def repair(inputfile: Path,  # pylint: disable=too-many-arguments
            outputfile: Path,
            axons: Optional[List[Path]] = None,
            seed: int = 0,
@@ -630,7 +630,7 @@ def repair(inputfile: Path,
            legacy_detection: bool = False,
            plot_file: Optional[Path] = None,
            repair_flags: Optional[Dict[RepairType, bool]] = None,
-           apical_point: List = None):  # pylint: disable=too-many-arguments
+           apical_point: List = None):
     '''The repair function
 
     Args:
