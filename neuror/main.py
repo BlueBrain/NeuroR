@@ -13,6 +13,7 @@ import morphio
 import neurom as nm
 import numpy as np
 from morph_tool import apical_point_section_segment
+from morph_tool.spatial import point_to_section_segment
 from morphio import PointLevel, SectionType
 from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
 from neurom.core.dataformat import COLS
@@ -248,7 +249,8 @@ class Repair(object):
                  seed: Optional[int] = 0,
                  cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
                  legacy_detection: bool = False,
-                 repair_flags: Optional[Dict[RepairType, bool]] = None):
+                 repair_flags: Optional[Dict[RepairType, bool]] = None,
+                 apical_point: NDArray[3, float] = None):
         '''Repair the input morphology
 
         Args:
@@ -260,6 +262,7 @@ class Repair(object):
                 (see neuror.legacy_detection)
             repair_flags: a dict of flags where key is a RepairType and value is whether
                 it should be repaired or not. If not provided, all types will be repaired.
+            apical_point: 3d vector for apical point, else, the automatic apical detection is used
 
         Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
         '''
@@ -284,7 +287,11 @@ class Repair(object):
                                 for section in self.neuron.iter())
 
         self.info = dict()
-        apical_section_id, _ = apical_point_section_segment(self.neuron)
+        if apical_point:
+            # recall MorphIO ID = NeuroM ID - 1
+            apical_section_id = point_to_section_segment(self.neuron, apical_point)[0] - 1
+        else:
+            apical_section_id, _ = apical_point_section_segment(self.neuron)
         if apical_section_id:
             self.apical_section = self.neuron.sections[apical_section_id]
         else:
@@ -615,14 +622,15 @@ class Repair(object):
         self.repair_type_map = repair_type_map(self.neuron, self.apical_section)
 
 
-def repair(inputfile: Path,
+def repair(inputfile: Path,  # pylint: disable=too-many-arguments
            outputfile: Path,
            axons: Optional[List[Path]] = None,
            seed: int = 0,
            cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
            legacy_detection: bool = False,
            plot_file: Optional[Path] = None,
-           repair_flags: Optional[Dict[RepairType, bool]] = None):
+           repair_flags: Optional[Dict[RepairType, bool]] = None,
+           apical_point: List = None):
     '''The repair function
 
     Args:
@@ -634,6 +642,7 @@ def repair(inputfile: Path,
         plot_file: the filename of the plot
         repair_flags: a dict of flags where key is a RepairType and value is whether
             it should be repaired or not. If not provided, all types will be repaired.
+        apical_point: 3d vector for apical point, else, the automatic apical detection is used
     '''
     ignored_warnings = (
         # We append the section at the wrong place and then we reposition them
@@ -653,7 +662,8 @@ def repair(inputfile: Path,
     if axons is None:
         axons = list()
     obj = Repair(inputfile, axons=axons, seed=seed, cut_leaves_coordinates=cut_leaves_coordinates,
-                 legacy_detection=legacy_detection, repair_flags=repair_flags)
+                 legacy_detection=legacy_detection, repair_flags=repair_flags,
+                 apical_point=apical_point)
     obj.run(outputfile, plot_file=plot_file)
 
     for warning in ignored_warnings:
