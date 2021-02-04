@@ -630,7 +630,7 @@ def repair(inputfile: Path,
            legacy_detection: bool = False,
            plot_file: Optional[Path] = None,
            repair_flags: Optional[Dict[RepairType, bool]] = None,
-           apical_point: List = None):
+           apical_point: List = None):  # pylint: disable=too-many-arguments
     '''The repair function
 
     Args:
