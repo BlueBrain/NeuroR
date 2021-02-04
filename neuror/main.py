@@ -250,7 +250,7 @@ class Repair(object):
                  cut_leaves_coordinates: Optional[NDArray[(3, Any)]] = None,
                  legacy_detection: bool = False,
                  repair_flags: Optional[Dict[RepairType, bool]] = None,
-                 apical_point: List = None):
+                 apical_point: NDArray[3, float] = None):
         '''Repair the input morphology
 
         Args:
