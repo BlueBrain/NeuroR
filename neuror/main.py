@@ -262,7 +262,7 @@ class Repair(object):
                 (see neuror.legacy_detection)
             repair_flags: a dict of flags where key is a RepairType and value is whether
                 it should be repaired or not. If not provided, all types will be repaired.
-            apical_point: 3d vector for apical point posiiton, if known
+            apical_point: 3d vector for apical point, else, the automatic apical detection is used
 
         Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
         '''
@@ -288,6 +288,7 @@ class Repair(object):
 
         self.info = dict()
         if apical_point:
+            # recall MorphIO ID = NeuroM ID - 1
             apical_section_id = point_to_section_segment(self.neuron, apical_point)[0] - 1
         else:
             apical_section_id, _ = apical_point_section_segment(self.neuron)
@@ -641,7 +642,7 @@ def repair(inputfile: Path,
         plot_file: the filename of the plot
         repair_flags: a dict of flags where key is a RepairType and value is whether
             it should be repaired or not. If not provided, all types will be repaired.
-        apical_point: 3d vector for apical point posiiton, if known
+        apical_point: 3d vector for apical point, else, the automatic apical detection is used
     '''
     ignored_warnings = (
         # We append the section at the wrong place and then we reposition them

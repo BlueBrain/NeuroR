@@ -243,6 +243,14 @@ def test__compute_sholl_data():
                                Action.TERMINATION: 2}}})
 
 
+def test__external_apical_point():
+    obj = Repair(DATA_PATH / 'repair_type.asc', apical_point=[1.0, 0.0, 0.0])
+    assert_array_almost_equal(obj.apical_section.points,
+                              np.array([[0., 0., 4., 1.],
+                                        [0., 0., 0., 0.5],
+                                        [1., 0., 0., 0.5]], dtype=np.float32))
+
+
 def test__fill_repair_type_map():
     obj = Repair(DATA_PATH / 'repair_type.asc')
     obj.apical_section = obj.neuron.sections[3]
