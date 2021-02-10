@@ -25,15 +25,21 @@ def annotate_single_morphology(morph_path):
     Returns:
         annotations to append to .asc file
         dict of error summary
+        dict of error markers
     """
     neuron = load_neuron(morph_path)
     results = [checker(neuron) for checker in CHECKERS]
+    markers = [
+        dict(setting, data=result.info)
+        for result, setting in zip(results, CHECKERS.values())
+        if not result.status
+    ]
     summary = {
         setting["name"]: len(result.info)
         for result, setting in zip(results, CHECKERS.values())
         if result.info
     }
-    return annotate(results, CHECKERS.values()), summary
+    return annotate(results, CHECKERS.values()), summary, markers
 
 
 def annotate_morphologies(morph_paths):
@@ -45,15 +51,17 @@ def annotate_morphologies(morph_paths):
     Returns:
         dict annotations to append to .asc file (morph_path as keys)
         dict of dict of error summary (morph_path as keys)
+        dict of dict of markers (morph_path as keys)
     """
-    summaries = {}
-    annotations = {}
+    summaries, annotations, markers = {}, {}, {}
     for morph_path in morph_paths:
         try:
-            annotations[str(morph_path)], summaries[str(morph_path)] = annotate_single_morphology(
-                morph_path
-            )
+            (
+                annotations[str(morph_path)],
+                summaries[str(morph_path)],
+                markers[str(morph_path)],
+            ) = annotate_single_morphology(morph_path)
         except Exception as e:  # noqa, pylint: disable=broad-except
             L.warning("%s failed", morph_path)
             L.warning(e, exc_info=True)
-    return annotations, summaries
+    return annotations, summaries, markers
