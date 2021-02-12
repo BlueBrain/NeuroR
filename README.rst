@@ -115,6 +115,50 @@ Prior to running ``pip install``, we recommend updating ``pip`` in your virtual 
 
     $ pip install --upgrade pip setuptools
 
+
+Building BlueRepairSDK from sources
+-----------------------------------
+
+To install the old BlueRepairSDK, use this script:
+
+.. code:: bash
+
+          #!/bin/bash
+
+          ##########
+          # BBPSDK #
+          ##########
+
+          git clone ssh://bbpcode.epfl.ch/common/BBPSDK --recursive
+          cd BBPSDK
+          git checkout 7ccfd867b43746909ac3429cf44e2e4014431bbf
+          git submodule update
+
+          cmake -DCLONE_SUBPROJECTS=ON
+          sed -i 's/add_subdirectory(tests)/#add_subdirectory(tests)/' Lunchbox/CMakeLists.txt
+
+          # Remove a word (2nd argument) from all files in a folder (1st argument) and its subfolder
+          delete_recursive() {
+              find $1 \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s/$2//g"
+          }
+
+          delete_recursive . -Wextra
+          delete_recursive . -Wall
+          delete_recursive . -pedantic
+
+          make
+          sudo make install
+          cd ..
+
+          #################
+          # BlueRepairSDK #
+          #################
+
+          git clone ssh://bbpcode.epfl.ch/platform/BlueRepairSDK
+          cd BlueRepairSDK
+          make build
+
+
 Contributing
 ------------
 
