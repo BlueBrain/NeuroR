@@ -16,17 +16,29 @@ CHECKERS = {
 }
 
 
-def annotate_single_morphology(morph_path, checkers=CHECKERS):
+def annotate_single_morphology(morph_path, checkers=None):
     """Annotate errors on a morphology.
 
     Args:
         morph_path (str): absolute path to an ascii morphology
+        checkers (dict): dict of checker functons from neurom with function as keys
+            and marker data in a dict as values, if None, default checkers are used
+
+    Default checkers include:
+        - fat ends
+        - z-jumps
+        - narrow start
+        - dangling branch
+        - multifurcation
 
     Returns:
         annotations to append to .asc file
         dict of error summary
         dict of error markers
     """
+    if checkers is None:
+        checkers = CHECKERS
+
     neuron = load_neuron(morph_path)
     results = [checker(neuron) for checker in checkers]
     markers = [
