@@ -16,7 +16,7 @@ CHECKERS = {
 }
 
 
-def annotate_single_morphology(morph_path):
+def annotate_single_morphology(morph_path, checkers=CHECKERS):
     """Annotate errors on a morphology.
 
     Args:
@@ -28,18 +28,18 @@ def annotate_single_morphology(morph_path):
         dict of error markers
     """
     neuron = load_neuron(morph_path)
-    results = [checker(neuron) for checker in CHECKERS]
+    results = [checker(neuron) for checker in checkers]
     markers = [
         dict(setting, data=result.info)
-        for result, setting in zip(results, CHECKERS.values())
+        for result, setting in zip(results, checkers.values())
         if not result.status
     ]
     summary = {
         setting["name"]: len(result.info)
-        for result, setting in zip(results, CHECKERS.values())
+        for result, setting in zip(results, checkers.values())
         if result.info
     }
-    return annotate(results, CHECKERS.values()), summary, markers
+    return annotate(results, checkers.values()), summary, markers
 
 
 def annotate_morphologies(morph_paths):
