@@ -36,7 +36,7 @@ def sanitize(input_neuron, output_path):
     '''
     neuron = morphio.Morphology(input_neuron)
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
-        raise CorruptedMorphology('{} has no soma'.format(input_neuron))
+        raise CorruptedMorphology('{} has an invalid or no soma'.format(input_neuron))
     if np.any(neuron.diameters < 0):
         raise CorruptedMorphology('{} has negative diameters'.format(input_neuron))
 

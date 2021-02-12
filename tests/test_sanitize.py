@@ -34,7 +34,7 @@ def test_sanitize():
 
         for input_morph, expected_exception in [
                 ('no-soma.asc',
-                 '{} has no soma'.format(Path(PATH, 'no-soma.asc'))),
+                 '{} has an invalid or no soma'.format(Path(PATH, 'no-soma.asc'))),
 
                 ('negative-diameters.asc',
                  '{} has negative diameters'.format(Path(PATH, 'negative-diameters.asc'))),
