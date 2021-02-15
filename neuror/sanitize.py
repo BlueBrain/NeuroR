@@ -167,13 +167,13 @@ def annotate_neurolucida(morph_path, checkers=None):
         }
 
     def _try(checker, neuron):
-        """Try to apply a checker, and return False if exception raised"""
+        """Try to apply a checker, returns True if exception raised, so the checker is bypassed."""
         try:
             return checker(neuron)
         except Exception as e:  # pylint: disable=broad-except
             L.exception("%s failed on %s", checker, morph_path)
             L.exception(e, exc_info=True)
-            return CheckResult(False)
+            return CheckResult(True)
 
     neuron = load_neuron(morph_path)
     results = [_try(checker, neuron) for checker in checkers]
