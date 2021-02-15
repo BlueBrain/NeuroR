@@ -98,7 +98,7 @@ def folder(input_dir, output_dir, error_summary_file, marker_file):
     from neuror.sanitize import annotate_neurolucida_all
 
     output_dir = Path(output_dir)
-    morph_paths = iter_morphology_files(input_dir)
+    morph_paths = list(iter_morphology_files(input_dir))
     annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
     for morph_path, annotation in annotations.items():
         output_file = output_dir / Path(morph_path).name

@@ -6,6 +6,7 @@ from morphio import Morphology
 from nose.tools import assert_raises
 from numpy.testing import assert_array_equal, assert_equal
 
+from morph_tool.utils import iter_morphology_files
 from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
 from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all
 
@@ -69,26 +70,50 @@ def test_sanitize_all():
                            [tmp_folder / 'a.asc',
                             tmp_folder / 'sub-folder/sub-sub-folder/c.asc'])
 
+
 def test_error_annotation():
-    with TemporaryDirectory('test-error-annotation') as tmp_folder:
-        output_path = Path(tmp_folder, 'annotated.asc')
-        annotation, summary, markers = annotate_neurolucida(Path(PATH, 'error-morph.asc'))
-        #expected_annotation = """\n\n(Circle3   ; MUK_ANNOTATION\n    (Color Blue)   ; MUK_ANNOTATION\n    (Name "fat end")   ; MUK_ANNOTATION\n    (-5.0 -4.0 0.0 0.50)   ; MUK_ANNOTATION\n)   ; MUK_ANNOTATION\n\n\n\n(Circle2   ; MUK_ANNOTATION\n    (Color Green)   ; MUK_ANNOTATION\n    (Name "zjump")   ; MUK_ANNOTATION\n    (0.0 5.0 0.0 0.50)   ; MUK_ANNOTATION\n    (0.0 5.0 40.0 0.50)   ; MUK_ANNOTATION\n)   ; MUK_ANNOTATION\n\n\n\n(Circle1   ; MUK_ANNOTATION\n    (Color Blue)   ; MUK_ANNOTATION\n    (Name "narrow start")   ; MUK_ANNOTATION\n    (0.0 5.0 0.0 0.50)   ; MUK_ANNOTATION\n)   ; MUK_ANNOTATION\n\n\n\n(Circle6   ; MUK_ANNOTATION\n    (Color Magenta)   ; MUK_ANNOTATION\n    (Name "dangling")   ; MUK_ANNOTATION\n    (10.0 -20.0 -4.0 0.50)   ; MUK_ANNOTATION\n)   ; MUK_ANNOTATION\n\n\n\n(Circle8   ; MUK_ANNOTATION\n    (Color Yellow)   ; MUK_ANNOTATION\n    (Name "Multifurcation")   ; MUK_ANNOTATION\n    (0.0 5.0 0.0 0.50)   ; MUK_ANNOTATION\n)   ; MUK_ANNOTATION\n\'\n            DESIRED: \'\n               (Circle3   ; MUK_ANNOTATION\n               (Color Blue)   ; MUK_ANNOTATION\n               (Name "fat end")   ; MUK_ANNOTATION\n               (-5.0 -4.0 0.0 0.50)   ; MUK_ANNOTATION\n           )   ; MUK_ANNOTATION\n\n\n\n           (Circle2   ; MUK_ANNOTATION\n               (Color Green)   ; MUK_ANNOTATION\n               (Name "zjump")   ; MUK_ANNOTATION\n               (0.0 5.0 0.0 0.50)   ; MUK_ANNOTATION\n               (0.0 5.0 40.0 0.50)   ; MUK_ANNOTATION\n           )   ; MUK_ANNOTATION\n\n\n\n           (Circle1   ; MUK_ANNOTATION\n               (Color Blue)   ; MUK_ANNOTATION\n               (Name "narrow start")   ; MUK_ANNOTATION\n               (0.0 5.0 0.0 0.50)   ; MUK_ANNOTATION\n           )   ; MUK_ANNOTATION\n\n\n\n           (Circle6   ; MUK_ANNOTATION\n               (Color Magenta)   ; MUK_ANNOTATION\n               (Name "dangling")   ; MUK_ANNOTATION\n               (10.0 -20.0 -4.0 0.50)   ; MUK_ANNOTATION\n           )   ; MUK_ANNOTATION\n\n\n\n           (Circle8   ; MUK_ANNOTATION\n               (Color Yellow)   ; MUK_ANNOTATION\n               (Name "Multifurcation")   ; MUK_ANNOTATION\n               (0.0 5.0 0.0 0.50)   ; MUK_ANNOTATION\n           )   ; MUK_ANNOTATION\n\n        """
-        # not sure how to test that, I can't make it work
-        #assert_equal(annotation, expected_annotation)
-        assert_equal(summary, {'fat end': 1,
-                               'zjump': 1,
-                               'narrow start': 1,
-                               'dangling': 1,
-                               'Multifurcation': 1})
-        assert_equal(markers, [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
-                                'data': [(8, np.array([[-5., -4.,  0., 20.,  2., 19., 18.]]))]},
-                               {'name': 'zjump', 'label': 'Circle2', 'color': 'Green',
-                                'data': [(3, [np.array([0., 5., 0., 1., 3., 2., 1.]),
-                                              np.array([ 0.,  5., 40.,  1.,  3.,  5.,  2.])])]},
-                               {'name': 'narrow start', 'label': 'Circle1', 'color': 'Blue',
-                                'data': [(1, np.array([[0., 5., 0., 1., 3., 2., 1.]]))]},
-                               {'name': 'dangling', 'label': 'Circle6', 'color': 'Magenta',
-                                'data': [(6, [np.array([ 10., -20.,  -4.,   1.,   2.,  11.,   0.])])]},
-                               {'name': 'Multifurcation', 'label': 'Circle8', 'color': 'Yellow',
-                                'data': [(1, np.array([[0., 5., 0., 1., 3., 2., 1.]]))]}])
+    annotation, summary, markers = annotate_neurolucida(
+        Path(PATH, 'test-error-detection/error-morph.asc')
+    )
+    assert_equal(summary, {'fat end': 1,
+                           'zjump': 1,
+                           'narrow start': 1,
+                           'dangling': 1,
+                           'Multifurcation': 1})
+    assert_equal(markers, [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
+                            'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},
+                           {'name': 'zjump', 'label': 'Circle2', 'color': 'Green',
+                            'data': [(2, [np.array([0., 5., 0., 1.], dtype=np.float32),
+                                          np.array([0.,  5., 40.,  1.], dtype=np.float32)])]},
+                           {'name': 'narrow start', 'label': 'Circle1', 'color': 'Blue',
+                            'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]},
+                           {'name': 'dangling', 'label': 'Circle6', 'color': 'Magenta',
+                            'data': [(5, [np.array([10., -20.,  -4., 1.], dtype=np.float32)])]},
+                           {'name': 'Multifurcation', 'label': 'Circle8', 'color': 'Yellow',
+                            'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]}])
+
+
+def test_error_annotation_all():
+
+    input_dir = Path(PATH, 'test-error-detection')
+    morph_paths = list(iter_morphology_files(input_dir))
+    annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
+    assert_equal(summaries, {str(morph_paths[0]): {'fat end': 1,
+                                                   'zjump': 1,
+                                                   'narrow start': 1,
+                                                   'dangling': 1,
+                                                   'Multifurcation': 1},
+                             str(morph_paths[1]): {}})
+    assert_equal(markers, {
+        str(morph_paths[0]): [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
+                               'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},
+                              {'name': 'zjump', 'label': 'Circle2', 'color': 'Green',
+                               'data': [(2, [np.array([0., 5., 0., 1.], dtype=np.float32),
+                                             np.array([0.,  5., 40.,  1.], dtype=np.float32)])]},
+                              {'name': 'narrow start', 'label': 'Circle1', 'color': 'Blue',
+                               'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]},
+                              {'name': 'dangling', 'label': 'Circle6', 'color': 'Magenta',
+                               'data': [(5, [np.array([10., -20.,  -4., 1.], dtype=np.float32)])]},
+                              {'name': 'Multifurcation', 'label': 'Circle8', 'color': 'Yellow',
+                               'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]}],
+        str(morph_paths[1]): []})

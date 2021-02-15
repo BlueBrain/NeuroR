@@ -202,8 +202,8 @@ def annotate_neurolucida_all(morph_paths, nprocesses=1):
         dict of dict of markers (morph_path as keys)
     """
     summaries, annotations, markers = {}, {}, {}
-    for morph_path, results in zip(
-        morph_paths, Pool(nprocesses).imap(annotate_neurolucida, morph_paths)
+    for morph_path, result in zip(
+        morph_paths, Pool(nprocesses).map(annotate_neurolucida, morph_paths)
     ):
-        annotations[str(morph_path)], summaries[str(morph_path)], markers[str(morph_path)] = results
+        annotations[str(morph_path)], summaries[str(morph_path)], markers[str(morph_path)] = result
     return annotations, summaries, markers
