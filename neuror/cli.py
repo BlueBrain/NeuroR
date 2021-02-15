@@ -81,9 +81,9 @@ def file(input_file, output_file, error_summary_file, marker_file):
     with open(output_file, 'a') as morph_file:
         morph_file.write(annotations)
     with open(error_summary_file, 'w') as summary_file:
-        json.dump(summary, summary_file)
+        json.dump(summary, summary_file, cls=NeuromJSON)
     with open(marker_file, 'w') as m_file:
-        json.dump(markers, m_file)
+        json.dump(markers, m_file, cls=NeuromJSON)
 
 
 @error_annotation.command(short_help='Annotate errors on morphologies')
@@ -106,9 +106,9 @@ def folder(input_dir, output_dir, error_summary_file, marker_file):
         with open(output_file, 'a') as morph_file:
             morph_file.write(annotation)
     with open(error_summary_file, 'w') as summary_file:
-        json.dump(summaries, summary_file, indent=4)
+        json.dump(summaries, summary_file, indent=4, cls=NeuromJSON)
     with open(marker_file, 'w') as m_file:
-        json.dump(markers, m_file)
+        json.dump(markers, m_file, cls=NeuromJSON)
 
 
 # pylint: disable=function-redefined
