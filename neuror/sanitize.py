@@ -1,4 +1,4 @@
-"""Module for the sanitization of raw morphologies."""
+'''Module for the sanitization of raw morphologies.'''
 import logging
 from functools import partial
 from multiprocessing import Pool
@@ -14,20 +14,20 @@ from neurom.check import CheckResult
 from neurom.apps.annotate import annotate
 from neurom import load_neuron
 
-L = logging.getLogger("neuror")
+L = logging.getLogger('neuror')
 
 
 class CorruptedMorphology(Exception):
-    """Exception for morphologies that should not be used"""
+    '''Exception for morphologies that should not be used'''
 
 
 def iter_morphologies(folder):
-    """Recursively yield morphology files in folder and its sub-directories."""
-    return (path for path in folder.rglob("*") if path.suffix.lower() in {".swc", ".h5", ".asc"})
+    '''Recursively yield morphology files in folder and its sub-directories.'''
+    return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
 
 
 def sanitize(input_neuron, output_path):
-    """Sanitize one morphology.
+    '''Sanitize one morphology.
 
     - fixes non zero segments
     - raises if the morphology has no soma
@@ -37,34 +37,32 @@ def sanitize(input_neuron, output_path):
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
-    """
+    '''
     neuron = morphio.Morphology(input_neuron)
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
-        raise CorruptedMorphology("{} has no soma".format(input_neuron))
+        raise CorruptedMorphology('{} has no soma'.format(input_neuron))
     if np.any(neuron.diameters < 0):
-        raise CorruptedMorphology("{} has negative diameters".format(input_neuron))
+        raise CorruptedMorphology('{} has negative diameters'.format(input_neuron))
 
     for root in neuron.root_sections:  # pylint: disable=not-an-iterable
         for section in root.iter():
             if section.type != root.type:
-                raise CorruptedMorphology(
-                    f"{input_neuron} has a neurite whose type changes along "
-                    "the way\n"
-                    f"Child section (id: {section.id}) has a different type "
-                    f"({section.type}) than its parent (id: "
-                    f"{section.parent.id}) (type: {section.parent.type})"
-                )
+                raise CorruptedMorphology(f'{input_neuron} has a neurite whose type changes along '
+                                          'the way\n'
+                                          f'Child section (id: {section.id}) has a different type '
+                                          f'({section.type}) than its parent (id: '
+                                          f'{section.parent.id}) (type: {section.parent.type})')
 
     fix_non_zero_segments(neuron).write(str(output_path))
 
 
 def _sanitize_one(path, input_folder, output_folder):
-    """Function to be called by sanitize_all to catch all exceptions
+    '''Function to be called by sanitize_all to catch all exceptions
     and return path if in error
 
     Since Pool.imap_unordered only supports one argument, the argument
     is a tuple: (path, input_folder, output_folder).
-    """
+    '''
     relative_path = path.relative_to(input_folder)
     output_dir = output_folder / relative_path.parent
     if not output_dir.exists():
@@ -79,7 +77,7 @@ def _sanitize_one(path, input_folder, output_folder):
 
 
 def sanitize_all(input_folder, output_folder, nprocesses=1):
-    """Sanitize all morphologies in input_folder and its sub-directories.
+    '''Sanitize all morphologies in input_folder and its sub-directories.
 
     See :func:`~neuror.sanitize.sanitize` for more information on the sanitization process.
 
@@ -88,7 +86,7 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
         output_folder (str|pathlib.Path): output name
 
     .. note:: the sub-directory structure is maintained.
-    """
+    '''
     set_maximum_warnings(0)
 
     morphologies = list(iter_morphologies(Path(input_folder)))
@@ -99,13 +97,13 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
         results = Pool(nprocesses).imap_unordered(func, morphologies, chunksize=100)
     errored_paths = list(filter(None, tqdm(results, total=len(morphologies))))
     if errored_paths:
-        L.info("Files in error:")
+        L.info('Files in error:')
         for path in errored_paths:
             L.info(path)
 
 
 def fix_non_zero_segments(neuron):
-    """Return a neuron with zero length segments removed
+    '''Return a neuron with zero length segments removed
 
     Sections composed of a single zero length segment are deleted
     Args:
@@ -113,7 +111,7 @@ def fix_non_zero_segments(neuron):
 
     Returns:
         a fixed morphio.mut.Morphology
-    """
+    '''
     neuron = Morphology(neuron)
     to_be_deleted = list()
     for section in neuron.iter():
@@ -175,7 +173,7 @@ def annotate_neurolucida(morph_path, checkers=None):
         except Exception as e:  # pylint: disable=broad-except
             L.exception("%s failed on %s", checker, morph_path)
             L.exception(e, exc_info=True)
-            return CheckResult(True)
+            return CheckResult(False)
 
     neuron = load_neuron(morph_path)
     results = [_try(checker, neuron) for checker in checkers]
@@ -192,7 +190,7 @@ def annotate_neurolucida(morph_path, checkers=None):
     return annotate(results, checkers.values()), summary, markers
 
 
-def annotate_neurolucida_all(morph_paths):
+def annotate_neurolucida_all(morph_paths, nprocesses=1):
     """Annotate errors on a list of morphologies in neurolicida format.
 
     Args:
@@ -204,10 +202,8 @@ def annotate_neurolucida_all(morph_paths):
         dict of dict of markers (morph_path as keys)
     """
     summaries, annotations, markers = {}, {}, {}
-    for morph_path in morph_paths:
-        (
-            annotations[str(morph_path)],
-            summaries[str(morph_path)],
-            markers[str(morph_path)],
-        ) = annotate_neurolucida(morph_path)
+    for morph_path, results in zip(
+        morph_paths, Pool(nprocesses).imap(annotate_neurolucida, morph_paths)
+    ):
+        annotations[str(morph_path)], summaries[str(morph_path)], markers[str(morph_path)] = results
     return annotations, summaries, markers
