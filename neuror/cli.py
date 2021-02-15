@@ -71,12 +71,12 @@ def error_annotation():
               help='Path to json file to save markers')
 def file(input_file, output_file, error_summary_file, marker_file):
     '''Annotate errors on a morphology.'''
-    from neuror.error_annotation import annotate_single_morphology
+    from neuror.sanitize import annotate_neurolucida
 
     if Path(input_file).suffix not in ['.asc', '.ASC']:
         raise Exception('Only .asc/.ASC files are allowed, please convert with morph-tool.')
 
-    annotations, summary, markers = annotate_single_morphology(input_file)
+    annotations, summary, markers = annotate_neurolucida(input_file)
     shutil.copy(input_file, output_file)
     with open(output_file, 'a') as morph_file:
         morph_file.write(annotations)
@@ -95,11 +95,11 @@ def file(input_file, output_file, error_summary_file, marker_file):
               help='Path to json file to save markers')
 def folder(input_dir, output_dir, error_summary_file, marker_file):
     '''Annotate errors on a morphologies in a folder.'''
-    from neuror.error_annotation import annotate_morphologies
+    from neuror.sanitize import annotate_neurolucida_all
 
     output_dir = Path(output_dir)
     morph_paths = iter_morphology_files(input_dir)
-    annotations, summaries, markers = annotate_morphologies(morph_paths)
+    annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
     for morph_path, annotation in annotations.items():
         output_file = output_dir / Path(morph_path).name
         shutil.copy(morph_path, output_file)
