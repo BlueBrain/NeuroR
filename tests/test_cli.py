@@ -10,6 +10,26 @@ from neuror.cli import cli
 DATA = Path(__file__).parent / 'data'
 
 
+def test_error_annotation_file():
+    runner = CliRunner()
+    with TemporaryDirectory('test-file') as folder:
+        result = runner.invoke(cli, ['error-annotation', 'file',
+                                     str(DATA / 'test-error-detection/error-morph.asc'),
+                                     str(Path(folder, 'out.asc'))])
+        assert_equal(result.exit_code, 0, result.exception)
+
+
+def test_error_annotation_folder():
+    runner = CliRunner()
+    with TemporaryDirectory('test-cli-folder') as folder:
+        result = runner.invoke(cli, ['error-annotation', 'folder',
+                                     str(DATA / 'test-error-detection'),
+                                     folder])
+        assert_equal(result.exit_code, 0, result.exception)
+        assert_equal(set(str(path.relative_to(folder)) for path in Path(folder).rglob('*')),
+                     {'simple.asc', 'error-morph.asc'})
+
+
 def test_repair_file():
     runner = CliRunner()
     with TemporaryDirectory('test-file') as folder:
