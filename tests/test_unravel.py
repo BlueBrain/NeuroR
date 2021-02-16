@@ -6,8 +6,10 @@ import pandas as pd
 from neurom import load_neuron
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
+from nose.tools import assert_false
 import neuror.unravel as test_module
 from neuror.cut_plane.detection import CutPlane
+from morph_tool import diff
 
 DATA = Path(__file__).parent / 'data'
 
@@ -96,3 +98,10 @@ def test_unravel_all():
 
         test_module.unravel_all(input, output, raw_planes, unravel_planes)
         assert_array_equal(list(output.rglob('*.h5')), [output / 'Neuron_slice.h5'])
+
+def test_legacy():
+    actual, _ = test_module.unravel(DATA / 'legacy-unravel/1-pt-soma.swc', legacy_bug=True)
+    assert_false(diff(actual, DATA / 'legacy-unravel/expected-1-pt-soma.h5'))
+
+    actual, _ = test_module.unravel(DATA / 'legacy-unravel/3-pts-soma.swc', legacy_bug=True)
+    assert_false(diff(actual, DATA / 'legacy-unravel/expected-3-pts-soma.h5'))

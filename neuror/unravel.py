@@ -32,12 +32,17 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
-def _unravel_section(sec, new_section, window_half_length):
+def _unravel_section(sec, new_section, window_half_length, soma, legacy_bug):
     '''Unravel a section'''
     points = sec.points
+    if legacy_bug and sec.is_root and len(soma.points) > 1:
+        points = np.vstack((soma.points[0], points))
     point_count = len(points)
     if new_section.is_root:
-        unravelled_points = [new_section.points[0]]
+        if len(soma.points) > 1:
+            unravelled_points = [soma.points[0]]
+        else:
+            unravelled_points = [new_section.points[0]]
     else:
         unravelled_points = [new_section.parent.points[-1]]
 
@@ -55,12 +60,16 @@ def _unravel_section(sec, new_section, window_half_length):
         # point it in the same direction as before
         direction *= np.sign(np.dot(segment, direction))
 
-        unravelled_points.append(direction + unravelled_points[window_center - 1])
+        point = direction + unravelled_points[-1]
+        unravelled_points.append(point)
 
     new_section.points = unravelled_points
+    if legacy_bug and sec.is_root and len(soma.points) > 1:
+        new_section.diameters = np.hstack((soma.diameters[0], sec.diameters))
 
 
-def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
+def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
+            legacy_bug=False):
     '''Return an unravelled neuron
 
     Segment are unravelled iteratively
@@ -71,32 +80,36 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
     Args:
         filename (str): the neuron to unravel
         window_half_length (int): the number of segments that defines half of the sliding window
+        legacy_bug (bool): if yes, when the soma has more than one point, the first point of the
+            soma is appended to the start of each neurite.
 
     Returns:
         a tuple (morphio.mut.Morphology, dict) where first item is the unravelled
             morphology and the second one is the mapping of each point coordinate
             before and after unravelling
     '''
-    morph = morphio.Morphology(filename)
-    new_morph = morphio.mut.Morphology(morph)  # pylint: disable=no-member
+    morph = morphio.Morphology(filename, options=morphio.Option.nrn_order)
+    new_morph = morphio.mut.Morphology(morph, options=morphio.Option.nrn_order)  # pylint: disable=no-member
 
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
 
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
-        _unravel_section(sec, new_section, window_half_length)
+        _unravel_section(sec, new_section, window_half_length, morph.soma, legacy_bug)
 
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
 
-    mapping = pd.DataFrame({
-        'x0': coord_before[:, 0],
-        'y0': coord_before[:, 1],
-        'z0': coord_before[:, 2],
-        'x1': coord_after[:, 0],
-        'y1': coord_after[:, 1],
-        'z1': coord_after[:, 2],
-    })
+        if legacy_bug and len(morph.soma.points) > 1:
+            coord_before = np.vstack((morph.soma.points[0], coord_before))
+        mapping = pd.DataFrame({
+            'x0': coord_before[:, 0],
+            'y0': coord_before[:, 1],
+            'z0': coord_before[:, 2],
+            'x1': coord_after[:, 0],
+            'y1': coord_after[:, 1],
+            'z1': coord_after[:, 2],
+        })
 
     L.info('Unravel successful for file: %s', filename)
     return new_morph, mapping
