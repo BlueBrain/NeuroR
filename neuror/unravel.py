@@ -39,7 +39,7 @@ def _unravel_section(sec, new_section, window_half_length, soma, legacy_bug):
         points = np.vstack((soma.points[0], points))
     point_count = len(points)
     if new_section.is_root:
-        if len(soma.points) > 1:
+        if legacy_bug and len(soma.points) > 1:
             unravelled_points = [soma.points[0]]
         else:
             unravelled_points = [new_section.points[0]]
