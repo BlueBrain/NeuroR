@@ -5,7 +5,6 @@ from multiprocessing import Pool
 from pathlib import Path
 from tqdm import tqdm
 
-import morphio
 import numpy as np
 from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
@@ -38,7 +37,7 @@ def sanitize(input_neuron, output_path):
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
     '''
-    neuron = morphio.mut.Morphology(input_neuron)
+    neuron = Morphology(input_neuron)
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology('{} has an invalid or no soma'.format(input_neuron))
 
