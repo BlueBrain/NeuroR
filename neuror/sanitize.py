@@ -31,7 +31,7 @@ def sanitize(input_neuron, output_path):
 
     - fixes non zero segments
     - raises if the morphology has no soma
-    - raises if the morphology has negative diameters
+    - set negative diameters to zero
     - raises if the morphology has a neurite whose type changes along the way
 
     Args:
@@ -41,8 +41,8 @@ def sanitize(input_neuron, output_path):
     neuron = morphio.Morphology(input_neuron)
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology('{} has an invalid or no soma'.format(input_neuron))
-    if np.any(neuron.diameters < 0):
-        raise CorruptedMorphology('{} has negative diameters'.format(input_neuron))
+
+    neuron.diameters = np.clip(neuron.diameters, 0, None)
 
     for root in neuron.root_sections:  # pylint: disable=not-an-iterable
         for section in root.iter():
