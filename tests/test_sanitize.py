@@ -39,9 +39,6 @@ def test_sanitize():
                 ('no-soma.asc',
                  '{} has an invalid or no soma'.format(Path(PATH, 'no-soma.asc'))),
 
-                ('negative-diameters.asc',
-                 '{} has negative diameters'.format(Path(PATH, 'negative-diameters.asc'))),
-
                 ('neurite-with-multiple-types.swc',
                  ('{} has a neurite whose type changes along the way\n'
                   'Child section (id: 5) has a different type (SectionType.basal_dendrite) '

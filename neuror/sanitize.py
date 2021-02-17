@@ -38,11 +38,12 @@ def sanitize(input_neuron, output_path):
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
     '''
-    neuron = morphio.Morphology(input_neuron)
+    neuron = morphio.mut.Morphology(input_neuron)
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology('{} has an invalid or no soma'.format(input_neuron))
 
-    neuron.diameters = np.clip(neuron.diameters, 0, None)
+    for section in neuron.iter():
+        section.diameters = np.clip(section.diameters, 0, None)
 
     for root in neuron.root_sections:  # pylint: disable=not-an-iterable
         for section in root.iter():
