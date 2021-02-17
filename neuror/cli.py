@@ -67,19 +67,23 @@ def error_annotation():
 @click.argument('output_file')
 @click.option('--error_summary_file', type=click.Path(file_okay=True), default='error_summary.json',
               help='Path to json file to save error summary')
-def file(input_file, output_file, error_summary_file):
+@click.option('--marker_file', type=click.Path(file_okay=True), default='markers.json',
+              help='Path to json file to save markers')
+def file(input_file, output_file, error_summary_file, marker_file):
     '''Annotate errors on a morphology.'''
-    from neuror.error_annotation import annotate_single_morphology
+    from neuror.sanitize import annotate_neurolucida
 
     if Path(input_file).suffix not in ['.asc', '.ASC']:
         raise Exception('Only .asc/.ASC files are allowed, please convert with morph-tool.')
 
-    annotations, summary = annotate_single_morphology(input_file)
+    annotations, summary, markers = annotate_neurolucida(input_file)
     shutil.copy(input_file, output_file)
     with open(output_file, 'a') as morph_file:
         morph_file.write(annotations)
     with open(error_summary_file, 'w') as summary_file:
-        json.dump(summary, summary_file)
+        json.dump(summary, summary_file, cls=NeuromJSON)
+    with open(marker_file, 'w') as m_file:
+        json.dump(markers, m_file, cls=NeuromJSON)
 
 
 @error_annotation.command(short_help='Annotate errors on morphologies')
@@ -87,20 +91,24 @@ def file(input_file, output_file, error_summary_file):
 @click.argument('output_dir', type=click.Path(exists=True, file_okay=False, writable=True))
 @click.option('--error_summary_file', type=click.Path(file_okay=True), default='error_summary.json',
               help='Path to json file to save error summary')
-def folder(input_dir, output_dir, error_summary_file):
+@click.option('--marker_file', type=click.Path(file_okay=True), default='markers.json',
+              help='Path to json file to save markers')
+def folder(input_dir, output_dir, error_summary_file, marker_file):
     '''Annotate errors on a morphologies in a folder.'''
-    from neuror.error_annotation import annotate_morphologies
+    from neuror.sanitize import annotate_neurolucida_all
 
     output_dir = Path(output_dir)
-    morph_paths = iter_morphology_files(input_dir)
-    annotations, summaries = annotate_morphologies(morph_paths)
+    morph_paths = list(iter_morphology_files(input_dir))
+    annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
     for morph_path, annotation in annotations.items():
         output_file = output_dir / Path(morph_path).name
         shutil.copy(morph_path, output_file)
         with open(output_file, 'a') as morph_file:
             morph_file.write(annotation)
     with open(error_summary_file, 'w') as summary_file:
-        json.dump(summaries, summary_file, indent=4)
+        json.dump(summaries, summary_file, indent=4, cls=NeuromJSON)
+    with open(marker_file, 'w') as m_file:
+        json.dump(markers, m_file, cls=NeuromJSON)
 
 
 # pylint: disable=function-redefined
