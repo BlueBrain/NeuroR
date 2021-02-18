@@ -49,6 +49,10 @@ def test_sanitize():
                 sanitize(PATH / input_morph, Path(tmp_folder, 'output.asc'))
             assert_equal(str(cm.exception), expected_exception)
 
+        out_path =  Path(tmp_folder, 'output.asc')
+        sanitize(PATH / 'negative-diameters.asc', out_path)
+        assert_equal(next(Morphology(out_path).iter()).diameters, [2, 2, 0, 2])
+
 
 def test_sanitize_all():
     with TemporaryDirectory('test-sanitize') as tmp_folder:
