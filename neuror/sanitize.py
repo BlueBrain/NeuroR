@@ -5,7 +5,6 @@ from multiprocessing import Pool
 from pathlib import Path
 from tqdm import tqdm
 
-import morphio
 import numpy as np
 from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
@@ -31,18 +30,19 @@ def sanitize(input_neuron, output_path):
 
     - fixes non zero segments
     - raises if the morphology has no soma
-    - raises if the morphology has negative diameters
+    - set negative diameters to zero
     - raises if the morphology has a neurite whose type changes along the way
 
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
     '''
-    neuron = morphio.Morphology(input_neuron)
+    neuron = Morphology(input_neuron)
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology('{} has an invalid or no soma'.format(input_neuron))
-    if np.any(neuron.diameters < 0):
-        raise CorruptedMorphology('{} has negative diameters'.format(input_neuron))
+
+    for section in neuron.iter():
+        section.diameters = np.clip(section.diameters, 0, None)
 
     for root in neuron.root_sections:  # pylint: disable=not-an-iterable
         for section in root.iter():
