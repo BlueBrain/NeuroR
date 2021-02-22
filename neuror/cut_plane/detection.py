@@ -152,7 +152,7 @@ class CutPlane(HalfSpace):
                         best_plane.upward,
                         neuron,
                         best_plane.bin_width,
-                        best_plane.prob_threshold)
+                        best_plane.threshold)
 
     @classmethod
     def find_legacy(cls, neuron, axis):
@@ -222,10 +222,10 @@ class CutPlane(HalfSpace):
 
     def _compute_status(self):
         '''Returns ok if the probability that there is a cut plane is high enough'''
-        if self.prob < self.prob_threshold:
+        if self.prob < self.threshold:
             self.status = ('The probability that there is in fact NO '
                            'cut plane is below threshold: p = {0} < {1} ').format(
-                               self.prob, self.prob_threshold
+                               self.prob, self.threshold
                            )
         else:
             self.status = 'ok'
