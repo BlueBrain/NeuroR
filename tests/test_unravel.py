@@ -3,13 +3,13 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas as pd
+from morph_tool import diff
 from neurom import load_neuron
+from nose.tools import assert_false
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from nose.tools import assert_false
 import neuror.unravel as test_module
 from neuror.cut_plane.detection import CutPlane
-from morph_tool import diff
 
 DATA = Path(__file__).parent / 'data'
 
