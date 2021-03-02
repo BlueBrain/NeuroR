@@ -32,14 +32,14 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
-def _unravel_section(sec, new_section, window_half_length, soma, legacy_bug):
+def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior):
     '''Unravel a section'''
     points = sec.points
-    if legacy_bug and sec.is_root and len(soma.points) > 1:
+    if legacy_behavior and sec.is_root and len(soma.points) > 1:
         points = np.vstack((soma.points[0], points))
     point_count = len(points)
     if new_section.is_root:
-        if legacy_bug and len(soma.points) > 1:
+        if legacy_behavior and len(soma.points) > 1:
             unravelled_points = [soma.points[0]]
         else:
             unravelled_points = [new_section.points[0]]
@@ -64,12 +64,12 @@ def _unravel_section(sec, new_section, window_half_length, soma, legacy_bug):
         unravelled_points.append(point)
 
     new_section.points = unravelled_points
-    if legacy_bug and sec.is_root and len(soma.points) > 1:
+    if legacy_behavior and sec.is_root and len(soma.points) > 1:
         new_section.diameters = np.hstack((soma.diameters[0], sec.diameters))
 
 
 def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
-            legacy_bug=False):
+            legacy_behavior=False):
     '''Return an unravelled neuron
 
     Segment are unravelled iteratively
@@ -80,7 +80,7 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     Args:
         filename (str): the neuron to unravel
         window_half_length (int): the number of segments that defines half of the sliding window
-        legacy_bug (bool): if yes, when the soma has more than one point, the first point of the
+        legacy_behavior (bool): if yes, when the soma has more than one point, the first point of the
             soma is appended to the start of each neurite.
 
     Returns:
@@ -95,12 +95,12 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     coord_after = np.empty([0, 3])
 
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
-        _unravel_section(sec, new_section, window_half_length, morph.soma, legacy_bug)
+        _unravel_section(sec, new_section, window_half_length, morph.soma, legacy_behavior)
 
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
 
-        if legacy_bug and len(morph.soma.points) > 1:
+        if legacy_behavior and len(morph.soma.points) > 1:
             coord_before = np.vstack((morph.soma.points[0], coord_before))
         mapping = pd.DataFrame({
             'x0': coord_before[:, 0],

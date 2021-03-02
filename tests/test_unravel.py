@@ -100,8 +100,8 @@ def test_unravel_all():
         assert_array_equal(list(output.rglob('*.h5')), [output / 'Neuron_slice.h5'])
 
 def test_legacy():
-    actual, _ = test_module.unravel(DATA / 'legacy-unravel/1-pt-soma.swc', legacy_bug=True)
+    actual, _ = test_module.unravel(DATA / 'legacy-unravel/1-pt-soma.swc', legacy_behavior=True)
     assert_false(diff(actual, DATA / 'legacy-unravel/expected-1-pt-soma.h5'))
 
-    actual, _ = test_module.unravel(DATA / 'legacy-unravel/3-pts-soma.swc', legacy_bug=True)
+    actual, _ = test_module.unravel(DATA / 'legacy-unravel/3-pts-soma.swc', legacy_behavior=True)
     assert_false(diff(actual, DATA / 'legacy-unravel/expected-3-pts-soma.h5'))
