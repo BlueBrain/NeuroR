@@ -80,8 +80,8 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     Args:
         filename (str): the neuron to unravel
         window_half_length (int): the number of segments that defines half of the sliding window
-        legacy_behavior (bool): if yes, when the soma has more than one point, the first point of the
-            soma is appended to the start of each neurite.
+        legacy_behavior (bool): if yes, when the soma has more than one point, the first point of
+            the soma is appended to the start of each neurite.
 
     Returns:
         a tuple (morphio.mut.Morphology, dict) where first item is the unravelled
@@ -89,7 +89,7 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
             before and after unravelling
     '''
     morph = morphio.Morphology(filename, options=morphio.Option.nrn_order)
-    new_morph = morphio.mut.Morphology(morph, options=morphio.Option.nrn_order)  # pylint: disable=no-member
+    new_morph = morphio.mut.Morphology(morph, options=morphio.Option.nrn_order)  # noqa, pylint: disable=no-member
 
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
@@ -100,8 +100,8 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
 
-        if legacy_behavior and len(morph.soma.points) > 1:
-            coord_before = np.vstack((morph.soma.points[0], coord_before))
+        if legacy_behavior and len(morph.soma.points) > 1:  # pylint: disable=no-member
+            coord_before = np.vstack((morph.soma.points[0], coord_before))  # noqa, pylint: disable=no-member
         mapping = pd.DataFrame({
             'x0': coord_before[:, 0],
             'y0': coord_before[:, 1],
