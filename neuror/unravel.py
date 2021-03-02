@@ -13,12 +13,13 @@ import pandas as pd
 from morph_tool.utils import iter_morphology_files
 from scipy.spatial.ckdtree import cKDTree
 
+from neurom.morphmath import interval_lengths
 from neuror.cut_plane import CutPlane
 from neuror.utils import RepairJSON
 
 L = logging.getLogger('neuror')
 
-DEFAULT_WINDOW_HALF_LENGTH = 5
+DEFAULT_WINDOW_HALF_LENGTH = 10
 
 
 def _get_principal_direction(points):
@@ -32,40 +33,64 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
-def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior):
+def _unravel_section(sec, window_half_length, soma, legacy_behavior):
     '''Unravel a section'''
-    points = sec.points
+    unraveled_points = sec.points
+    n_points = len(sec.points)
+
     if legacy_behavior and sec.is_root and len(soma.points) > 1:
-        points = np.vstack((soma.points[0], points))
-    point_count = len(points)
-    if new_section.is_root:
-        if legacy_behavior and len(soma.points) > 1:
-            unravelled_points = [soma.points[0]]
-        else:
-            unravelled_points = [new_section.points[0]]
-    else:
-        unravelled_points = [new_section.parent.points[-1]]
+        unraveled_points = np.vstack((soma.points[0], unraveled_points))
 
-    for window_center in range(1, point_count):
-        window_start = max(0, window_center - window_half_length - 1)
-        window_end = min(point_count, window_center + window_half_length + 1)
+    # ensure the first point is the parent's last point
+    if not sec.is_root:
+        unraveled_points[0] = sec.parent.points[-1]
 
-        direction = _get_principal_direction(points[window_start:window_end])
+    for window_center in range(1, n_points):
+        # find how many segement on the left and right to be close to window_half_length
+        intervals = interval_lengths(sec.points)
+        _l_left = np.cumsum(intervals[window_center::-1])
+        _l_right = np.cumsum(intervals[min(n_points - 2, window_center):])
+        window_start = np.argmin(abs(_l_left - window_half_length))
+        window_end = np.argmin(abs(_l_right - window_half_length))
 
-        segment = points[window_center] - points[window_center - 1]
+        # if we are near the first point of the section we increase window from the right/left
+        # the 0.9 is only to not do that to often
+        _left_length = _l_left[window_start]
+        if _left_length < 0.9 * window_half_length:
+            window_end = np.argmin(abs(_l_right - (2 * window_half_length - _left_length)))
+        _right_length = _l_right[window_end]
+        if _right_length < 0.9 * window_half_length:
+            window_start = np.argmin(abs(_l_left - (2 * window_half_length - _right_length)))
+
+        # center bounds to windows center
+        window_start = window_center - window_start
+        window_end = window_center + window_end
+
+        # if windows as 0 width, extend by one segment on each side if possible
+        if window_start == window_end:
+            window_start = max(0, window_start - 1)
+            window_end = min(n_points, window_end + 1)
+
+        direction = _get_principal_direction(sec.points[window_start:window_end])
+
+        original_segment = sec.points[window_center] - sec.points[window_center - 1]
 
         # make it span length the same as the original segment within the window
-        direction *= np.linalg.norm(segment) / np.linalg.norm(direction)
+        direction *= np.linalg.norm(original_segment)
 
         # point it in the same direction as before
-        direction *= np.sign(np.dot(segment, direction))
+        if window_center > 1:
+            # this is what is mentionned as Add by Guy in BlueRepairSDK
+            # and is crucial to avoid 180degree flips due to wrong choice of directions
+            original_segment = unraveled_points[window_center - 1] - unraveled_points[0]
+        direction *= np.sign(np.dot(original_segment, direction))
 
-        point = direction + unravelled_points[-1]
-        unravelled_points.append(point)
+        # update the unravel points
+        unraveled_points[window_center] = unraveled_points[window_center - 1] + direction
 
-    new_section.points = unravelled_points
+    sec.points = unraveled_points
     if legacy_behavior and sec.is_root and len(soma.points) > 1:
-        new_section.diameters = np.hstack((soma.diameters[0], sec.diameters))
+        sec.diameters = np.hstack((soma.diameters[0], sec.diameters))
 
 
 def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
@@ -79,7 +104,7 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
 
     Args:
         filename (str): the neuron to unravel
-        window_half_length (int): the number of segments that defines half of the sliding window
+        window_half_length (int): path length that defines half of the sliding window
         legacy_behavior (bool): if yes, when the soma has more than one point, the first point of
             the soma is appended to the start of each neurite.
 
@@ -93,9 +118,8 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
 
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
-
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
-        _unravel_section(sec, new_section, window_half_length, morph.soma, legacy_behavior)
+        _unravel_section(new_section, window_half_length, morph.soma, legacy_behavior)
 
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
