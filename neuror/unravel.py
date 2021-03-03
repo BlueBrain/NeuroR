@@ -72,7 +72,6 @@ def _unravel_section(sec, window_half_length, soma, legacy_behavior):
             window_end = min(n_points, window_end + 1)
 
         direction = _get_principal_direction(sec.points[window_start:window_end])
-
         original_segment = sec.points[window_center] - sec.points[window_center - 1]
 
         # make it span length the same as the original segment within the window
@@ -83,7 +82,9 @@ def _unravel_section(sec, window_half_length, soma, legacy_behavior):
             # this is what is mentionned as Add by Guy in BlueRepairSDK
             # and is crucial to avoid 180degree flips due to wrong choice of directions
             original_segment = unraveled_points[window_center - 1] - unraveled_points[0]
-        direction *= np.sign(np.dot(original_segment, direction))
+
+        _scalar = np.dot(original_segment, direction)  # to prevent numpy to multiply by 0
+        direction *= np.sign(_scalar if abs(_scalar) > 0 else 1)
 
         # update the unravel points
         unraveled_points[window_center] = unraveled_points[window_center - 1] + direction

@@ -27,7 +27,6 @@ def test_get_principal_direction():
                                                                     [10, -1, 0],
                                                                     [10, 1, 0]]),
                               np.array([1, 0, 0]))
-
 def test_unravel():
     neuron, mapping = test_module.unravel(DATA / 'simple.asc')
     assert_array_almost_equal(neuron.root_sections[0].points,
