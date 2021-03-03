@@ -33,6 +33,7 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
+# pylint: disable=too-many-locals
 def _unravel_section(sec, window_half_length, soma, legacy_behavior):
     '''Unravel a section'''
     unraveled_points = sec.points
