@@ -19,7 +19,7 @@ from neuror.utils import RepairJSON
 
 L = logging.getLogger('neuror')
 
-DEFAULT_WINDOW_HALF_LENGTH = 10
+DEFAULT_WINDOW_HALF_LENGTH = 8
 
 
 def _get_principal_direction(points):
