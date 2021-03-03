@@ -73,7 +73,6 @@ def _unravel_section(sec, window_half_length, soma, legacy_behavior):
             window_end = min(n_points, window_end + 1)
 
         direction = _get_principal_direction(sec.points[window_start:window_end])
-
         original_segment = sec.points[window_center] - sec.points[window_center - 1]
 
         # make it span length the same as the original segment within the window
