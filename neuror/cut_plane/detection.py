@@ -32,7 +32,7 @@ class CutPlane(HalfSpace):
                  upward: bool,
                  morphology: Union[None, str, Path, Neuron],
                  bin_width: float,
-                 threshold: float = 0.2):
+                 percentile_threshold: float = 0.2):
         '''Cut plane ctor.
 
         Args:
@@ -41,7 +41,7 @@ class CutPlane(HalfSpace):
                     else, they satisfy: a X + b Y + c Z + d < 0
             morphology: the morphology
             bin_width: the bin width
-            thresold: the minimum fraction of cut leaves to consider a cut plane exists
+            percentile_threshold: the minimum percentile of leaves counts in bins
         '''
         super().__init__(coefs[0], coefs[1], coefs[2], coefs[3], upward)
 
@@ -56,10 +56,9 @@ class CutPlane(HalfSpace):
         self.cut_leaves_coordinates = None
         self.status = None
         self.prob = None
-        self.threshold = threshold
+        self.percentile_threshold = percentile_threshold
         if morphology is not None:
             self._compute_cut_leaves_coordinates()
-            self._compute_probabilities()
             self._compute_status()
 
     @classmethod
@@ -87,17 +86,17 @@ class CutPlane(HalfSpace):
         return obj
 
     # pylint: disable=arguments-differ
-    @classmethod
-    def from_rotations_translations(cls, transformations, morphology, bin_width):
-        plane = PlaneEquation.from_rotations_translations(transformations)
-        return cls(plane.coefs, True, morphology, bin_width)
+    #@classmethod
+    #def from_rotations_translations(cls, transformations, morphology, bin_width):
+    #    plane = PlaneEquation.from_rotations_translations(transformations)
+    #    return cls(plane.coefs, True, morphology, bin_width)
 
     @classmethod
-    def find(cls, neuron, bin_width=3,
-             searched_axes=('X', 'Y', 'Z'),
+    def find(cls, neuron, bin_width=15,
+             searched_axes=('Z'),
              searched_half_spaces=(-1, 1),
              fix_position=None,
-             threshold: float = 0.2):
+             percentile_threshold: float = 70):
         """
         Find and return the cut plane that is oriented along X, Y or Z.
         6 potential positions are considered: for each axis, they correspond
@@ -128,7 +127,6 @@ class CutPlane(HalfSpace):
         """
         if not isinstance(neuron, Neuron):
             neuron = load_neuron(neuron)
-
         # pylint: disable=invalid-unary-operand-type
         coef_d = -fix_position if fix_position is not None else 0
 
@@ -137,22 +135,40 @@ class CutPlane(HalfSpace):
                            upward=(side > 0),
                            morphology=neuron,
                            bin_width=bin_width,
-                           threshold=threshold)
+                           percentile_threshold=percentile_threshold)
                   for axis, side in product(searched_axes, searched_half_spaces)]
 
-        best_plane = max(planes, key=attrgetter('prob'))
-
+        # I have to do this mess below, as the planes ar at coef_d =0 above, so the computation
+        # for the probability is wrong.
+        # we need to refactor that I think, as it stands it is overcomputing stuff and
+        # overcomplexify it, it is a nightmare to read
+        coefs = []
         if fix_position is None:
-            points = _get_points(best_plane.morphology)
-            projected_points = best_plane.project_on_directed_normal(points)
-            best_plane.coefs[3] = np.min(projected_points, axis=0)
+            for plane, (axis, side) in zip(planes, product(searched_axes, searched_half_spaces)):
+                points = _get_points(plane.morphology)
+                projected_points = plane.project_on_directed_normal(points)
+                plane.coefs[3] = -side * np.min(projected_points, axis=0)
+                coefs.append(plane.coefs)
         else:
-            best_plane.coefs[3] = coef_d
+            for plane in planes:
+                plane.coefs[3] = coef_d
+                coefs.append(plane.coefs)
+
+        planes = [CutPlane(coef,
+                           upward=(side > 0),
+                           morphology=neuron,
+                           bin_width=bin_width,
+                           percentile_threshold=percentile_threshold)
+                  for coef, (axis, side) in zip(coefs,
+                                                product(searched_axes, searched_half_spaces))
+                  ]
+
+        best_plane = max(planes, key=attrgetter('prob'))
         return CutPlane(best_plane.coefs,
                         best_plane.upward,
                         neuron,
                         best_plane.bin_width,
-                        best_plane.threshold)
+                        best_plane.percentile_threshold)
 
     @classmethod
     def find_legacy(cls, neuron, axis):
@@ -175,22 +191,25 @@ class CutPlane(HalfSpace):
         plane.cut_leaves_coordinates = cut_leaves
         return plane
 
-    @property
-    def cut_sections(self):
-        '''Returns sections that ends within the cut plane'''
+    def _compute_cut_leaves_coordinates(self):
+        '''Returns cut leaves coordinates'''
         leaves = np.array([leaf
                            for neurite in self.morphology.neurites
                            for leaf in iter_sections(neurite, iterator_type=Tree.ileaf)])
-        self.n_leaves = len(leaves)
-        leaves_coord = [leaf.points[-1, COLS.XYZ] for leaf in leaves]
-        out = leaves[self.distance(leaves_coord) < self.bin_width]
-        self.n_cut_leaves = len(out)
-        return out
+        leaves_coord = np.array([leaf.points[-1, COLS.XYZ] for leaf in leaves])
+        cut_filter = self.distance(leaves_coord) < self.bin_width
+        cut_leaves = leaves[cut_filter]
 
-    def _compute_cut_leaves_coordinates(self):
-        '''Returns cut leaves coordinates'''
-        leaves = [leaf.points[-1, COLS.XYZ] for leaf in self.cut_sections]
-        self.cut_leaves_coordinates = np.vstack(leaves) if leaves else np.array([])
+        projected_uncut_leaves = self.project_on_directed_normal(leaves_coord[~cut_filter])
+        _min, _max = min(projected_uncut_leaves),  max(projected_uncut_leaves)
+        bins = np.arange(_min, _max, self.bin_width)
+        _dig = np.digitize(projected_uncut_leaves, bins)
+        _counts = np.unique(_dig, return_counts=True)[1]
+        self.leaves_threshold = np.percentile(_counts, self.percentile_threshold)
+        self.n_cut_leaves = len(cut_leaves)
+
+        self.cut_leaves_coordinates = np.vstack(leaves_coord[cut_filter]) \
+            if any(cut_filter) else np.array([])
 
     def to_json(self):
         '''Return a dictionary with the following items:
@@ -199,38 +218,23 @@ class CutPlane(HalfSpace):
             - cut_plane: a tuple (plane, position) where 'plane' is 'X', 'Y' or 'Z'
                        and 'position' is the position
             - cut_leaves: an np.array of all termination points in the cut plane
-            - figures: if 'display' option was used, a dict where values are tuples (fig, ax)
-                     for each figure
             - details: A dict currently only containing -LogP of the bin where the cut plane was
                      found
         '''
         return {'cut-leaves': self.cut_leaves_coordinates if self.status == 'ok' else None,
                 'status': self.status,
                 'details': {'prob': self.prob, 'bin-width': self.bin_width},
-                'cut-plane': super().to_json() if self.status=='ok' else None}
-
-    def _compute_probabilities(self):
-        '''Sets self.prob = (number of cut leaves) / (total number of leaves)'''
-        leaves = np.array([leaf
-                           for neurite in self.morphology.neurites
-                           for leaf in iter_sections(neurite, iterator_type=Tree.ileaf)])
-        n_leaves = len(leaves)
-        leaves_coord = [leaf.points[-1, COLS.XYZ] for leaf in leaves]
-        n_cut_leaves = len(leaves[self.distance(leaves_coord) < self.bin_width])
-
-        self.prob = 1.0 * n_cut_leaves / n_leaves
+                'cut-plane': super().to_json() if self.status == 'ok' else None}
 
     def _compute_status(self):
         '''Returns ok if the probability that there is a cut plane is high enough'''
-        if self.prob < self.threshold:
-            self.status = ('The probability that there is in fact NO '
-                           'cut plane is below threshold: p = {0} < {1} ').format(
-                               self.prob, self.threshold
-                           )
+        self.prob = self.n_cut_leaves - self.leaves_threshold
+        if self.prob < 0:
+            self.status = ('No cut plane detected with {self.prob} < 0 ')
         else:
             self.status = 'ok'
 
-
+"""
 def _success_function(params, points, bin_width):
     '''The success function is low (=good) when the difference of points
     on the left side and right side of the plane is high'''
@@ -259,7 +263,7 @@ def _minimize(x0, points, bin_width):
     if result.status:
         raise Exception(result.message)
     return result.x
-
+"""
 
 def _get_points(neuron):
     return np.array([point
