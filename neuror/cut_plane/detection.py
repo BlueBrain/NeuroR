@@ -104,7 +104,7 @@ class CutPlane(HalfSpace):
         to the coordinate of the first and last point of the neuron.
 
         We compute the ratio of number of cut leaves over the total number of leaves,
-        and decide is there is a cut plane using a threshold. The assumption is that a
+        and decide if there is a cut plane using a threshold. The assumption is that a
         cut plane contains a large fraction of the leaves of the morphologies to be considered one.
 
         Args:
