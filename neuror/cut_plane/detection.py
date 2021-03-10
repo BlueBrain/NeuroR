@@ -13,6 +13,7 @@ from neurom.core import Tree
 from neurom.core._neuron import Neuron
 from neurom.core.dataformat import COLS
 from scipy.optimize import minimize
+from scipy.special import factorial
 
 from neuror.cut_plane.legacy_detection import internal_cut_detection
 from neuror.cut_plane.planes import HalfSpace, PlaneEquation
@@ -31,8 +32,7 @@ class CutPlane(HalfSpace):
     def __init__(self, coefs: List[float],
                  upward: bool,
                  morphology: Union[None, str, Path, Neuron],
-                 bin_width: float,
-                 percentile_threshold: float = 0.2):
+                 bin_width: float):
         '''Cut plane ctor.
 
         Args:
@@ -41,7 +41,6 @@ class CutPlane(HalfSpace):
                     else, they satisfy: a X + b Y + c Z + d < 0
             morphology: the morphology
             bin_width: the bin width
-            percentile_threshold: the minimum percentile of leaves counts in bins
         '''
         super().__init__(coefs[0], coefs[1], coefs[2], coefs[3], upward)
 
@@ -55,10 +54,10 @@ class CutPlane(HalfSpace):
         self.bin_width = bin_width
         self.cut_leaves_coordinates = None
         self.status = None
-        self.prob = None
-        self.percentile_threshold = percentile_threshold
+        self.minus_log_prob = None
         if morphology is not None:
             self._compute_cut_leaves_coordinates()
+            self._compute_probabilities()
             self._compute_status()
 
     @classmethod
@@ -82,29 +81,37 @@ class CutPlane(HalfSpace):
 
         obj.cut_leaves_coordinates = np.array(cut_plane_obj['cut-leaves'])
         obj.status = cut_plane_obj['status']
-        obj.prob = cut_plane_obj['details']['prob']
+        obj.minus_log_prob = cut_plane_obj['details']['-LogP']
         return obj
 
     # pylint: disable=arguments-differ
-    #@classmethod
-    #def from_rotations_translations(cls, transformations, morphology, bin_width):
-    #    plane = PlaneEquation.from_rotations_translations(transformations)
-    #    return cls(plane.coefs, True, morphology, bin_width)
+    @classmethod
+    def from_rotations_translations(cls, transformations, morphology, bin_width):
+        plane = PlaneEquation.from_rotations_translations(transformations)
+        return cls(plane.coefs, True, morphology, bin_width)
 
     @classmethod
-    def find(cls, neuron, bin_width=15,
-             searched_axes=('Z'),
+    def find(cls, neuron, bin_width=3,
+             searched_axes=('X', 'Y', 'Z'),
              searched_half_spaces=(-1, 1),
-             fix_position=None,
-             percentile_threshold: float = 70):
+             fix_position=None):
         """
         Find and return the cut plane that is oriented along X, Y or Z.
         6 potential positions are considered: for each axis, they correspond
         to the coordinate of the first and last point of the neuron.
 
-        We compute the ratio of number of cut leaves over the total number of leaves,
-        and decide if there is a cut plane using a threshold. The assumption is that a
-        cut plane contains a large fraction of the leaves of the morphologies to be considered one.
+        Description of the algorithm:
+
+        1) The distribution of all points along X, Y and Z is computed
+           and put into 3 histograms.
+        2) For each histogram we look at the first and last empty bins
+           (ie. the last bin before the histogram starts rising,
+           and the first after it reaches zero again). Under the assumption
+           that there is no cut plane, the posteriori probability
+           of observing this empty bin given the value of the not-empty
+           neighbour bin is then computed.
+        3) The lowest probability of the 6 probabilities (2 for each axes)
+           corresponds to the cut plane
 
         Args:
             neuron (Neuron|str|pathlib.Path): a Neuron object or path
@@ -127,6 +134,7 @@ class CutPlane(HalfSpace):
         """
         if not isinstance(neuron, Neuron):
             neuron = load_neuron(neuron)
+
         # pylint: disable=invalid-unary-operand-type
         coef_d = -fix_position if fix_position is not None else 0
 
@@ -134,41 +142,21 @@ class CutPlane(HalfSpace):
                             int(axis.upper() == 'Z'), coef_d],
                            upward=(side > 0),
                            morphology=neuron,
-                           bin_width=bin_width,
-                           percentile_threshold=percentile_threshold)
+                           bin_width=bin_width)
                   for axis, side in product(searched_axes, searched_half_spaces)]
 
-        # I have to do this mess below, as the planes ar at coef_d =0 above, so the computation
-        # for the probability is wrong.
-        # we need to refactor that I think, as it stands it is overcomputing stuff and
-        # overcomplexify it, it is a nightmare to read
-        coefs = []
+        best_plane = max(planes, key=attrgetter('minus_log_prob'))
+
         if fix_position is None:
-            for plane, (axis, side) in zip(planes, product(searched_axes, searched_half_spaces)):
-                points = _get_points(plane.morphology)
-                projected_points = plane.project_on_directed_normal(points)
-                plane.coefs[3] = -side * np.min(projected_points, axis=0)
-                coefs.append(plane.coefs)
+            _, bins = best_plane.histogram()
+            # The orientation of the plane is defined such as the morphology lives
+            # on the positive side once coordinates are projected
+            # (see HalfSpace.project_on_directed_normal)
+            # So the first bin is where we look for the cut plane
+            best_plane.coefs[3] = bins[0]
         else:
-            for plane in planes:
-                plane.coefs[3] = coef_d
-                coefs.append(plane.coefs)
-
-        planes = [CutPlane(coef,
-                           upward=(side > 0),
-                           morphology=neuron,
-                           bin_width=bin_width,
-                           percentile_threshold=percentile_threshold)
-                  for coef, (axis, side) in zip(coefs,
-                                                product(searched_axes, searched_half_spaces))
-                  ]
-
-        best_plane = max(planes, key=attrgetter('prob'))
-        return CutPlane(best_plane.coefs,
-                        best_plane.upward,
-                        neuron,
-                        best_plane.bin_width,
-                        best_plane.percentile_threshold)
+            best_plane.coefs[3] = coef_d
+        return CutPlane(best_plane.coefs, best_plane.upward, neuron, best_plane.bin_width)
 
     @classmethod
     def find_legacy(cls, neuron, axis):
@@ -191,25 +179,19 @@ class CutPlane(HalfSpace):
         plane.cut_leaves_coordinates = cut_leaves
         return plane
 
-    def _compute_cut_leaves_coordinates(self):
-        '''Returns cut leaves coordinates'''
+    @property
+    def cut_sections(self):
+        '''Returns sections that ends within the cut plane'''
         leaves = np.array([leaf
                            for neurite in self.morphology.neurites
                            for leaf in iter_sections(neurite, iterator_type=Tree.ileaf)])
-        leaves_coord = np.array([leaf.points[-1, COLS.XYZ] for leaf in leaves])
-        cut_filter = self.distance(leaves_coord) < self.bin_width
-        cut_leaves = leaves[cut_filter]
+        leaves_coord = [leaf.points[-1, COLS.XYZ] for leaf in leaves]
+        return leaves[self.distance(leaves_coord) < self.bin_width]
 
-        projected_uncut_leaves = self.project_on_directed_normal(leaves_coord[~cut_filter])
-        _min, _max = min(projected_uncut_leaves),  max(projected_uncut_leaves)
-        bins = np.arange(_min, _max, self.bin_width)
-        _dig = np.digitize(projected_uncut_leaves, bins)
-        _counts = np.unique(_dig, return_counts=True)[1]
-        self.leaves_threshold = np.percentile(_counts, self.percentile_threshold)
-        self.n_cut_leaves = len(cut_leaves)
-
-        self.cut_leaves_coordinates = np.vstack(leaves_coord[cut_filter]) \
-            if any(cut_filter) else np.array([])
+    def _compute_cut_leaves_coordinates(self):
+        '''Returns cut leaves coordinates'''
+        leaves = [leaf.points[-1, COLS.XYZ] for leaf in self.cut_sections]
+        self.cut_leaves_coordinates = np.vstack(leaves) if leaves else np.array([])
 
     def to_json(self):
         '''Return a dictionary with the following items:
@@ -218,23 +200,57 @@ class CutPlane(HalfSpace):
             - cut_plane: a tuple (plane, position) where 'plane' is 'X', 'Y' or 'Z'
                        and 'position' is the position
             - cut_leaves: an np.array of all termination points in the cut plane
+            - figures: if 'display' option was used, a dict where values are tuples (fig, ax)
+                     for each figure
             - details: A dict currently only containing -LogP of the bin where the cut plane was
                      found
         '''
-        return {'cut-leaves': self.cut_leaves_coordinates if self.status == 'ok' else None,
+        return {'cut-leaves': self.cut_leaves_coordinates,
                 'status': self.status,
-                'details': {'prob': self.prob, 'bin-width': self.bin_width},
-                'cut-plane': super().to_json() if self.status == 'ok' else None}
+                'details': {'-LogP': self.minus_log_prob, 'bin-width': self.bin_width},
+                'cut-plane': super().to_json()}
+
+    def histogram(self):
+        '''Get the point distribution projected along the normal to the plane
+
+        Returns:
+            a numpy.histogram
+        '''
+        points = _get_points(self.morphology)
+        projected_points = self.project_on_directed_normal(points)
+        min_, max_ = np.min(projected_points, axis=0), np.max(projected_points, axis=0)
+        binning = np.arange(min_, max_ + self.bin_width, self.bin_width)
+        return np.histogram(projected_points, bins=binning)
+
+    def _compute_probabilities(self):
+        '''Returns -log(p) where p is the a posteriori probabilities of the observed values
+        in the bins X min, X max, Y min, Y max, Z min, Z max
+
+        Parameters:
+            hist: a dict of the X, Y and Z 1D histograms
+
+        Returns: a dict of -log(p) values'''
+
+        hist = self.histogram()
+        if not hist[0].size:
+            self.minus_log_prob = np.nan
+        else:
+            self.minus_log_prob = get_minus_log_p(0, hist[0][0])
+        self._compute_status()
+        return self.minus_log_prob
 
     def _compute_status(self):
         '''Returns ok if the probability that there is a cut plane is high enough'''
-        self.prob = self.n_cut_leaves - self.leaves_threshold
-        if self.prob < 0:
-            self.status = ('No cut plane detected with {self.prob} < 0 ')
+        _THRESHOLD = 50
+        if np.isnan(self.minus_log_prob):
+            self.status = 'The proba is NaN, something went wrong'
+        elif self.minus_log_prob < _THRESHOLD:
+            self.status = ('The probability that there is in fact NO '
+                           'cut plane is high: -log(p) = {0} !').format(self.minus_log_prob)
         else:
             self.status = 'ok'
 
-"""
+
 def _success_function(params, points, bin_width):
     '''The success function is low (=good) when the difference of points
     on the left side and right side of the plane is high'''
@@ -263,7 +279,15 @@ def _minimize(x0, points, bin_width):
     if result.status:
         raise Exception(result.message)
     return result.x
-"""
+
+
+def get_minus_log_p(k, mu):
+    '''Compute -Log(p|k) where p is the a posteriori probability to observe k counts
+    in bin given than the mean value was "mu":
+    demo: p(k|mu) = exp(-mu) * mu**k / k!
+    '''
+    return mu - k * np.log(mu) + np.log(factorial(k))
+
 
 def _get_points(neuron):
     return np.array([point
