@@ -132,7 +132,7 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
     '''
 
     if not intact_sections:
-        L.info("No intact axon found. Not repairing!")
+        L.debug("No intact axon found. Not repairing!")
         return
 
     similar = _similar_section(intact_sections, section)
@@ -141,12 +141,12 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
     strahler_orders = {intact_section: strahler_order(intact_section)
                        for intact_section in intact_sections + branch_pool}
 
-    L.info('Branch pool count: %s', len(branch_pool))
+    L.debug('Branch pool count: %s', len(branch_pool))
     for branch in branch_pool:
         if (branch in used_axon_branches or strahler_orders[similar] != strahler_orders[branch]):
             continue
 
-        L.info("Pasting axon branch with ID %s", branch.id)
+        L.debug("Pasting axon branch with ID %s", branch.id)
 
         end_point = section.points[-1, COLS.XYZ]
         appended = section.append_section(branch)
@@ -160,10 +160,10 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
         appended.points = appended_points
 
         if any(np.any(section.points[:, COLS.Y] > y_extent) for section in appended.iter()):
-            L.info("Discarded, exceeds y-limit")
+            L.debug("Discarded, exceeds y-limit")
             morphology.delete_section(appended)
         else:
-            L.info('Section appended')
+            L.debug('Section appended')
             used_axon_branches.add(branch)
             return
 
