@@ -64,12 +64,12 @@ def test_unravel_with_backward_segment():
     '''
     neuron, mapping = test_module.unravel(DATA / 'simple-with-backward-segment.asc')
     assert_array_almost_equal(neuron.root_sections[0].points,
-                              np.array([[ 0.        ,  0.        ,  0.        ],
-                                        [ 1.2649109 , -0.63245565,  0.        ],
-                                        [ 2.5298219 , -1.2649113 ,  0.        ],
-                                        [ 4.318676  , -2.1593387 ,  0.        ],
-                                        [ 6.10753   , -3.053766  ,  0.        ],
-                                        [ 7.0019574 , -3.5009797 ,  0.        ]], dtype=np.float32))
+                              np.array([[0.        , 0.        , 0.        ],
+                                        [0.99999994, 0.99999994, 0.        ],
+                                        [1.9999999 , 1.9999999 , 0.        ],
+                                        [3.4142134 , 3.4142134 , 0.        ],
+                                        [4.828427  , 4.828427  , 0.        ],
+                                        [5.5355334 , 4.1213202 , 0.        ]], dtype=np.float32))
 
 
 def test_unravel_plane():
