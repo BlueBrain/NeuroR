@@ -59,6 +59,20 @@ def test_unravel():
                                [3.8028996 , -0.44137323, 0.],
                                [6.80289936,  3.55862665, 2.]])
 
+def test_unravel_with_backward_segment():
+    '''Test the fix to the  unravel issue
+    which was not working when there was a segment going backward wrt to the window direction
+    (direction from the window first to the window last point)
+    '''
+    neuron, mapping = test_module.unravel(DATA / 'simple-with-backward-segment.asc')
+    assert_array_almost_equal(neuron.root_sections[0].points,
+                              np.array([[ 0.        ,  0.        ,  0.        ],
+                                        [ 1.2649109 , -0.63245565,  0.        ],
+                                        [ 2.5298219 , -1.2649113 ,  0.        ],
+                                        [ 4.318676  , -2.1593387 ,  0.        ],
+                                        [ 6.10753   , -3.053766  ,  0.        ],
+                                        [ 7.0019574 , -3.5009797 ,  0.        ]], dtype=np.float32))
+
 
 def test_unravel_plane():
     with TemporaryDirectory('test-unravel-plane'):
