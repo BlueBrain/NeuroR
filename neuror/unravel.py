@@ -57,7 +57,7 @@ def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior
         window_direction = points[window_end - 1] - points[window_start]
 
         # make it span length the same as the original window_direction within the window
-        direction *= np.linalg.norm(segment) / np.linalg.norm(direction)
+        direction *= np.linalg.norm(segment)
 
         scalar_product = np.dot(window_direction, direction)
         # point it in the same direction as the window
