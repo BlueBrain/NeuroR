@@ -1,8 +1,8 @@
 """Detect cut leaves with new algo."""
+from itertools import product
 import numpy as np
 from neurom.core.dataformat import COLS
 from neuror.cut_plane.planes import HalfSpace
-from itertools import product
 
 
 def _get_cut_leaves(plane, morphology, bin_width, percentile_threshold):
@@ -18,8 +18,7 @@ def _get_cut_leaves(plane, morphology, bin_width, percentile_threshold):
     _min, _max = min(projected_uncut_leaves), max(projected_uncut_leaves)
     bins = np.arange(_min, _max, bin_width)
     _dig = np.digitize(projected_uncut_leaves, bins)
-    _counts = np.unique(_dig, return_counts=True)[1]
-    leaves_threshold = np.percentile(_counts, percentile_threshold)
+    leaves_threshold = np.percentile(np.unique(_dig, return_counts=True)[1], percentile_threshold)
 
     quality = len(cut_leaves) - leaves_threshold
     if quality > 0:
