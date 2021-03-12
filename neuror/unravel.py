@@ -32,9 +32,9 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
-# pylint: disable=too-many-locals
 def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior):
     '''Unravel a section'''
+    # pylint: disable=too-many-locals
     points = sec.points
     if legacy_behavior and sec.is_root and len(soma.points) > 1:
         points = np.vstack((soma.points[0], points))
@@ -79,6 +79,10 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     Each segment direction is replaced by the averaged direction in a sliding window
     around this segment. And the original segment length is preserved.
     The start position of the new segment is the end of the latest unravelled segment
+
+    Based initially on:
+    DOI: 10.7551/mitpress/9780262013277.001.0001
+    Section: 9.2 Repair of Neuronal Dendrites
 
     Args:
         filename (str): the neuron to unravel
