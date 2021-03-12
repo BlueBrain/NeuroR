@@ -32,6 +32,7 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
+# pylint: disable=too-many-locals
 def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior):
     '''Unravel a section'''
     points = sec.points
@@ -53,12 +54,14 @@ def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior
         direction = _get_principal_direction(points[window_start:window_end])
 
         segment = points[window_center] - points[window_center - 1]
+        window_direction = points[window_end - 1] - points[window_start]
 
-        # make it span length the same as the original segment within the window
-        direction *= np.linalg.norm(segment) / np.linalg.norm(direction)
+        # make it span length the same as the original window_direction within the window
+        direction *= np.linalg.norm(segment)
 
-        # point it in the same direction as before
-        direction *= np.sign(np.dot(segment, direction))
+        scalar_product = np.dot(window_direction, direction)
+        # point it in the same direction as the window
+        direction *= np.sign(scalar_product or 1.)
 
         point = direction + unravelled_points[-1]
         unravelled_points.append(point)
