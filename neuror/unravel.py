@@ -19,7 +19,8 @@ from neuror.utils import RepairJSON
 
 L = logging.getLogger('neuror')
 
-DEFAULT_WINDOW_HALF_LENGTH = 8
+DEFAULT_WINDOW_HALF_LENGTH = 5
+DEFAULT_WINDOW_HALF_LENGTH_PATH = 8
 
 
 def _get_principal_direction(points):
@@ -116,9 +117,9 @@ def _unravel_section_path_length(sec, window_half_length, soma, legacy_behavior)
         # make it span length the same as the original segment within the window
         direction *= np.linalg.norm(original_segment)
 
+        # point it in the same direction as the window
         window_direction = sec.points[window_end - 1] - sec.points[window_start]
         scalar_product = np.dot(window_direction, direction)
-        # point it in the same direction as the window
         direction *= np.sign(scalar_product or 1.)
 
         # update the unravel points
@@ -129,7 +130,7 @@ def _unravel_section_path_length(sec, window_half_length, soma, legacy_behavior)
         sec.diameters = np.hstack((soma.diameters[0], sec.diameters))
 
 
-def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
+def unravel(filename, window_half_length=None,
             legacy_behavior=False, use_path_length=True):
     '''Return an unravelled neuron
 
@@ -157,6 +158,10 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     '''
     morph = morphio.Morphology(filename, options=morphio.Option.nrn_order)
     new_morph = morphio.mut.Morphology(morph, options=morphio.Option.nrn_order)  # noqa, pylint: disable=no-member
+
+    if window_half_length is None:
+        window_half_length = DEFAULT_WINDOW_HALF_LENGTH_PATH \
+            if use_path_length else DEFAULT_WINDOW_HALF_LENGTH
 
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
@@ -207,7 +212,7 @@ def unravel_plane(plane, mapping):
 def unravel_all(raw_dir, unravelled_dir,
                 raw_planes_dir,
                 unravelled_planes_dir,
-                window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
+                window_half_length=None):
     '''Repair all morphologies in input folder
     '''
     if not os.path.exists(raw_planes_dir):
