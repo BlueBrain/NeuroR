@@ -33,20 +33,20 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
-def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior):
+def _unravel_section(section, window_half_length, soma, legacy_behavior):
     '''Unravel a section using number of adjacent points as window_half_length'''
     # pylint: disable=too-many-locals
-    points = sec.points
-    if legacy_behavior and sec.is_root and len(soma.points) > 1:
+    points = section.points
+    if legacy_behavior and section.is_root and len(soma.points) > 1:
         points = np.vstack((soma.points[0], points))
     point_count = len(points)
-    if new_section.is_root:
+    if section.is_root:
         if legacy_behavior and len(soma.points) > 1:
             unravelled_points = [soma.points[0]]
         else:
-            unravelled_points = [new_section.points[0]]
+            unravelled_points = [section.points[0]]
     else:
-        unravelled_points = [new_section.parent.points[-1]]
+        unravelled_points = [section.parent.points[-1]]
 
     for window_center in range(1, point_count):
         window_start = int(max(0, window_center - window_half_length - 1))
@@ -66,9 +66,9 @@ def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior
         point = direction + unravelled_points[-1]
         unravelled_points.append(point)
 
-    new_section.points = unravelled_points
-    if legacy_behavior and sec.is_root and len(soma.points) > 1:
-        new_section.diameters = np.hstack((soma.diameters[0], sec.diameters))
+    section.points = unravelled_points
+    if legacy_behavior and section.is_root and len(soma.points) > 1:
+        section.diameters = np.hstack((soma.diameters[0], section.diameters))
 
 
 # pylint: disable=too-many-locals
