@@ -83,7 +83,7 @@ def find_cut_leaves(
     # return only leaves of planes with valid cut
     leaves = [leave for leave, _ in cuts if leave is not None]
     qualities = [
-        {"axis": axis, "side": side, "quality": quality}
+        {"axis": axis, "side": side, "quality": np.around(quality, 3)}
         for (_, quality), (axis, side) in zip(cuts, product(searched_axes, searched_half_spaces))
         if quality is not None
     ]
