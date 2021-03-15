@@ -57,6 +57,39 @@ def test_unravel():
                                [2.70710659, 1.29289317, 0.        ],
                                [5.70710659, 5.29289341, 2.        ]])
 
+
+def test_unravel_no_path_length():
+    neuron, mapping = test_module.unravel(DATA / 'simple.asc', use_path_length=False)
+    assert_array_almost_equal(neuron.root_sections[0].points,
+                              np.array([[ 0.      ,  0.      ,  0.      ],
+                                        [ 1.404784, -0.163042,  0.      ],
+                                        [ 2.809567, -0.326085,  0.      ],
+                                        [ 3.8029  , -0.441373,  0.      ]]))
+
+    assert_array_almost_equal(neuron.root_sections[0].children[0].points[0],
+                              np.array([ 3.8029  , -0.441373,  0.      ]))
+
+    assert_array_almost_equal(mapping[['x0', 'y0', 'z0']].values,
+                              [[0., 0., 0.],
+                               [1., 1., 0.],
+                               [2., 0., 0.],
+                               [3., 0., 0.],
+                               [3., 0., 0.],
+                               [4., 1., 0.],
+                               [3., 0., 0.],
+                               [6., 4., 2.]])
+
+    assert_array_almost_equal(mapping[['x1', 'y1', 'z1']].values,
+                              [[0.        ,  0.        , 0.],
+                               [1.40478373, -0.16304241, 0.],
+                               [2.80956745, -0.32608482, 0.],
+                               [3.8028996 , -0.44137323, 0.],
+                               [3.8028996 , -0.44137323, 0.],
+                               [4.80289936,  0.55862677, 0.],
+                               [3.8028996 , -0.44137323, 0.],
+                               [6.80289936,  3.55862665, 2.]])
+
+
 def test_unravel_with_backward_segment():
     '''Test the fix to the  unravel issue
     which was not working when there was a segment going backward wrt to the window direction
