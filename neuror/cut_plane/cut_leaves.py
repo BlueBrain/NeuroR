@@ -81,10 +81,10 @@ def find_cut_leaves(
     cuts = [_get_cut_leaves(plane, morph, bin_width, percentile_threshold) for plane in planes]
 
     # return only leaves of planes with valid cut
-    leaves = np.vstack([leave for leave, _ in cuts if leave is not None])
+    leaves = [leave for leave, _ in cuts if leave is not None]
     qualities = [
         {"axis": axis, "side": side, "quality": quality}
         for (_, quality), (axis, side) in zip(cuts, product(searched_axes, searched_half_spaces))
         if quality is not None
     ]
-    return leaves, qualities
+    return np.vstack(leaves) if leaves else [], qualities
