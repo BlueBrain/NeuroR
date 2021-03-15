@@ -138,6 +138,10 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     around this segment, preserving the original segment length.
     The start position of the new segment is the end of the latest unravelled segment
 
+    Based initially on:
+    DOI: 10.7551/mitpress/9780262013277.001.0001
+    Section: 9.2 Repair of Neuronal Dendrites
+
     Args:
         filename (str): the neuron to unravel
         window_half_length (int): path length that defines half of the sliding window
