@@ -14,7 +14,6 @@ from morph_tool.utils import iter_morphology_files
 from neurom.morphmath import interval_lengths
 from scipy.spatial.ckdtree import cKDTree
 
-from neurom.morphmath import interval_lengths
 from neuror.cut_plane import CutPlane
 from neuror.utils import RepairJSON
 
@@ -34,9 +33,47 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
+def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior):
+    '''Unravel a section using number of adjacent points as window_half_length'''
+    # pylint: disable=too-many-locals
+    points = sec.points
+    if legacy_behavior and sec.is_root and len(soma.points) > 1:
+        points = np.vstack((soma.points[0], points))
+    point_count = len(points)
+    if new_section.is_root:
+        if legacy_behavior and len(soma.points) > 1:
+            unravelled_points = [soma.points[0]]
+        else:
+            unravelled_points = [new_section.points[0]]
+    else:
+        unravelled_points = [new_section.parent.points[-1]]
+
+    for window_center in range(1, point_count):
+        window_start = int(max(0, window_center - window_half_length - 1))
+        window_end = int(min(point_count, window_center + window_half_length + 1))
+        direction = _get_principal_direction(points[window_start:window_end])
+
+        segment = points[window_center] - points[window_center - 1]
+        window_direction = points[window_end - 1] - points[window_start]
+
+        # make it span length the same as the original window_direction within the window
+        direction *= np.linalg.norm(segment)
+
+        scalar_product = np.dot(window_direction, direction)
+        # point it in the same direction as the window
+        direction *= np.sign(scalar_product or 1.)
+
+        point = direction + unravelled_points[-1]
+        unravelled_points.append(point)
+
+    new_section.points = unravelled_points
+    if legacy_behavior and sec.is_root and len(soma.points) > 1:
+        new_section.diameters = np.hstack((soma.diameters[0], sec.diameters))
+
+
 # pylint: disable=too-many-locals
-def _unravel_section(sec, window_half_length, soma, legacy_behavior):
-    '''Unravel a section'''
+def _unravel_section_path_length(sec, window_half_length, soma, legacy_behavior):
+    '''Unravel a section using path length as window_half_length'''
     unraveled_points = sec.points
     n_points = len(sec.points)
 
@@ -93,12 +130,12 @@ def _unravel_section(sec, window_half_length, soma, legacy_behavior):
 
 
 def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
-            legacy_behavior=False):
+            legacy_behavior=False, use_path_length=True):
     '''Return an unravelled neuron
 
     Segment are unravelled iteratively
     Each segment direction is replaced by the averaged direction in a sliding window
-    around this segment. And the original segment length is preserved.
+    around this segment, preserving the original segment length.
     The start position of the new segment is the end of the latest unravelled segment
 
     Args:
@@ -106,6 +143,8 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
         window_half_length (int): path length that defines half of the sliding window
         legacy_behavior (bool): if yes, when the soma has more than one point, the first point of
             the soma is appended to the start of each neurite.
+        use_path_length (bool): if False, the argument window_half_length will be recasted to an int
+            and correspond to number of points on each side of the window.
 
     Returns:
         a tuple (morphio.mut.Morphology, dict) where first item is the unravelled
@@ -118,7 +157,12 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
-        _unravel_section(new_section, window_half_length, morph.soma, legacy_behavior)
+        if use_path_length:
+            _unravel_section_path_length(
+                new_section, window_half_length, morph.soma, legacy_behavior
+            )
+        else:
+            _unravel_section(new_section, int(window_half_length), morph.soma, legacy_behavior)
 
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
