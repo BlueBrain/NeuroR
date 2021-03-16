@@ -11,6 +11,7 @@ import morphio
 import numpy as np
 import pandas as pd
 from morph_tool.utils import iter_morphology_files
+from neurom.morphmath import interval_lengths
 from scipy.spatial.ckdtree import cKDTree
 
 from neuror.cut_plane import CutPlane
@@ -19,6 +20,7 @@ from neuror.utils import RepairJSON
 L = logging.getLogger('neuror')
 
 DEFAULT_WINDOW_HALF_LENGTH = 5
+DEFAULT_WINDOW_HALF_LENGTH_PATH = 8
 
 
 def _get_principal_direction(points):
@@ -32,25 +34,24 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
-def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior):
-    '''Unravel a section'''
+def _unravel_section(section, window_half_length, soma, legacy_behavior):
+    '''Unravel a section using number of adjacent points as window_half_length'''
     # pylint: disable=too-many-locals
-    points = sec.points
-    if legacy_behavior and sec.is_root and len(soma.points) > 1:
+    points = section.points
+    if legacy_behavior and section.is_root and len(soma.points) > 1:
         points = np.vstack((soma.points[0], points))
     point_count = len(points)
-    if new_section.is_root:
+    if section.is_root:
         if legacy_behavior and len(soma.points) > 1:
             unravelled_points = [soma.points[0]]
         else:
-            unravelled_points = [new_section.points[0]]
+            unravelled_points = [section.points[0]]
     else:
-        unravelled_points = [new_section.parent.points[-1]]
+        unravelled_points = [section.parent.points[-1]]
 
     for window_center in range(1, point_count):
-        window_start = max(0, window_center - window_half_length - 1)
-        window_end = min(point_count, window_center + window_half_length + 1)
-
+        window_start = int(max(0, window_center - window_half_length - 1))
+        window_end = int(min(point_count, window_center + window_half_length + 1))
         direction = _get_principal_direction(points[window_start:window_end])
 
         segment = points[window_center] - points[window_center - 1]
@@ -66,18 +67,76 @@ def _unravel_section(sec, new_section, window_half_length, soma, legacy_behavior
         point = direction + unravelled_points[-1]
         unravelled_points.append(point)
 
-    new_section.points = unravelled_points
+    section.points = unravelled_points
+    if legacy_behavior and section.is_root and len(soma.points) > 1:
+        section.diameters = np.hstack((soma.diameters[0], section.diameters))
+
+
+# pylint: disable=too-many-locals
+def _unravel_section_path_length(sec, window_half_length, soma, legacy_behavior):
+    '''Unravel a section using path length as window_half_length'''
+    unraveled_points = sec.points
+    n_points = len(sec.points)
+
     if legacy_behavior and sec.is_root and len(soma.points) > 1:
-        new_section.diameters = np.hstack((soma.diameters[0], sec.diameters))
+        unraveled_points = np.vstack((soma.points[0], unraveled_points))
+
+    # ensure the first point is the parent's last point
+    if not sec.is_root:
+        unraveled_points[0] = sec.parent.points[-1]
+
+    for window_center in range(1, n_points):
+        # find how many segement on the left and right to be close to window_half_length
+        intervals = interval_lengths(sec.points)
+        _l_left = np.cumsum(intervals[window_center::-1])
+        _l_right = np.cumsum(intervals[min(n_points - 2, window_center):])
+        window_start = np.argmin(abs(_l_left - window_half_length))
+        window_end = np.argmin(abs(_l_right - window_half_length))
+
+        # if we are near the first point of the section we increase window from the right/left
+        # the 0.9 is only to not do that to often
+        _left_length = _l_left[window_start]
+        if _left_length < 0.9 * window_half_length:
+            window_end = np.argmin(abs(_l_right - (2 * window_half_length - _left_length)))
+        _right_length = _l_right[window_end]
+        if _right_length < 0.9 * window_half_length:
+            window_start = np.argmin(abs(_l_left - (2 * window_half_length - _right_length)))
+
+        # center bounds to windows center
+        window_start = window_center - window_start
+        window_end = window_center + window_end
+
+        # if windows as 0 width, extend by one segment on each side if possible
+        if window_start == window_end:
+            window_start = max(0, window_start - 1)
+            window_end = min(n_points, window_end + 1)
+
+        direction = _get_principal_direction(sec.points[window_start:window_end])
+        original_segment = sec.points[window_center] - sec.points[window_center - 1]
+
+        # make it span length the same as the original segment within the window
+        direction *= np.linalg.norm(original_segment)
+
+        # point it in the same direction as the window
+        window_direction = sec.points[window_end - 1] - sec.points[window_start]
+        scalar_product = np.dot(window_direction, direction)
+        direction *= np.sign(scalar_product or 1.)
+
+        # update the unravel points
+        unraveled_points[window_center] = unraveled_points[window_center - 1] + direction
+
+    sec.points = unraveled_points
+    if legacy_behavior and sec.is_root and len(soma.points) > 1:
+        sec.diameters = np.hstack((soma.diameters[0], sec.diameters))
 
 
-def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
-            legacy_behavior=False):
+def unravel(filename, window_half_length=None,
+            legacy_behavior=False, use_path_length=True):
     '''Return an unravelled neuron
 
     Segment are unravelled iteratively
     Each segment direction is replaced by the averaged direction in a sliding window
-    around this segment. And the original segment length is preserved.
+    around this segment, preserving the original segment length.
     The start position of the new segment is the end of the latest unravelled segment
 
     Based initially on:
@@ -86,9 +145,11 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
 
     Args:
         filename (str): the neuron to unravel
-        window_half_length (int): the number of segments that defines half of the sliding window
+        window_half_length (int): path length that defines half of the sliding window
         legacy_behavior (bool): if yes, when the soma has more than one point, the first point of
             the soma is appended to the start of each neurite.
+        use_path_length (bool): if False, the argument window_half_length will be recasted to an int
+            and correspond to number of points on each side of the window.
 
     Returns:
         a tuple (morphio.mut.Morphology, dict) where first item is the unravelled
@@ -98,11 +159,19 @@ def unravel(filename, window_half_length=DEFAULT_WINDOW_HALF_LENGTH,
     morph = morphio.Morphology(filename, options=morphio.Option.nrn_order)
     new_morph = morphio.mut.Morphology(morph, options=morphio.Option.nrn_order)  # noqa, pylint: disable=no-member
 
+    if window_half_length is None:
+        window_half_length = DEFAULT_WINDOW_HALF_LENGTH_PATH \
+            if use_path_length else DEFAULT_WINDOW_HALF_LENGTH
+
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
-
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
-        _unravel_section(sec, new_section, window_half_length, morph.soma, legacy_behavior)
+        if use_path_length:
+            _unravel_section_path_length(
+                new_section, window_half_length, morph.soma, legacy_behavior
+            )
+        else:
+            _unravel_section(new_section, int(window_half_length), morph.soma, legacy_behavior)
 
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
@@ -143,7 +212,7 @@ def unravel_plane(plane, mapping):
 def unravel_all(raw_dir, unravelled_dir,
                 raw_planes_dir,
                 unravelled_planes_dir,
-                window_half_length=DEFAULT_WINDOW_HALF_LENGTH):
+                window_half_length=None):
     '''Repair all morphologies in input folder
     '''
     if not os.path.exists(raw_planes_dir):

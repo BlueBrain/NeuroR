@@ -27,9 +27,39 @@ def test_get_principal_direction():
                                                                     [10, -1, 0],
                                                                     [10, 1, 0]]),
                               np.array([1, 0, 0]))
-
 def test_unravel():
     neuron, mapping = test_module.unravel(DATA / 'simple.asc')
+    assert_array_almost_equal(neuron.root_sections[0].points,
+                              np.array([[ 0.      ,  0.      ,  0.      ],
+                                        [1.      , 1.      , 0.      ],
+                                        [2.      , 2.      , 0.      ],
+                                        [2.707107, 1.292893, 0.      ]]))
+
+    assert_array_almost_equal(neuron.root_sections[0].children[0].points[0],
+                              np.array([2.707107, 1.292893, 0.    ]))
+
+    assert_array_almost_equal(mapping[['x0', 'y0', 'z0']].values,
+                              [[0., 0., 0.],
+                               [1., 1., 0.],
+                               [2., 0., 0.],
+                               [3., 0., 0.],
+                               [3., 0., 0.],
+                               [4., 1., 0.],
+                               [3., 0., 0.],
+                               [6., 4., 2.]])
+    assert_array_almost_equal(mapping[['x1', 'y1', 'z1']].values,
+                              [[0.        , 0.        , 0.        ],
+                               [0.99999994, 0.99999994, 0.        ],
+                               [1.99999988, 1.99999988, 0.        ],
+                               [2.70710659, 1.29289317, 0.        ],
+                               [2.70710659, 1.29289317, 0.        ],
+                               [3.70710659, 2.29289317, 0.        ],
+                               [2.70710659, 1.29289317, 0.        ],
+                               [5.70710659, 5.29289341, 2.        ]])
+
+
+def test_unravel_no_path_length():
+    neuron, mapping = test_module.unravel(DATA / 'simple.asc', use_path_length=False)
     assert_array_almost_equal(neuron.root_sections[0].points,
                               np.array([[ 0.      ,  0.      ,  0.      ],
                                         [ 1.404784, -0.163042,  0.      ],
@@ -59,6 +89,7 @@ def test_unravel():
                                [3.8028996 , -0.44137323, 0.],
                                [6.80289936,  3.55862665, 2.]])
 
+
 def test_unravel_with_backward_segment():
     '''Test the fix to the  unravel issue
     which was not working when there was a segment going backward wrt to the window direction
@@ -66,12 +97,12 @@ def test_unravel_with_backward_segment():
     '''
     neuron, mapping = test_module.unravel(DATA / 'simple-with-backward-segment.asc')
     assert_array_almost_equal(neuron.root_sections[0].points,
-                              np.array([[ 0.        ,  0.        ,  0.        ],
-                                        [ 1.2649109 , -0.63245565,  0.        ],
-                                        [ 2.5298219 , -1.2649113 ,  0.        ],
-                                        [ 4.318676  , -2.1593387 ,  0.        ],
-                                        [ 6.10753   , -3.053766  ,  0.        ],
-                                        [ 7.0019574 , -3.5009797 ,  0.        ]], dtype=np.float32))
+                              np.array([[0.        , 0.        , 0.        ],
+                                        [0.99999994, 0.99999994, 0.        ],
+                                        [1.9999999 , 1.9999999 , 0.        ],
+                                        [3.4142134 , 3.4142134 , 0.        ],
+                                        [4.828427  , 4.828427  , 0.        ],
+                                        [5.5355334 , 4.1213202 , 0.        ]], dtype=np.float32))
 
 
 def test_unravel_plane():
