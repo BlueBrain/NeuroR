@@ -67,9 +67,7 @@ def find_cut_leaves(
 
     # set the plane coef_d as furthest morphology point
     for plane, (axis, side) in zip(planes, product(searched_axes, searched_half_spaces)):
-        points = np.vstack([section.points for section in morph.iter()])
-        projected_points = plane.project_on_directed_normal(points)
-        plane.coefs[3] = -side * np.min(projected_points, axis=0)
+        plane.coefs[3] = -side * np.min(plane.project_on_directed_normal(morph.points), axis=0)
 
     # find the leaves
     cuts = [_get_cut_leaves(plane, morph, bin_width, percentile_threshold) for plane in planes]
