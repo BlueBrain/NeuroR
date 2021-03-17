@@ -97,7 +97,8 @@ def test_error_annotation():
 def test_error_annotation_all():
 
     input_dir = Path(PATH, 'test-error-detection')
-    morph_paths = list(iter_morphology_files(input_dir))
+    # this ensure morphs are ordered as expected
+    morph_paths = sorted([str(morph) for morph in iter_morphology_files(input_dir)])
     annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
     assert_equal(summaries, {str(morph_paths[0]): {'fat end': 1,
                                                    'zjump': 1,
