@@ -4,6 +4,7 @@ import logging
 from itertools import product
 from operator import attrgetter
 from pathlib import Path
+import warnings
 from typing import List, Union
 
 import neurom as nm
@@ -132,6 +133,9 @@ class CutPlane(HalfSpace):
         Returns:
             A cut plane object
         """
+        warnings.warn("This method will be deprecated in favor or cut_leaves.find_cut_leaves"
+                      "it also has bugs if one uses +1 in searched_half_spaces and multiple"
+                      "combinations of searched_arguments.", DeprecationWarning)
         if not isinstance(neuron, Neuron):
             neuron = load_neuron(neuron)
 
