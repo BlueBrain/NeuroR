@@ -8,7 +8,7 @@ from neuror.cut_plane.planes import HalfSpace
 def _get_cut_leaves(plane, morphology, bin_width, percentile_threshold):
     """Compute the cut leaves from a plane."""
     # get the cut leaves
-    leaves = np.array([section for section in morphology.iter() if len(section.children) == 0])
+    leaves = np.array([section for section in morphology.iter() if not section.children])
     leaves_coord = np.array([leaf.points[-1, COLS.XYZ] for leaf in leaves])
     cut_filter = plane.distance(leaves_coord) < bin_width
     cut_leaves = leaves[cut_filter]
