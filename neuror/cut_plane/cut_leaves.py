@@ -37,14 +37,13 @@ def find_cut_leaves(
     """Find all cut leaves for cuts with strong signal for real cut.
 
     The algorithm works as follow. Given the searched_axes and searched_half_spaces,
-    a list of candidate cuts is created, consisting of a slice with bin_width adjusted
-    to the most extreme points of the morphology in the direction.
-    Each cut contains a set of leaves, which are considered as cut leaves if there quality
-    is positive. The quality of a cut is defined as a cut for which the number of leaves
-    in the cut, minus the 'percentile_threshold' percentile of the distribution of the number
-    of leaves in all other slices of bin_width size of the morphology.
-    More explicitely, if a cut has more leaves than most of other possible cuts of the same size,
-    it is likely to be a real cut from an invitro slice.
+    a list of candidate cuts is created, consisting of a slice with bin_width adjusted to the most
+    extreme points of the morphology in the direction of serched_axes/serached_half_spaces.
+    Each cut contains a set of leaves, which are considered as cut leaves if their quality
+    is positive. The quality of a cut is defined the number of leaves in the cut minus the
+    'percentile_threshold' percentile of the distribution of the number of leaves in all other
+    slices of bin_width size of the morphology. More explicitely, if a cut has more leaves than most
+    of other possible cuts of the same size, it is likely to be a real cut from an invitro slice.
 
     Note that all cuts can be valid, thus cut leaves can be on both sides.
 
@@ -57,17 +56,12 @@ def find_cut_leaves(
                 on the negative side of the plane, and a positive one the opposite.
     Returns:
         ndarray: cut leaves
-        list: list of qualities in dicts with axis an side for each
+        list: list of qualities in dicts with axis and side for each
     """
     # create planes
+    searched_axes = [axis.upper() for axis in searched_axes]
     planes = [
-        HalfSpace(
-            int(axis.upper() == "X"),
-            int(axis.upper() == "Y"),
-            int(axis.upper() == "Z"),
-            0,
-            upward=(side > 0),
-        )
+        HalfSpace(int(axis == "X"), int(axis == "Y"), int(axis == "Z"), 0, upward=(side > 0))
         for axis, side in product(searched_axes, searched_half_spaces)
     ]
 
