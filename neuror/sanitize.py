@@ -38,6 +38,8 @@ def sanitize(input_neuron, output_path):
         output_path (str|pathlib.Path): output name
     '''
     neuron = Morphology(input_neuron)
+    neuron.remove_unifurcations()
+
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology('{} has an invalid or no soma'.format(input_neuron))
 
