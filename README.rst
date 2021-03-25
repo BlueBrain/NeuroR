@@ -42,11 +42,14 @@ There are presently three types of repair which are outlined below.
 Sanitization
 ~~~~~~~~~~~~
 
-This is the process of curating a morphological file. It currently:
+This is the process of sanitizing a morphological file. It currently:
 
-- removes zero-length segments
-- raises if the morphology has no soma
-- raises if the morphology has negative diameters
+- ensures it can be loaded with MorphIO
+- raises if the morphology has no soma or of invalid format
+- removes unifurcations
+- set negative diameters to zero
+- raises if the morphology has a neurite whose type changes along the way
+- removes segments with near zero lengths (shorted that 1e-4)
 
 Note: more functionality may be added in the future
 
