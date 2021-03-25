@@ -318,6 +318,7 @@ def test__grow():
     obj._grow(leaf, 0, obj.neuron.soma.center)
     assert_equal(len(obj.neuron.sections), 8)
 
+
 def test_repair_axon():
     filename = DATA_PATH / 'real-with-axon.asc'
     with TemporaryDirectory('test-cli-axon') as tmp_folder:
@@ -325,22 +326,22 @@ def test_repair_axon():
         test_module.repair(filename, outfilename, axons=[filename])
         neuron_in = load_neuron(filename)
         neuron_out = load_neuron(outfilename)
-        axon = neuron_out.section(40)
+        axon = neuron_out.section(41)
         ok_(axon.type == NeuriteType.axon)
         assert_array_equal(neuron_in.section(40).points[0],
                            neuron_out.section(40).points[0])
-        ok_(len(neuron_out.section(40).points) > len(neuron_in.section(40).points))
+        ok_(len(neuron_out.section(41).points) > len(neuron_in.section(41).points))
 
         # Test disactivating the axon repair
         repair_flags = {RepairType.axon: False}
         test_module.repair(filename, outfilename, axons=[filename], repair_flags=repair_flags)
         neuron_out = load_neuron(outfilename)
-        axon = neuron_out.section(40)
+        axon = neuron_out.section(41)
         ok_(axon.type == NeuriteType.axon)
-        assert_array_equal(neuron_in.section(40).points[0],
-                           neuron_out.section(40).points[0])
+        assert_array_equal(neuron_in.section(41).points[0],
+                           neuron_out.section(41).points[0])
 
-        ok_(len(neuron_out.section(40).points) == len(neuron_in.section(40).points),
+        ok_(len(neuron_out.section(41).points) == len(neuron_in.section(41).points),
             'The section should not have been regrown')
 
 

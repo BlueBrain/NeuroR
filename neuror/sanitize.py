@@ -14,6 +14,7 @@ from neurom.apps.annotate import annotate
 from neurom import load_neuron
 
 L = logging.getLogger('neuror')
+_ZERO_LENGTH = 1e-4
 
 
 class CorruptedMorphology(Exception):
@@ -28,20 +29,23 @@ def iter_morphologies(folder):
 def sanitize(input_neuron, output_path):
     '''Sanitize one morphology.
 
-    - fixes non zero segments
-    - raises if the morphology has no soma
+    - ensures it can be loaded with MorphIO
+    - raises if the morphology has no soma or of invalid format
+    - removes unifurcations
     - set negative diameters to zero
     - raises if the morphology has a neurite whose type changes along the way
+    - removes segments with near zero lengths (shorted that 1e-4)
 
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
     '''
     neuron = Morphology(input_neuron)
-    neuron.remove_unifurcations()
 
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology('{} has an invalid or no soma'.format(input_neuron))
+
+    neuron.remove_unifurcations()
 
     for section in neuron.iter():
         section.diameters = np.clip(section.diameters, 0, None)
@@ -104,12 +108,15 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
             L.info(path)
 
 
-def fix_non_zero_segments(neuron):
+def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
     '''Return a neuron with zero length segments removed
 
-    Sections composed of a single zero length segment are deleted
+    Sections composed of a single zero length segment are deleted, where zero is parametrized
+    by zero_length
+
     Args:
         neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
+        zero_length (float): smallest length of a segment
 
     Returns:
         a fixed morphio.mut.Morphology
@@ -119,6 +126,7 @@ def fix_non_zero_segments(neuron):
     for section in neuron.iter():
         points = section.points
         distances = np.linalg.norm(np.diff(points, axis=0), axis=1)
+        distances[distances < zero_length] = 0 
         indices = np.append(0, np.nonzero(distances)[0] + 1)
         if len(indices) != len(points):
             section.points = section.points[indices]
