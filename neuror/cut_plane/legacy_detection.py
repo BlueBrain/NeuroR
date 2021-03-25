@@ -9,7 +9,7 @@ from collections import defaultdict
 import numpy as np
 from morph_tool import apical_point_section_segment
 from neurom import iter_sections
-from neurom.core import Section 
+from neurom.core import Section
 from neurom.core.dataformat import COLS
 
 from neuror.utils import RepairType, repair_type_map
