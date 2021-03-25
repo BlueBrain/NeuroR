@@ -10,7 +10,7 @@ from typing import List, Union
 import neurom as nm
 import numpy as np
 from neurom import geom, iter_sections, load_neuron
-from neurom.core import Section 
+from neurom.core import Section
 from neurom.core._neuron import Neuron
 from neurom.core.dataformat import COLS
 from scipy.optimize import minimize
