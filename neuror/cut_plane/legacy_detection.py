@@ -9,7 +9,7 @@ from collections import defaultdict
 import numpy as np
 from morph_tool import apical_point_section_segment
 from neurom import iter_sections
-from neurom.core import Tree
+from neurom.core import Section
 from neurom.core.dataformat import COLS
 
 from neuror.utils import RepairType, repair_type_map
@@ -36,7 +36,7 @@ def cut_detect(neuron, cut, offset, axis):
     '''
     count_plus = count_minus = sum_plus = sum_minus = 0
 
-    for leaf in iter_sections(neuron, iterator_type=Tree.ileaf):
+    for leaf in iter_sections(neuron, iterator_type=Section.ileaf):
         coord = leaf.points[-1, axis]
         if coord > offset:
             count_plus += 1
@@ -53,7 +53,7 @@ def cut_detect(neuron, cut, offset, axis):
     else:
         sign = -1
 
-    for leaf in iter_sections(neuron, iterator_type=Tree.ileaf):
+    for leaf in iter_sections(neuron, iterator_type=Section.ileaf):
         if leaf.points[-1, axis] * sign > offset:
             cut[leaf] = True
 
