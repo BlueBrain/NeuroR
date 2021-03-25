@@ -34,7 +34,7 @@ def sanitize(input_neuron, output_path):
     - removes unifurcations
     - set negative diameters to zero
     - raises if the morphology has a neurite whose type changes along the way
-    - removes segments with near zero lengths (shorted that 1e-4)
+    - removes segments with near zero lengths (shorter that 1e-4)
 
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
