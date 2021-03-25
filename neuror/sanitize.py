@@ -126,7 +126,7 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
     for section in neuron.iter():
         points = section.points
         distances = np.linalg.norm(np.diff(points, axis=0), axis=1)
-        distances[distances < zero_length] = 0 
+        distances[distances < zero_length] = 0
         indices = np.append(0, np.nonzero(distances)[0] + 1)
         if len(indices) != len(points):
             section.points = section.points[indices]
