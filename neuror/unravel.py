@@ -30,7 +30,7 @@ def _get_principal_direction(points):
     X = np.copy(np.asarray(points))
     X -= np.mean(X, axis=0)
     C = np.dot(X.T, X)
-    w, v = np.linalg.eig(C)
+    w, v = np.linalg.eigh(C)
     return v[:, w.argmax()]
 
 
@@ -187,7 +187,7 @@ def unravel(filename, window_half_length=None,
             'z1': coord_after[:, 2],
         })
 
-    L.info('Unravel successful for file: %s', filename)
+    L.debug('Unravel successful for file: %s', filename)
     return new_morph, mapping
 
 
@@ -222,7 +222,7 @@ def unravel_all(raw_dir, unravelled_dir,
         os.mkdir(unravelled_planes_dir)
 
     for inputfilename in iter_morphology_files(raw_dir):
-        L.info('Unravelling: %s', inputfilename)
+        L.debug('Unravelling: %s', inputfilename)
         outfilename = Path(unravelled_dir, inputfilename.name)
         raw_plane = CutPlane.from_json(
             Path(raw_planes_dir, inputfilename.name).with_suffix('.json'))

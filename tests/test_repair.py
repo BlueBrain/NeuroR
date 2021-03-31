@@ -12,7 +12,7 @@ from nose.tools import assert_dict_equal, assert_equal, ok_
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.main as test_module
-from neuror.main import Action, Repair
+from neuror.main import Action, Repair, _PARAMS
 from neuror.utils import RepairType
 
 from .expected_sholl_stats import SHOLL_STATS
@@ -159,24 +159,13 @@ def test__get_sholl_proba():
 
 
 def test_continuation():
-    test_module._continuation(DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [0, 0, 0])
-    test_module._continuation(DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [1, 1, 1])
 
-
-def test_get_similar_child_diameters():
-    children = [DummySection([[1.0, 1, 1, 10]]),
-                DummySection([[1.0, 1, 1, 12]])]
-    sections = [DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]], children=children)]
-
-    similar_section = DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]], children=[])
-    assert_array_equal(test_module._get_similar_child_diameters(sections, similar_section),
-                       [20, 24])
-
-    different_section = DummySection([[1.0, 1, 1, 42]],
-                                     children=[DummySection([[1.0, 1, 1, 1]]),
-                                               DummySection([[1.0, 1, 1, 2]])])
-    assert_array_equal(test_module._get_similar_child_diameters(sections, different_section),
-                       [84, 84])
+    test_module._continuation(
+        DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [0, 0, 0], _PARAMS, 1., 0.1
+    )
+    test_module._continuation(
+        DummySection([[1.0, 1, 1, 1], [1, 1, 2, 1]]), [1, 1, 1], _PARAMS, 1., 0.1
+    )
 
 
 def test_get_origin():
@@ -200,7 +189,8 @@ def test_get_order_offset():
 
 def test__get_sholl_layer():
     section = SIMPLE.neurites[0].root_node
-    assert_equal(test_module._get_sholl_layer(section, SIMPLE.soma.center), 0)
+    assert_equal(test_module._get_sholl_layer(
+        section, SIMPLE.soma.center, _PARAMS['sholl_layer_size']), 0)
 
 
 def test_last_segment_vector():
@@ -216,12 +206,13 @@ def test__grow_until_sholl_sphere():
     np.random.seed(0)
     neuron = load_neuron(DATA_PATH / 'simple.swc')
     section = neuron.neurites[0].root_node
-    test_module._grow_until_sholl_sphere(section, SIMPLE.soma.center, 0)
+    test_module._grow_until_sholl_sphere(section, SIMPLE.soma.center, 0, _PARAMS,
+                                         lambda diam:diam, 0.1, 1.0)
     assert_array_almost_equal(section.points[:, COLS.XYZ],
-                              np.array([[0., 0., 0.],
-                                        [0., 5., 0.],
-                                        [0.170201, 9.98424, 0.358311],
-                                        [0.469826, 14.901759, 1.211672]], dtype=np.float32))
+                              np.array([[ 0.      ,  0.      ,  0.      ],
+                                        [ 0.      ,  5.      ,  0.      ],
+                                        [ 0.302276,  9.950119,  0.636358],
+                                        [ 1.172574, 14.19536 ,  3.130453]], dtype=np.float32))
 
 
 def test__compute_sholl_data():
@@ -314,7 +305,7 @@ def test__grow():
         'dendritic_sections': obj.neuron.sections,
         'intact_branching_angles': {RepairType.basal: {1: [0.2]}}
     }
-
+    obj.current_trunk_radius = 1.0
     obj._grow(leaf, 0, obj.neuron.soma.center)
     assert_equal(len(obj.neuron.sections), 8)
 

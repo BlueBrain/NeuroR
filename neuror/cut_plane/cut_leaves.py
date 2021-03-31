@@ -1,4 +1,4 @@
-"""dETECT CUT LEAVES WITH NEW ALGO."""
+"""Detect cut leaves with new algo."""
 from itertools import product
 import numpy as np
 from neurom.core.dataformat import COLS
@@ -83,7 +83,7 @@ def find_cut_leaves(
     # set the half space coef_d as furthest morphology point
     for half_space, (axis, side) in zip(half_spaces, product(searched_axes, searched_half_spaces)):
         half_space.coefs[3] = -side * np.min(
-            half_spaces.project_on_directed_normal(morph.points), axis=0
+            half_space.project_on_directed_normal(morph.points), axis=0
         )
 
     # find the cut leaves
