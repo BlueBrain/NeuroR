@@ -30,7 +30,7 @@ def _get_cut_leaves(half_space, morphology, bin_width, percentile_threshold):
 
     # compute the min cut leave given the percentile
     projected_uncut_leaves = half_space.project_on_directed_normal(leaves_coord[~cut_filter])
-    if not projected_uncut_leaves.tolist():
+    if projected_uncut_leaves.size == 0:
         return None, None
 
     _min, _max = min(projected_uncut_leaves), max(projected_uncut_leaves)
