@@ -22,8 +22,7 @@ from neurom.features.sectionfunc import branch_order, section_path_length
 from nptyping import NDArray
 from scipy.spatial.distance import cdist
 
-from neuror import axon
-from neuror.cut_plane import CutPlane
+from neuror import axon, cut_plane
 from neuror.utils import RepairType, direction, repair_type_map, rotation_matrix, section_length
 
 _PARAMS = {
@@ -279,6 +278,7 @@ class Repair(object):
         self.repair_flags = repair_flags or dict()
         self.params = params if params is not None else _PARAMS
 
+        CutPlane = cut_plane.CutPlane
         if legacy_detection:
             self.cut_leaves = CutPlane.find_legacy(inputfile, 'z').cut_leaves_coordinates
         elif cut_leaves_coordinates is None:
@@ -348,9 +348,9 @@ class Repair(object):
 
         for axon_donor in self.axon_donors:
             if self.legacy_detection:
-                plane = CutPlane.find_legacy(axon_donor, 'z')
+                plane = cut_plane.CutPlane.find_legacy(axon_donor, 'z')
             else:
-                plane = CutPlane.find(axon_donor)
+                plane = cut_plane.CutPlane.find(axon_donor)
             keep_axons_alive.append(plane)
             self.donated_intact_axon_sections.extend(
                 [section for section in iter_sections(plane.morphology)
