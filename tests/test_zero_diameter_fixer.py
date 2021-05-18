@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 from morphio.mut import Morphology
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+from morph_tool import diff
 
 from neuror.zero_diameter_fixer import (Point, fix_from_downstream, fix_from_upstream,
                                         fix_in_between, fix_zero_diameters)
@@ -70,3 +71,10 @@ def test_fix_zero_diameters():
     fix_zero_diameters(neuron)
     leaf = neuron.root_sections[0].children[0]
     assert_array_equal(leaf.diameters, np.array([2, 2, 2, 2, 2], dtype=np.float32))
+
+
+def test_functional():
+    functional_neuron = Morphology(DATA_PATH / 'compare-zero-diameter/original.h5')
+    fix_zero_diameters(functional_neuron)
+    expected = Morphology(DATA_PATH / 'compare-zero-diameter/cpp-fixed.h5')
+    assert not diff(functional_neuron, expected)
