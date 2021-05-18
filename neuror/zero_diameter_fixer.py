@@ -5,8 +5,6 @@ Re-implementation of: https://bbpcode.epfl.ch/source/xref/sim/MUK/apps/Fix_Zero_
 import sys
 from collections import namedtuple
 
-import numpy as np
-
 SMALL = 0.0001
 
 Point = namedtuple('Point',
@@ -140,10 +138,11 @@ def fix_in_between(point, stack):
     if(len(stack) > 1 and
        stack[-2].section.diameters[stack[-2].point_id] <= SMALL and
        stack[-1].section.diameters[stack[-1].point_id] > SMALL):
-
+        count = 0
         for next_point in next_section_points_upstream(point):
+            count += 1
             if next_point.section.diameters[next_point.point_id] > SMALL:
-                connect_average(point, next_point)
+                connect_average(point, next_point, count)
                 break
 
     for next_point in next_section_points(point):
@@ -151,32 +150,23 @@ def fix_in_between(point, stack):
     stack.pop()
 
 
-def connect_average(point1, point2):
+def connect_average(start_point, stop_point, count):
     '''Apply a ramp diameter between the two points
 
     Re-implementation of https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#232
     Contrary to the previous implementation the diameter the ramp is computed in term of
     pathlength and no longer in term of point number
     '''
-    sec1, idx1 = point1
-    sec2, idx2 = point2
-    diam1 = sec1.diameters[idx1]
-    diam2 = sec2.diameters[idx2]
-    prev_point = point1
-    pathlengths = list()
+    start_sec, start_idx = start_point
+    stop_sec, stop_idx = stop_point
+    start_diam = start_sec.diameters[start_idx]
+    stop_diam = stop_sec.diameters[stop_idx]
 
-    for point in next_section_points_upstream(point1):
-        pathlengths.append(np.linalg.norm(prev_point.section.points[prev_point.point_id] -
-                                          point.section.points[point.point_id]))
-        prev_point = point
-        if point == point2:
+    step_diam = (stop_diam - start_diam) / count
+    for step_num, point in enumerate(next_section_points_upstream(start_point), 1):
+        if point == stop_point:
             break
-
-    cumulative_pathlengths = np.cumsum(pathlengths)
-    pathlength_fractions = cumulative_pathlengths / cumulative_pathlengths[-1]
-
-    for point, fraction in zip(next_section_points_upstream(point1), pathlength_fractions[:-1]):
-        set_diameter(point, diam1 + (diam2 - diam1) * fraction)
+        set_diameter(point, start_diam + step_diam * step_num)
 
 
 def fix_zero_diameters(neuron):
