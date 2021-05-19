@@ -16,7 +16,19 @@ def test_fix_in_between():
     root = neuron.root_sections[0]
     point = Point(root, 0)
 
-    fix_in_between(point, stack=list())
+    fix_in_between(point, list(), False)
+    assert_array_equal(root.diameters, np.array([2., 2., 2.2, 2.4, 2.8, 3.], dtype=np.float32))
+    assert_array_equal(root.children[0].diameters, np.array([3, 3, 3, 2.8], dtype=np.float32))
+    assert_array_equal(root.children[0].children[0].diameters,
+                       np.array([2.8, 2.6, 2.4, 2.2, 2. ], dtype=np.float32))
+
+
+def test_fix_in_between_legacy():
+    neuron = Morphology(DATA_PATH / 'zero-diameter-middle-of-neurite.asc')
+    root = neuron.root_sections[0]
+    point = Point(root, 0)
+
+    fix_in_between(point, list(), True)
     assert_array_equal(root.diameters,
                        np.array([2., 2., 2.25, 2.5, 2.75, 3.], dtype=np.float32))
     assert_array_almost_equal(root.children[0].diameters,
@@ -71,10 +83,3 @@ def test_fix_zero_diameters():
     fix_zero_diameters(neuron)
     leaf = neuron.root_sections[0].children[0]
     assert_array_equal(leaf.diameters, np.array([2, 2, 2, 2, 2], dtype=np.float32))
-
-
-def test_functional():
-    functional_neuron = Morphology(DATA_PATH / 'compare-zero-diameter/original.h5')
-    fix_zero_diameters(functional_neuron)
-    expected = Morphology(DATA_PATH / 'compare-zero-diameter/cpp-fixed.h5')
-    assert not diff(functional_neuron, expected)
