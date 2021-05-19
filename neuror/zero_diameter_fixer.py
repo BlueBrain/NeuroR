@@ -154,8 +154,6 @@ def connect_average(start_point, stop_point, count):
     '''Apply a ramp diameter between the two points
 
     Re-implementation of https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#232
-    Contrary to the previous implementation the diameter the ramp is computed in term of
-    pathlength and no longer in term of point number
     '''
     start_sec, start_idx = start_point
     stop_sec, stop_idx = stop_point
