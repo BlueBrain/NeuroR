@@ -4,7 +4,6 @@ Re-implementation of: https://bbpcode.epfl.ch/source/xref/sim/MUK/apps/Fix_Zero_
 '''
 import sys
 from collections import namedtuple
-
 import numpy as np
 
 SMALL = 0.0001
@@ -14,11 +13,11 @@ Point = namedtuple('Point',
                     'point_id'])  # index of the point within the given section
 
 
-def fix_neurite(root_section):
+def fix_neurite(root_section, legacy=False):
     '''Apply all fixes to a neurite'''
     point = Point(root_section, 0)
     fix_from_downstream(point)
-    fix_in_between(point, stack=list())
+    fix_in_between(point, list(), legacy)
     fix_from_upstream(point, 0)
 
 
@@ -124,7 +123,7 @@ def fix_from_upstream(point, upstream_good_diameter):
     return smallest
 
 
-def fix_in_between(point, stack):
+def fix_in_between(point, stack, legacy):
     '''Re-implementation of
     https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#162
 
@@ -133,6 +132,7 @@ def fix_in_between(point, stack):
     Args:
         point: the current points
         stack: the stack of upstream points
+        legacy: whether to use legacy algorithm that didn't account for path lengths
     '''
     stack.append(point)
     # pylint: disable=chained-comparison
@@ -140,14 +140,16 @@ def fix_in_between(point, stack):
     if(len(stack) > 1 and
        stack[-2].section.diameters[stack[-2].point_id] <= SMALL and
        stack[-1].section.diameters[stack[-1].point_id] > SMALL):
-
         for next_point in next_section_points_upstream(point):
             if next_point.section.diameters[next_point.point_id] > SMALL:
-                connect_average(point, next_point)
+                if legacy:
+                    connect_average_legacy(point, next_point)
+                else:
+                    connect_average(point, next_point)
                 break
 
     for next_point in next_section_points(point):
-        fix_in_between(next_point, stack)
+        fix_in_between(next_point, stack, legacy)
     stack.pop()
 
 
@@ -179,13 +181,36 @@ def connect_average(point1, point2):
         set_diameter(point, diam1 + (diam2 - diam1) * fraction)
 
 
-def fix_zero_diameters(neuron):
+def connect_average_legacy(start_point, stop_point):
+    '''Apply a ramp diameter between the two points
+
+    Re-implementation of https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#232
+    '''
+    start_sec, start_idx = start_point
+    stop_sec, stop_idx = stop_point
+    start_diam = start_sec.diameters[start_idx]
+    stop_diam = stop_sec.diameters[stop_idx]
+    count = 0
+
+    for next_point in next_section_points_upstream(start_point):
+        count += 1
+        if next_point == stop_point:
+            break
+
+    step_diam = (stop_diam - start_diam) / count
+    for step_num, point in enumerate(next_section_points_upstream(start_point), 1):
+        if point == stop_point:
+            break
+        set_diameter(point, start_diam + step_diam * step_num)
+
+
+def fix_zero_diameters(neuron, legacy=False):
     '''Fix zero diameters'''
     old_limit = sys.getrecursionlimit()
     point_counts = sum(len(section.points) for section in neuron.iter())
     sys.setrecursionlimit(max(old_limit, point_counts))
     try:
         for root in neuron.root_sections:
-            fix_neurite(root)
+            fix_neurite(root, legacy)
     finally:
         sys.setrecursionlimit(old_limit)
