@@ -1,6 +1,7 @@
 '''Fix zero diameters
 
 Re-implementation of: https://bbpcode.epfl.ch/source/xref/sim/MUK/apps/Fix_Zero_Diameter.cpp
+with sections recursion instead of point recursion
 '''
 from collections import namedtuple
 import numpy as np
