@@ -117,7 +117,7 @@ def _fix_downstream(section):
         child_diameters = [_fix_downstream(child) for child in section.children]
         max_child_diameter = max(child_diameters) if child_diameters else 0
         if max_child_diameter > SMALL:
-            section.diameters = max_child_diameter
+            section.diameters = np.repeat(max_child_diameter, len(section.diameters))
         return max_child_diameter
 
 
