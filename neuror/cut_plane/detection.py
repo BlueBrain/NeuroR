@@ -1,28 +1,25 @@
 '''Module for the detection of the cut plane'''
 import json
 import logging
-from itertools import product
-from operator import attrgetter
+import itertools as it
+import operator
 from pathlib import Path
 import warnings
 from typing import List, Union
 
 import neurom as nm
 import numpy as np
-from neurom import geom, iter_sections, load_neuron
-from neurom.core import Section
-from neurom.core import Neuron
-from neurom.core.dataformat import COLS
-from scipy.optimize import minimize
-from scipy.special import factorial
 
-from neuror.cut_plane.legacy_detection import internal_cut_detection
-from neuror.cut_plane.planes import HalfSpace, PlaneEquation
+from neurom import geom
+from neurom.core import Section, Neuron
+from scipy import optimize, special
+
+from neuror.cut_plane import legacy_detection, planes
 
 L = logging.getLogger(__name__)
 
 
-class CutPlane(HalfSpace):
+class CutPlane(planes.HalfSpace):
     '''The cut plane class
 
     It is composed of a HalfSpace and a morphology
@@ -48,7 +45,7 @@ class CutPlane(HalfSpace):
         if isinstance(morphology, Neuron):
             self.morphology = morphology
         elif isinstance(morphology, (str, Path)):
-            self.morphology = load_neuron(morphology)
+            self.morphology = nm.load_neuron(morphology)
         elif morphology is not None:
             raise Exception(f'Unsupported morphology type: {type(morphology)}')
 
@@ -88,7 +85,7 @@ class CutPlane(HalfSpace):
     # pylint: disable=arguments-differ
     @classmethod
     def from_rotations_translations(cls, transformations, morphology, bin_width):
-        plane = PlaneEquation.from_rotations_translations(transformations)
+        plane = planes.PlaneEquation.from_rotations_translations(transformations)
         return cls(plane.coefs, True, morphology, bin_width)
 
     @classmethod
@@ -137,30 +134,31 @@ class CutPlane(HalfSpace):
                       "it also has bugs if one uses +1 in searched_half_spaces and multiple"
                       "combinations of searched_arguments.", DeprecationWarning)
         if not isinstance(neuron, Neuron):
-            neuron = load_neuron(neuron)
+            neuron = nm.load_neuron(neuron)
 
         # pylint: disable=invalid-unary-operand-type
         coef_d = -fix_position if fix_position is not None else 0
 
-        planes = [CutPlane([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
-                            int(axis.upper() == 'Z'), coef_d],
-                           upward=(side > 0),
-                           morphology=neuron,
-                           bin_width=bin_width)
-                  for axis, side in product(searched_axes, searched_half_spaces)]
+        cut_planes = [CutPlane([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
+                                int(axis.upper() == 'Z'), coef_d],
+                               upward=(side > 0),
+                               morphology=neuron,
+                               bin_width=bin_width)
+                      for axis, side in it.product(searched_axes, searched_half_spaces)]
 
-        best_plane = max(planes, key=attrgetter('minus_log_prob'))
+        best_cut_plane = max(cut_planes, key=operator.attrgetter('minus_log_prob'))
 
         if fix_position is None:
-            _, bins = best_plane.histogram()
+            _, bins = best_cut_plane.histogram()
             # The orientation of the plane is defined such as the morphology lives
             # on the positive side once coordinates are projected
             # (see HalfSpace.project_on_directed_normal)
             # So the first bin is where we look for the cut plane
-            best_plane.coefs[3] = bins[0]
+            best_cut_plane.coefs[3] = bins[0]
         else:
-            best_plane.coefs[3] = coef_d
-        return CutPlane(best_plane.coefs, best_plane.upward, neuron, best_plane.bin_width)
+            best_cut_plane.coefs[3] = coef_d
+        return CutPlane(
+            best_cut_plane.coefs, best_cut_plane.upward, neuron, best_cut_plane.bin_width)
 
     @classmethod
     def find_legacy(cls, neuron, axis):
@@ -170,16 +168,16 @@ class CutPlane(HalfSpace):
         https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
         '''
         if not isinstance(neuron, Neuron):
-            neuron = load_neuron(neuron)
+            neuron = nm.load_neuron(neuron)
 
-        cut_leaves, side = internal_cut_detection(neuron, axis)
+        cut_leaves, side = legacy_detection.internal_cut_detection(neuron, axis)
 
         plane = cls([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
                      int(axis.upper() == 'Z'), 0],
                     upward=(side < 0),
                     morphology=None,
                     bin_width=0)
-        plane.morphology = load_neuron(neuron)
+        plane.morphology = nm.load_neuron(neuron)
         plane.cut_leaves_coordinates = cut_leaves
         return plane
 
@@ -188,13 +186,13 @@ class CutPlane(HalfSpace):
         '''Returns sections that ends within the cut plane'''
         leaves = np.array([leaf
                            for neurite in self.morphology.neurites
-                           for leaf in iter_sections(neurite, iterator_type=Section.ileaf)])
-        leaves_coord = [leaf.points[-1, COLS.XYZ] for leaf in leaves]
+                           for leaf in nm.iter_sections(neurite, iterator_type=Section.ileaf)])
+        leaves_coord = [leaf.points[-1, nm.COLS.XYZ] for leaf in leaves]
         return leaves[self.distance(leaves_coord) < self.bin_width]
 
     def _compute_cut_leaves_coordinates(self):
         '''Returns cut leaves coordinates'''
-        leaves = [leaf.points[-1, COLS.XYZ] for leaf in self.cut_sections]
+        leaves = [leaf.points[-1, nm.COLS.XYZ] for leaf in self.cut_sections]
         self.cut_leaves_coordinates = np.vstack(leaves) if leaves else np.array([])
 
     def to_json(self):
@@ -258,7 +256,7 @@ class CutPlane(HalfSpace):
 def _success_function(params, points, bin_width):
     '''The success function is low (=good) when the difference of points
     on the left side and right side of the plane is high'''
-    plane = PlaneEquation.from_rotations_translations(params)
+    plane = planes.PlaneEquation.from_rotations_translations(params)
     n_left, n_right = plane.count_near_plane(points, bin_width)
     res = -abs(n_left - n_right)
     return res
@@ -274,11 +272,11 @@ def _minimize(x0, points, bin_width):
     bounds_min = x0 - delta
     bounds_max = x0 + delta
     bounds = list(zip(bounds_min, bounds_max))
-    result = minimize(_success_function,
-                      x0=x0,
-                      args=(points, bin_width),
-                      bounds=bounds,
-                      method='Nelder-Mead')
+    result = optimize.minimize(_success_function,
+                               x0=x0,
+                               args=(points, bin_width),
+                               bounds=bounds,
+                               method='Nelder-Mead')
 
     if result.status:
         raise Exception(result.message)
@@ -290,7 +288,7 @@ def get_minus_log_p(k, mu):
     in bin given than the mean value was "mu":
     demo: p(k|mu) = exp(-mu) * mu**k / k!
     '''
-    return mu - k * np.log(mu) + np.log(factorial(k))
+    return mu - k * np.log(mu) + np.log(special.factorial(k))
 
 
 def _get_points(neuron):
