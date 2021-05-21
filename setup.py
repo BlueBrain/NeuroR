@@ -42,7 +42,7 @@ setup(
             'sphinx-autorun>=1.1.1',
             'sphinx-bluebrain-theme>=0.2.4',
             'sphinx-click>=2.5.0',
-            'sphinx>=2.0.0,<4',
+            'sphinx>=2.0.0',
         ],
     },
     packages=find_packages(),
