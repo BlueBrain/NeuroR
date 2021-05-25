@@ -95,6 +95,7 @@ def allow_only_neuror(app, what, name, obj, skip, options):
     """Check that the member is part of neuror, exlude otherwise."""
     if what in {"module", "class", "exception", "function"} and "neuror" not in getattr(obj, "__module__", ""):
         return True
+    return skip
 
 def setup(app):
     app.connect('builder-inited', add_autosummary_override)
