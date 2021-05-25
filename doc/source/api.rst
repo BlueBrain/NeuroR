@@ -15,7 +15,6 @@ API
     neuror.sanitize
     neuror.unravel
     neuror.full
-    neuror.cli
     neuror.utils
     neuror.axon
     neuror.main

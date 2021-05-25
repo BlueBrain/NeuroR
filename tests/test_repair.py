@@ -14,6 +14,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 import neuror.main as test_module
 from neuror.main import Action, Repair, _PARAMS
 from neuror.utils import RepairType
+from neuror import cut_plane
 
 from .expected_sholl_stats import SHOLL_STATS
 
@@ -56,7 +57,7 @@ def test__find_intact_sub_trees():
 
     assert_equal(len(obj._find_intact_sub_trees()), 2)
 
-    points = test_module.CutPlane.find(SLICE, bin_width=15).cut_leaves_coordinates
+    points = cut_plane.CutPlane.find(SLICE, bin_width=15).cut_leaves_coordinates
     obj = Repair(SLICE_PATH,cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     intact_sub_trees = obj._find_intact_sub_trees()
@@ -73,7 +74,7 @@ def test__find_intact_sub_trees():
                        [RepairType.basal, RepairType.axon, RepairType.tuft])
 
     filename = DATA_PATH / 'no-intact-basals.h5'
-    points = test_module.CutPlane.find(filename, bin_width=15).cut_leaves_coordinates
+    points = cut_plane.CutPlane.find(filename, bin_width=15).cut_leaves_coordinates
     obj = Repair(filename, cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     intact_sub_trees = obj._find_intact_sub_trees()
@@ -279,7 +280,7 @@ def json_compatible_dict(dict_):
 
 def test__compute_statistics_for_intact_subtrees():
     input_file = DATA_PATH / 'neuron-slice.h5'
-    points = test_module.CutPlane.find(input_file, bin_width=15).cut_leaves_coordinates
+    points = cut_plane.CutPlane.find(input_file, bin_width=15).cut_leaves_coordinates
     obj = Repair(input_file, cut_leaves_coordinates=points)
     obj._fill_repair_type_map()
     obj._fill_statistics_for_intact_subtrees()
