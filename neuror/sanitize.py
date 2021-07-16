@@ -101,7 +101,7 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
         results = map(func, morphologies)
     else:
         with Pool(nprocesses) as pool:
-            results = pool.imap_unordered(func, morphologies, chunksize=100)
+            results = list(pool.imap_unordered(func, morphologies, chunksize=100))
     errored_paths = list(filter(None, tqdm(results, total=len(morphologies))))
     if errored_paths:
         L.info('Files in error:')
