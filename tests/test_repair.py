@@ -362,6 +362,7 @@ def test_legacy_compare_with_legacy_result():
     neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
 
+    # tests were written for NeuroM < 2 when it shifted sections by +1 comparing to MorphIO.
     cut_sections = {point_to_section_segment(neuron, point)[0] + 1
                     for point in obj.cut_leaves}
 
