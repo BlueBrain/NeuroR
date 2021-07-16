@@ -296,10 +296,9 @@ class Repair(object):
         apical_section_id = None
         if apical_point != -1:
             if apical_point:
-                # recall MorphIO ID = NeuroM ID - 1
-                apical_section_id = point_to_section_segment(self.neuron, apical_point)[0] - 1
+                apical_section_id = point_to_section_segment(self.neuron, apical_point)[0]
             else:
-                apical_section_id, _ = apical_point_section_segment(self.neuron)
+                apical_section_id = apical_point_section_segment(self.neuron)[0]
 
         if apical_section_id:
             self.apical_section = self.neuron.sections[apical_section_id]
