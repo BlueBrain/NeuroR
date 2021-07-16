@@ -100,7 +100,8 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
     if nprocesses == 1:
         results = map(func, morphologies)
     else:
-        results = Pool(nprocesses).imap_unordered(func, morphologies, chunksize=100)
+        with Pool(nprocesses) as pool:
+            results = pool.imap_unordered(func, morphologies, chunksize=100)
     errored_paths = list(filter(None, tqdm(results, total=len(morphologies))))
     if errored_paths:
         L.info('Files in error:')
@@ -212,8 +213,10 @@ def annotate_neurolucida_all(morph_paths, nprocesses=1):
         dict of dict of markers (morph_path as keys)
     """
     summaries, annotations, markers = {}, {}, {}
-    for morph_path, result in zip(
-        morph_paths, Pool(nprocesses).map(annotate_neurolucida, morph_paths)
-    ):
-        annotations[str(morph_path)], summaries[str(morph_path)], markers[str(morph_path)] = result
+    with Pool(nprocesses) as pool:
+        for morph_path, result in zip(
+            morph_paths, pool.map(annotate_neurolucida, morph_paths)
+        ):
+            morph_path = str(morph_path)
+            annotations[morph_path], summaries[morph_path], markers[morph_path] = result
     return annotations, summaries, markers
