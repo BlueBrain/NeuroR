@@ -362,7 +362,7 @@ def test_legacy_compare_with_legacy_result():
     neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
 
-    cut_sections = {point_to_section_segment(neuron, point)[0]
+    cut_sections = {point_to_section_segment(neuron, point)[0] + 1
                     for point in obj.cut_leaves}
 
     legacy_cut_sections = {
@@ -482,7 +482,7 @@ def test_legacy_compare_with_legacy_result2():
     neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5', legacy_detection=True)
 
-    cut_sections = {point_to_section_segment(neuron, point)[0]
+    cut_sections = {point_to_section_segment(neuron, point)[0] + 1
                     for point in obj.cut_leaves}
 
     legacy_cut_sections = {62,64,65,69,73,77,78,85,87,88,89,91,93,94,115,116,119,120,125,126,130,
