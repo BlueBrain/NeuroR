@@ -79,8 +79,8 @@ def view_all(folders, titles, output_pdf=None):
 
         try:
             _neuron_subplot(folders, f, pp, subplot, titles)
-        except Exception as e:  # pylint: disable=broad-except
-            L.info("e: %s", e)
+        except Exception as _e:  # pylint: disable=broad-except
+            L.info("e: %s", _e)
             L.info('failu: %s', f)
     pp.close()
     L.info('Done writing %s', output_pdf)
