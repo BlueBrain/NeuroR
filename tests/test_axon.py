@@ -3,7 +3,7 @@ from pathlib import Path
 from morph_tool import diff
 from morphio import SectionType
 from neurom import load_neuron
-from nose.tools import assert_raises
+import pytest
 from numpy.testing import assert_array_equal
 
 import neuror.axon as test_module
@@ -26,9 +26,8 @@ def test_tree_distance():
 
     assert test_module._tree_distance(child1.children[0], child2.children[0]) == 3
 
-
-    assert_raises(Exception, test_module._tree_distance, SLICE.neurites[0].root_node,
-                  SLICE.neurites[1].root_node)
+    with pytest.raises(Exception):
+        test_module._tree_distance(SLICE.neurites[0].root_node, SLICE.neurites[1].root_node)
 
 def test__downstream_pathlength():
     root = SIMPLE.root_sections[0]
