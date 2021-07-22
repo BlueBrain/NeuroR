@@ -1,12 +1,14 @@
 import sys
 import json
 from pathlib import Path
+from packaging import  version
 
 import neurom as nm
 import numpy as np
 import pytest
 from mock import MagicMock
 from numpy.testing import assert_array_equal, assert_almost_equal, assert_allclose
+import scipy
 
 import neuror.cut_plane.detection as test_module
 from neuror.cut_plane import PlaneEquation
@@ -61,7 +63,8 @@ def test_success_function():
     assert res == 513-1830
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 7), reason="requires python3.6")
+@pytest.mark.skipif(version.parse(scipy.__version__) >= version.parse('1.6'),
+                    reason="requires scipy < 1.6")
 def test_minimize():
     params = 4, 45, -21, 0, 0, 61
 
@@ -71,7 +74,8 @@ def test_minimize():
                      -2.71528635e-04, 6.88986409e+01])
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
+@pytest.mark.skipif(version.parse(scipy.__version__) < version.parse('1.6'),
+                    reason="requires scipy >= 1.6")
 def test_minimize():
     params = 4, 45, -21, 0, 0, 61
 
