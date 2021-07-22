@@ -29,6 +29,7 @@ def test_tree_distance():
     with pytest.raises(Exception):
         test_module._tree_distance(SLICE.neurites[0].root_node, SLICE.neurites[1].root_node)
 
+
 def test__downstream_pathlength():
     root = SIMPLE.root_sections[0]
     assert test_module._downstream_pathlength(root) == 16

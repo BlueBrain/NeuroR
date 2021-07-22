@@ -35,22 +35,20 @@ def test_sanitize():
                             [2., 0., 0.],
                             [3., 0., 0.]])
 
-        for input_morph, expected_exception in [
-                ('no-soma.asc',
-                 '{} has an invalid or no soma'.format(Path(PATH, 'no-soma.asc'))),
+        with pytest.raises(CorruptedMorphology,
+                           match=f'{PATH / "no-soma.asc"} has an invalid or no soma'):
+            sanitize(PATH / 'no-soma.asc', Path(tmp_folder, 'output.asc'))
 
-                ('neurite-with-multiple-types.swc',
-                 ('{} has a neurite whose type changes along the way\n'
-                  'Child section (id: 5) has a different type (SectionType.basal_dendrite) '
-                  'than its parent (id: 3) (type: SectionType.axon)').format(
-                      Path(PATH, 'neurite-with-multiple-types.swc')))
-        ]:
-            with pytest.raises(CorruptedMorphology, match=expected_exception):
-                sanitize(PATH / input_morph, Path(tmp_folder, 'output.asc'))
+        with pytest.raises(CorruptedMorphology) as e:
+            sanitize(PATH / 'neurite-with-multiple-types.swc', Path(tmp_folder, 'output.asc'))
+        assert e.value.args[0] == (
+            f'{PATH / "neurite-with-multiple-types.swc"} has a neurite whose type changes'
+            ' along the way\nChild section (id: 5) has a different type (SectionType.'
+            'basal_dendrite) than its parent (id: 3) (type: SectionType.axon)')
 
         out_path = Path(tmp_folder, 'output.asc')
         sanitize(PATH / 'negative-diameters.asc', out_path)
-        assert next(Morphology(out_path).iter()).diameters == [2, 2, 0, 2]
+        assert_array_equal(next(Morphology(out_path).iter()).diameters, [2, 2, 0, 2])
 
 
 def test_sanitize_all():
