@@ -5,7 +5,7 @@ import neurom as nm
 import numpy as np
 import pytest
 from mock import MagicMock
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_almost_equal
+from numpy.testing import assert_array_equal, assert_almost_equal, assert_allclose
 
 import neuror.cut_plane.detection as test_module
 from neuror.cut_plane import PlaneEquation
@@ -64,9 +64,9 @@ def test_minimize():
     params = rot_x, rot_y, rot_z, transl_x, transl_y, transl_z = 4, 45, -21, 0, 0, 61
 
     result = _minimize(params, _get_points(), bin_width=10)
-    assert_array_almost_equal(result,
-                              [4.151031e+00, 4.676304e+01, -2.096578e+01, -2.720654e-04,
-                               4.507011e-04, 6.880449e+01])
+    assert_allclose(result,
+                    [4.1510e+00, 4.6763e+01, -2.0966e+01, -2.7207e-04, -4.5070e-04, 6.8804e+01],
+                    rtol=1e-4)
 
 def test__compute_probabilities():
     plane = test_module.CutPlane((1, 0, 0, 4), None, None, None)
