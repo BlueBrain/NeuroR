@@ -65,8 +65,8 @@ def test_minimize():
 
     result = _minimize(params, _get_points(), bin_width=10)
     assert_array_almost_equal(result,
-                              [ 4.11038409e+00,  4.65181441e+01, -2.05934568e+01, -2.44713344e-04,
-                                -2.71528635e-04,  6.88986409e+01])
+                              [4.151031e+00, 4.676304e+01, -2.096578e+01, -2.720654e-04,
+                               4.507011e-04, 6.880449e+01])
 
 def test__compute_probabilities():
     plane = test_module.CutPlane((1, 0, 0, 4), None, None, None)
