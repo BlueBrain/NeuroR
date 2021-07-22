@@ -45,7 +45,7 @@ setup(
             'sphinx>=2.0.0',
         ],
     },
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests',)),
     entry_points={'console_scripts': ['neuror=neuror.cli:cli']},
     python_requires='>=3.6',
     classifiers=[

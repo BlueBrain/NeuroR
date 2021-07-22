@@ -1,17 +1,10 @@
-import os
-import subprocess
 from pathlib import Path
 
 import matplotlib
-import numpy as np
-from neurom import COLS, iter_sections, load_neuron
-from nose.tools import assert_not_equal, ok_
-from numpy.testing import (assert_allclose, assert_almost_equal, assert_array_almost_equal,
-                           assert_equal)
-from pyquaternion import Quaternion
+from neurom import COLS
+from numpy.testing import assert_allclose, assert_almost_equal, assert_array_almost_equal
 
 from neuror.cut_plane import CutPlane
-from neuror.cut_plane.viewer import _get_displaced_pos
 
 matplotlib.use('Agg')
 
@@ -29,7 +22,7 @@ def test_cut_plane_from_rotations_translations():
 def test_cut_neuron_simple():
     filename = DATA / 'simple2.asc'
     result = CutPlane.find(filename, bin_width=0.2).to_json()
-    ok_('The probability that there is in fact NO cut plane is high: -log(p)'
+    assert ('The probability that there is in fact NO cut plane is high: -log(p)'
         in result['status'])
     assert_almost_equal(result['cut-plane']['a'], 0)
     assert_almost_equal(result['cut-plane']['b'], 0)
@@ -40,13 +33,13 @@ def test_cut_neuron_simple():
 def test_cut_real_neuron():
     filename = DATA / 'Neuron_slice.h5'
     result = CutPlane.find(filename, bin_width=10).to_json()
-    assert_equal(result['status'], 'ok')
+    assert result['status'] == 'ok'
     assert_almost_equal(result['cut-plane']['a'], 0)
     assert_almost_equal(result['cut-plane']['b'], 0)
     assert_almost_equal(result['cut-plane']['c'], 1)
     assert_almost_equal(result['cut-plane']['d'], -48.68020515427703,
                         decimal=5)
-    assert_equal(result['cut-plane']['comment'],
+    assert (result['cut-plane']['comment'] ==
                  'Equation: a*X + b*Y + c*Z + d < 0')
 
     leaves_coord = [[63.97577896,   61.52564626,   44.46020393],
@@ -90,4 +83,4 @@ def test_cut_real_neuron():
 
 def test_repaired_neuron():
     result = CutPlane.find(DATA / 'bio_neuron-000.h5', bin_width=10).to_json()
-    assert_not_equal(result['status'], 'ok')
+    assert result['status'] != 'ok'

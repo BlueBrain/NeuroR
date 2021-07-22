@@ -8,7 +8,6 @@ from mock import patch
 from morph_tool.spatial import point_to_section_segment
 from morphio import SectionType
 from neurom import COLS, NeuriteType, load_neuron
-from nose.tools import assert_dict_equal, assert_equal, ok_
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.main as test_module
@@ -34,19 +33,19 @@ class DummySection:
 
 def test_is_cut_section():
     section = SIMPLE.neurites[0].root_node
-    assert_equal(test_module.is_cut_section(section, np.array([[2, 2, 2]])),
+    assert (test_module.is_cut_section(section, np.array([[2, 2, 2]])) ==
                  False)
 
-    assert_equal(test_module.is_cut_section(section, np.array([[0, 0, 0]])),
+    assert (test_module.is_cut_section(section, np.array([[0, 0, 0]])) ==
                  True)
 
 
 def test_is_branch_intact():
     neurite = SIMPLE.neurites[0]
-    assert_equal(test_module.is_branch_intact(neurite.root_node, np.array([[2, 2, 2]])),
+    assert (test_module.is_branch_intact(neurite.root_node, np.array([[2, 2, 2]])) ==
                  True)
 
-    assert_equal(test_module.is_branch_intact(neurite.root_node, np.array([[0, 0, 0]])),
+    assert (test_module.is_branch_intact(neurite.root_node, np.array([[0, 0, 0]])) ==
                  False)
 
 
@@ -55,7 +54,7 @@ def test__find_intact_sub_trees():
     obj.cut_leaves = np.array([[2, 2, 2]])
     obj._fill_repair_type_map()
 
-    assert_equal(len(obj._find_intact_sub_trees()), 2)
+    assert len(obj._find_intact_sub_trees()) == 2
 
     points = cut_plane.CutPlane.find(SLICE, bin_width=15).cut_leaves_coordinates
     obj = Repair(SLICE_PATH,cut_leaves_coordinates=points)
@@ -80,26 +79,26 @@ def test__find_intact_sub_trees():
     intact_sub_trees = obj._find_intact_sub_trees()
     basals = [section for section in intact_sub_trees
               if section.type == NeuriteType.basal_dendrite]
-    assert_equal(len(basals), 78)
+    assert len(basals) == 78
 
 
 def test_section_length():
-    assert_equal(test_module.section_length(SIMPLE.neurites[0].root_node), 5)
+    assert test_module.section_length(SIMPLE.neurites[0].root_node) == 5
 
 
 def test_branching_angles():
-    assert_equal(test_module._branching_angles(SIMPLE.neurites[0].root_node),
+    assert (test_module._branching_angles(SIMPLE.neurites[0].root_node) ==
                  [(0, 1.5707963267948966), (0, 1.5707963267948966)])
 
     # Test skip too short sections
-    assert_equal(test_module._branching_angles(DummySection([[0, 0, 0], [0, 0, 1e-9]])),
+    assert (test_module._branching_angles(DummySection([[0, 0, 0], [0, 0, 1e-9]])) ==
                  [])
 
     # Test skip too short child sections
     tiny_child = DummySection([[0, 0, 0], [0, 0, 1e-9]])
     parent = DummySection([[0, 0, 0], [0, 0, 1]], children=[tiny_child])
     with patch('neuror.main.branch_order'):
-        assert_equal(test_module._branching_angles(parent),
+        assert (test_module._branching_angles(parent) ==
                      [])
 
 
@@ -135,25 +134,25 @@ def test__get_sholl_proba():
                                              Action.CONTINUATION: 4
                                              }}}}
 
-    assert_dict_equal(test_module._get_sholl_proba(sholl_data, RepairType.axon, 0, 1),
+    assert (test_module._get_sholl_proba(sholl_data, RepairType.axon, 0, 1) ==
                       {Action.TERMINATION: 0.25,
                        Action.BIFURCATION: 0.25,
                        Action.CONTINUATION: 0.5})
 
     # No info for pseudo_order == 2, re-use data from pseudo_order == 1
-    assert_dict_equal(test_module._get_sholl_proba(sholl_data, RepairType.axon, 0, 2),
+    assert (test_module._get_sholl_proba(sholl_data, RepairType.axon, 0, 2) ==
                       {Action.TERMINATION: 0.25,
                        Action.BIFURCATION: 0.25,
                        Action.CONTINUATION: 0.5})
 
     # No info for sholl_layer == 1, use default value
-    assert_dict_equal(test_module._get_sholl_proba(sholl_data, RepairType.axon, 1, 2),
+    assert (test_module._get_sholl_proba(sholl_data, RepairType.axon, 1, 2) ==
                       {Action.TERMINATION: 1,
                        Action.BIFURCATION: 0,
                        Action.CONTINUATION: 0})
 
     # No data at all, use default value
-    assert_dict_equal(test_module._get_sholl_proba({RepairType.axon: {1: {}}}, RepairType.axon, 1, 2),
+    assert (test_module._get_sholl_proba({RepairType.axon: {1: {}}}, RepairType.axon, 1, 2) ==
                       {Action.TERMINATION: 1,
                        Action.BIFURCATION: 0,
                        Action.CONTINUATION: 0})
@@ -182,16 +181,16 @@ def test_get_order_offset():
     obj = Repair(SIMPLE_PATH)
     section = obj.neuron.neurites[0].root_node.children[0]
     obj.repair_type_map = {section: RepairType.basal}
-    assert_equal(obj._get_order_offset(section), 0)
+    assert obj._get_order_offset(section) == 0
 
     obj.repair_type_map = {section: RepairType.oblique}
-    assert_equal(obj._get_order_offset(section), 1)
+    assert obj._get_order_offset(section) == 1
 
 
 def test__get_sholl_layer():
     section = SIMPLE.neurites[0].root_node
-    assert_equal(test_module._get_sholl_layer(
-        section, SIMPLE.soma.center, _PARAMS['sholl_layer_size']), 0)
+    assert test_module._get_sholl_layer(
+        section, SIMPLE.soma.center, _PARAMS['sholl_layer_size']) == 0
 
 
 def test_last_segment_vector():
@@ -221,12 +220,12 @@ def test__compute_sholl_data():
     obj._fill_repair_type_map()
     branches = [neurite.root_node for neurite in obj.neuron.neurites]
     sholl_data = obj._compute_sholl_data(branches)
-    assert_dict_equal(sholl_data[RepairType.basal][0][0],
+    assert (sholl_data[RepairType.basal][0][0] ==
                       {Action.TERMINATION: 0, Action.CONTINUATION: 0, Action.BIFURCATION: 1})
-    assert_dict_equal(sholl_data[RepairType.basal][0][1],
+    assert (sholl_data[RepairType.basal][0][1] ==
                       {Action.TERMINATION: 2, Action.CONTINUATION: 0, Action.BIFURCATION: 0})
-    assert_dict_equal(sholl_data[RepairType.oblique], {})
-    assert_dict_equal(sholl_data[RepairType.axon],
+    assert sholl_data[RepairType.oblique] == {}
+    assert (sholl_data[RepairType.axon] ==
                       {0: {0: {Action.BIFURCATION: 1,
                                Action.CONTINUATION: 0,
                                Action.TERMINATION: 0},
@@ -253,7 +252,7 @@ def test__fill_repair_type_map():
                                         [1., 0., 0., 0.5]], dtype=np.float32))
 
     obj._fill_repair_type_map()
-    assert_dict_equal({sec.id: v for sec, v in obj.repair_type_map.items()},
+    assert ({sec.id: v for sec, v in obj.repair_type_map.items()} ==
                       {
                           0: test_module.RepairType.axon,
                           1: test_module.RepairType.trunk,
@@ -294,7 +293,7 @@ def test__compute_statistics_for_intact_subtrees():
     for layer in basal_data:
         for order in basal_data[layer]:
             for action in basal_data[layer][order]:
-                assert_equal(basal_data[layer][order][action],
+                assert (basal_data[layer][order][action] ==
                              actual[layer][order][action])
 
 def test__grow():
@@ -308,7 +307,7 @@ def test__grow():
     }
     obj.current_trunk_radius = 1.0
     obj._grow(leaf, 0, obj.neuron.soma.center)
-    assert_equal(len(obj.neuron.sections), 8)
+    assert len(obj.neuron.sections) == 8
 
 
 def test_repair_axon():
@@ -319,22 +318,21 @@ def test_repair_axon():
         neuron_in = load_neuron(filename)
         neuron_out = load_neuron(outfilename)
         axon = neuron_out.section(41)
-        ok_(axon.type == NeuriteType.axon)
+        assert axon.type == NeuriteType.axon
         assert_array_equal(neuron_in.section(40).points[0],
                            neuron_out.section(40).points[0])
-        ok_(len(neuron_out.section(41).points) > len(neuron_in.section(41).points))
+        assert len(neuron_out.section(41).points) > len(neuron_in.section(41).points)
 
         # Test disactivating the axon repair
         repair_flags = {RepairType.axon: False}
         test_module.repair(filename, outfilename, axons=[filename], repair_flags=repair_flags)
         neuron_out = load_neuron(outfilename)
         axon = neuron_out.section(41)
-        ok_(axon.type == NeuriteType.axon)
+        assert axon.type == NeuriteType.axon
         assert_array_equal(neuron_in.section(41).points[0],
                            neuron_out.section(41).points[0])
 
-        ok_(len(neuron_out.section(41).points) == len(neuron_in.section(41).points),
-            'The section should not have been regrown')
+        assert len(neuron_out.section(41).points) == len(neuron_in.section(41).points), 'The section should not have been regrown'
 
 
 def test_repair_no_intact_axon():
@@ -371,7 +369,7 @@ def test_legacy_compare_with_legacy_result():
         109,110,111,120,124,125,148,149,150,156,157,158,162,163,164,166,167,168,
         169,192,201,202,203,205,206,208
     }
-    assert_equal(cut_sections, legacy_cut_sections)
+    assert cut_sections == legacy_cut_sections
 
     obj._fill_repair_type_map()
 
@@ -387,9 +385,9 @@ def test_legacy_compare_with_legacy_result():
     section_id, segment_id = 134, 8
 
 
-    assert_equal(obj.apical_section.id + offset, section_id)
+    assert obj.apical_section.id + offset == section_id
 
-    assert_equal(len(obj.apical_section.points) - 1, segment_id)
+    assert len(obj.apical_section.points) - 1 == segment_id
 
     assert_array_equal([section.id + offset for section in types[RepairType.basal]],
                        [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,
@@ -414,7 +412,7 @@ def test_legacy_compare_with_legacy_result():
                       195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
                       210, 211, 212, 213, 214, 215, 216}
     actual_tufts = {section.id + offset for section in types[RepairType.tuft]}
-    assert_equal(actual_tufts, expected_tufts)
+    assert actual_tufts == expected_tufts
 
 
     expected_axons = {1, 2, 77, 3, 70, 4, 59, 5, 46, 6, 41, 7, 40, 8, 39, 9, 38, 10, 19, 11, 16, 12,
@@ -423,7 +421,7 @@ def test_legacy_compare_with_legacy_result():
                       57, 60, 69, 61, 66, 62, 63, 64, 65, 67, 68, 71, 76, 72, 75, 73, 74, 78, 83,
                       79, 82, 80, 81, 84, 85, 86, 89, 87, 88}
     actual_axons = {section.id + offset for section in types[RepairType.axon]}
-    assert_equal(actual_axons, expected_axons)
+    assert actual_axons == expected_axons
 
 
     intacts = defaultdict(list)
@@ -431,11 +429,11 @@ def test_legacy_compare_with_legacy_result():
     for sec in obj._find_intact_sub_trees():
         intacts[obj.repair_type_map[sec]].append(sec)
 
-    assert_equal([sec.id + offset for sec in intacts[RepairType.trunk]],
+    assert ([sec.id + offset for sec in intacts[RepairType.trunk]] ==
                  [])
-    assert_equal([sec.id + offset for sec in intacts[RepairType.oblique]],
+    assert ([sec.id + offset for sec in intacts[RepairType.oblique]] ==
                  [217])
-    assert_equal({sec.id + offset for sec in intacts[RepairType.tuft]},
+    assert ({sec.id + offset for sec in intacts[RepairType.tuft]} ==
                  {135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 151, 152, 153,
                   154, 155, 159, 160, 161, 165, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179,
                   180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 193, 194, 195, 196,
@@ -466,12 +464,12 @@ def test_legacy_sholl_data():
                  for i in obj.info['sholl'][RepairType.oblique].keys()
                  for j in obj.info['sholl'][RepairType.oblique][i].keys()}
 
-    assert_dict_equal(flattened, expected_stats[RepairType.oblique])
+    assert flattened == expected_stats[RepairType.oblique]
 
 def test_repair_only_axon():
     '''Test repairing a morph which has only an axon (but no dendrites) does not crash'''
     test_module.Repair(DATA_PATH / 'just-axon.asc')
-    ok_(True)
+    assert True
 
 def test_legacy_compare_with_legacy_result2():
     '''Comparing results with the old repair launch with the following commands:
@@ -498,7 +496,7 @@ def test_legacy_compare_with_legacy_result2():
                            608,609,610,613,614,615,617,620,622,623,624,626,637,639,640,645,647,648,
                            649,650,653,654,665,666,667,670,677,678,679,680,689,691,693,694,703,716,
                            717,721,723,725,726}
-    assert_equal(cut_sections, legacy_cut_sections)
+    assert cut_sections == legacy_cut_sections
 
     obj._fill_repair_type_map()
 
@@ -510,9 +508,9 @@ def test_legacy_compare_with_legacy_result2():
     # offset due to the first section id in the old soft being the soma
     offset = 1
 
-    assert_equal(obj.apical_section, None)
+    assert obj.apical_section == None
 
-    assert_equal({section.id + offset for section in types[RepairType.basal]},
+    assert ({section.id + offset for section in types[RepairType.basal]} ==
                  {650, 651, 668, 671, 702, 719, 652, 655, 653, 654, 656, 663, 657, 662, 658, 661,
                   659, 660, 664, 667, 665, 666, 669, 670, 672, 681, 673, 680, 674, 679, 675, 678,
                   676, 677, 682, 695, 683, 684, 685, 686, 687, 690, 688, 689, 691, 692, 693, 694,
@@ -525,7 +523,7 @@ def test_legacy_compare_with_legacy_result2():
     assert_array_equal([section.id + offset for section in types[RepairType.trunk]],
                        [])
 
-    assert_equal({section.id + offset for section in types[RepairType.tuft]},
+    assert ({section.id + offset for section in types[RepairType.tuft]} ==
                  set())
 
     intacts = defaultdict(list)
@@ -535,9 +533,9 @@ def test_legacy_compare_with_legacy_result2():
 
     # Since there is no apical dendrite, all of those are empty
     for extended_type in [RepairType.trunk, RepairType.oblique, RepairType.tuft]:
-        assert_equal(intacts[extended_type], [])
+        assert intacts[extended_type] == []
 
-    assert_equal({sec.id + offset for sec in intacts[RepairType.basal]},
+    assert ({sec.id + offset for sec in intacts[RepairType.basal]} ==
                  {651, 668, 671, 702, 719, 652, 655, 656, 663, 657, 662, 658, 661, 659, 660, 664,
                   669, 672, 681, 673, 674, 675, 676, 682, 695, 683, 684, 685, 686, 687, 690, 688,
                   692, 696, 699, 697, 698, 700, 701, 704, 705, 706, 707, 710, 708, 709, 711, 718,

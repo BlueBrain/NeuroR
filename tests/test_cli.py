@@ -1,10 +1,7 @@
-import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from click.testing import CliRunner
-from nose.tools import assert_equal
-
 from neuror.cli import cli
 
 DATA = Path(__file__).parent / 'data'
@@ -16,7 +13,7 @@ def test_error_annotation_file():
         result = runner.invoke(cli, ['error-annotation', 'file',
                                      str(DATA / 'test-error-detection/error-morph.asc'),
                                      str(Path(folder, 'out.asc'))])
-        assert_equal(result.exit_code, 0, result.exception)
+        assert result.exit_code == 0, result.exception
 
 
 def test_error_annotation_folder():
@@ -25,8 +22,8 @@ def test_error_annotation_folder():
         result = runner.invoke(cli, ['error-annotation', 'folder',
                                      str(DATA / 'test-error-detection'),
                                      folder])
-        assert_equal(result.exit_code, 0, result.exception)
-        assert_equal(set(str(path.relative_to(folder)) for path in Path(folder).rglob('*')),
+        assert result.exit_code == 0, result.exception
+        assert (set(str(path.relative_to(folder)) for path in Path(folder).rglob('*')) ==
                      {'simple.asc', 'error-morph.asc'})
 
 
@@ -36,7 +33,7 @@ def test_repair_file():
         result = runner.invoke(cli, ['cut-plane', 'repair', 'file',
                                      str(DATA / 'real.asc'),
                                      str(Path(folder, 'out.asc'))])
-        assert_equal(result.exit_code, 0, result.exception)
+        assert result.exit_code == 0, result.exception
 
 
 def test_repair_folder():
@@ -45,8 +42,8 @@ def test_repair_folder():
         result = runner.invoke(cli, ['cut-plane', 'repair', 'folder',
                                      str(DATA / 'input-repair-all'),
                                      folder])
-        assert_equal(result.exit_code, 0, result.exception)
-        assert_equal(set(str(path.relative_to(folder)) for path in Path(folder).rglob('*')),
+        assert result.exit_code == 0, result.exception
+        assert (set(str(path.relative_to(folder)) for path in Path(folder).rglob('*')) ==
                      {'simple.asc', 'simple2.asc'})
 
 
@@ -58,7 +55,7 @@ def test_repair_with_plane():
                                      str(input_path),
                                      folder,
                                      '--cut-file-dir', str(input_path / 'planes')])
-        assert_equal(result.exit_code, 0, result.exc_info)
+        assert result.exit_code == 0, result.exc_info
 
 
 def test_cli_axon():
@@ -69,7 +66,7 @@ def test_cli_axon():
                                      '-a', str(DATA / 'real-with-axon.asc'),
                                      str(DATA / 'real-with-axon.asc'),
                                      str(tmp_folder / 'output.asc')])
-        assert_equal(result.exit_code, 0)
+        assert result.exit_code == 0
 
 
 def test_sanitize():
@@ -79,8 +76,8 @@ def test_sanitize():
         result = runner.invoke(cli, ['sanitize', 'file',
                                      str(DATA / 'simple-with-duplicates.asc'),
                                      str(tmp_folder / 'output.asc')])
-        assert_equal(result.exit_code, 0)
+        assert result.exit_code == 0
 
         result = runner.invoke(cli, ['sanitize', 'folder',
                                     str(DATA), str(tmp_folder)])
-        assert_equal(result.exit_code, 0)
+        assert result.exit_code == 0

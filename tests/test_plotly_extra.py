@@ -3,7 +3,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from click.testing import CliRunner
-from numpy.testing import assert_equal
 
 from neuror.cli import cli
 
@@ -14,4 +13,4 @@ def test_report():
     with TemporaryDirectory('test-report') as folder:
         runner = CliRunner()
         result = runner.invoke(cli, ['report', str(DATA), folder])
-        assert_equal(result.exit_code, 0)
+        assert result.exit_code == 0

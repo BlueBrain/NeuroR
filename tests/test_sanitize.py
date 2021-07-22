@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 import numpy as np
 
 from morphio import Morphology
-from nose.tools import assert_raises
+import pytest
 from numpy.testing import assert_array_equal, assert_equal
 
 from morph_tool.utils import iter_morphology_files
@@ -15,7 +15,7 @@ PATH = Path(__file__).parent / 'data'
 
 def test_fix_non_zero_segments():
     neuron = fix_non_zero_segments(Path(PATH, 'simple-with-duplicates.asc'))
-    assert_equal(len(neuron.root_sections), 1)
+    assert len(neuron.root_sections) == 1
     assert_array_equal(neuron.section(0).points,
                        [[0., 0., 0.],
                         [1., 1., 0.],
@@ -28,7 +28,7 @@ def test_sanitize():
         output_path = Path(tmp_folder, 'sanitized.asc')
         sanitize(Path(PATH, 'simple-with-duplicates.asc'), output_path)
         neuron = Morphology(output_path)
-        assert_equal(len(neuron.root_sections), 1)
+        assert len(neuron.root_sections) == 1
         assert_array_equal(neuron.section(0).points,
                            [[0., 0., 0.],
                             [1., 1., 0.],
@@ -45,13 +45,12 @@ def test_sanitize():
                   'than its parent (id: 3) (type: SectionType.axon)').format(
                       Path(PATH, 'neurite-with-multiple-types.swc')))
         ]:
-            with assert_raises(CorruptedMorphology) as cm:
+            with pytest.raises(CorruptedMorphology, match=expected_exception):
                 sanitize(PATH / input_morph, Path(tmp_folder, 'output.asc'))
-            assert_equal(str(cm.exception), expected_exception)
 
         out_path = Path(tmp_folder, 'output.asc')
         sanitize(PATH / 'negative-diameters.asc', out_path)
-        assert_equal(next(Morphology(out_path).iter()).diameters, [2, 2, 0, 2])
+        assert next(Morphology(out_path).iter()).diameters == [2, 2, 0, 2]
 
 
 def test_sanitize_all():
@@ -76,11 +75,11 @@ def test_error_annotation():
     annotation, summary, markers = annotate_neurolucida(
         Path(PATH, 'test-error-detection/error-morph.asc')
     )
-    assert_equal(summary, {'fat end': 1,
+    assert summary == {'fat end': 1,
                            'zjump': 1,
                            'narrow start': 1,
                            'dangling': 1,
-                           'Multifurcation': 1})
+                           'Multifurcation': 1}
     assert_equal(markers, [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
                             'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},
                            {'name': 'zjump', 'label': 'Circle2', 'color': 'Green',
@@ -100,12 +99,12 @@ def test_error_annotation_all():
     # this ensure morphs are ordered as expected
     morph_paths = sorted([str(morph) for morph in iter_morphology_files(input_dir)])
     annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
-    assert_equal(summaries, {str(morph_paths[0]): {'fat end': 1,
+    assert summaries == {str(morph_paths[0]): {'fat end': 1,
                                                    'zjump': 1,
                                                    'narrow start': 1,
                                                    'dangling': 1,
                                                    'Multifurcation': 1},
-                             str(morph_paths[1]): {}})
+                             str(morph_paths[1]): {}}
     assert_equal(markers, {
         str(morph_paths[0]): [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
                                'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},

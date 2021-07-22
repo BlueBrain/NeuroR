@@ -3,9 +3,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from click.testing import CliRunner
-from nose.tools import assert_dict_equal, assert_equal
 
-from neuror.cut_plane.cli import cli
+from neuror.cli import cut_plane
 
 DATA = Path(__file__).parent.parent / 'data'
 
@@ -21,7 +20,7 @@ def test_join():
                 str(DATA / 'plane2.json'),
                 str(DATA / 'plane3.json')]
 
-        result = runner.invoke(cli, args)
+        result = runner.invoke(cut_plane, args)
         assert result.exit_code == 0
 
         with open(out_filename) as f:
@@ -30,6 +29,6 @@ def test_join():
         with open(out_filename) as f:
             expected = json.load(f)
 
-        assert_equal(len(actual), len(expected))
+        assert len(actual) == len(expected)
         for act, exp in zip(actual, expected):
-            assert_dict_equal(act, exp)
+            assert act == exp

@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 from numpy.testing import assert_array_almost_equal
 
-from neuror.cut_plane.cli import cli
+from neuror.cli import compute
 
 DATA = Path(__file__).parent.parent / 'data'
 
@@ -16,15 +16,15 @@ def test_cli_compute_file():
     runner = CliRunner()
 
     # vanilla test
-    result = runner.invoke(cli, ['compute', 'file', NEURON_SLICE])
+    result = runner.invoke(compute, ['file', NEURON_SLICE])
     if result.exit_code:
         raise AssertionError(result.exception)
 
     # test writing output
     with TemporaryDirectory(prefix='test_cli_compute_file') as temp_dir:
         json_file = str(Path(temp_dir, 'plane.json'))
-        result = runner.invoke(cli, ['compute', 'file', NEURON_SLICE,
-                                     '-o', json_file])
+        result = runner.invoke(compute, ['file', NEURON_SLICE,
+                                         '-o', json_file])
         if result.exit_code:
             raise AssertionError(result.exception)
 
@@ -35,9 +35,9 @@ def test_cli_compute_file():
     # test forcing plane
     with TemporaryDirectory(prefix='test_cli_compute_file') as temp_dir:
         json_file = str(Path(temp_dir, 'plane.json'))
-        result = runner.invoke(cli, ['compute', 'file', NEURON_SLICE,
-                                     '-o', json_file,
-                                     '--plane', 'y'])
+        result = runner.invoke(compute, ['file', NEURON_SLICE,
+                                         '-o', json_file,
+                                         '--plane', 'y'])
         if result.exit_code:
             raise AssertionError(result.exception)
 
@@ -51,10 +51,10 @@ def test_cli_compute_file():
     # test forcing plane and position
     with TemporaryDirectory(prefix='test_cli_compute_file') as temp_dir:
         json_file = str(Path(temp_dir, 'plane.json'))
-        result = runner.invoke(cli, ['compute', 'file', NEURON_SLICE,
-                                     '-o', json_file,
-                                     '--plane', 'y',
-                                     '--position', 40])
+        result = runner.invoke(compute, ['file', NEURON_SLICE,
+                                         '-o', json_file,
+                                         '--plane', 'y',
+                                         '--position', 40])
         if result.exit_code:
             raise AssertionError(result.exception)
 
@@ -71,6 +71,6 @@ def test_cli_compute_folder():
     runner = CliRunner()
 
     with TemporaryDirectory(prefix='cut-plane-compute-folder') as temp_dir:
-        result = runner.invoke(cli, ['compute', 'folder', str(DATA), temp_dir])
+        result = runner.invoke(compute, ['folder', str(DATA), temp_dir])
     if result.exit_code:
         raise AssertionError(result.exception)
