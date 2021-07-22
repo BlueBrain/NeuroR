@@ -1,3 +1,4 @@
+import sys
 import json
 from pathlib import Path
 
@@ -60,8 +61,19 @@ def test_success_function():
     assert res == 513-1830
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 7), reason="requires python3.6")
 def test_minimize():
-    params = rot_x, rot_y, rot_z, transl_x, transl_y, transl_z = 4, 45, -21, 0, 0, 61
+    params = 4, 45, -21, 0, 0, 61
+
+    result = _minimize(params, _get_points(), bin_width=10)
+    assert_allclose(result,
+                    [4.11038409e+00, 4.65181441e+01, -2.05934568e+01, -2.44713344e-04,
+                     -2.71528635e-04, 6.88986409e+01])
+
+
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
+def test_minimize():
+    params = 4, 45, -21, 0, 0, 61
 
     result = _minimize(params, _get_points(), bin_width=10)
     assert_allclose(result,
