@@ -1,7 +1,6 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import numpy as np
 from mock import patch
@@ -310,44 +309,41 @@ def test__grow():
     assert len(obj.neuron.sections) == 8
 
 
-def test_repair_axon():
+def test_repair_axon(tmpdir):
     filename = DATA_PATH / 'real-with-axon.asc'
-    with TemporaryDirectory('test-cli-axon') as tmp_folder:
-        outfilename = Path(tmp_folder, 'out.asc')
-        test_module.repair(filename, outfilename, axons=[filename])
-        neuron_in = load_neuron(filename)
-        neuron_out = load_neuron(outfilename)
-        axon = neuron_out.section(41)
-        assert axon.type == NeuriteType.axon
-        assert_array_equal(neuron_in.section(40).points[0],
-                           neuron_out.section(40).points[0])
-        assert len(neuron_out.section(41).points) > len(neuron_in.section(41).points)
+    outfilename = Path(tmpdir, 'out.asc')
+    test_module.repair(filename, outfilename, axons=[filename])
+    neuron_in = load_neuron(filename)
+    neuron_out = load_neuron(outfilename)
+    axon = neuron_out.section(41)
+    assert axon.type == NeuriteType.axon
+    assert_array_equal(neuron_in.section(40).points[0],
+                       neuron_out.section(40).points[0])
+    assert len(neuron_out.section(41).points) > len(neuron_in.section(41).points)
 
-        # Test disactivating the axon repair
-        repair_flags = {RepairType.axon: False}
-        test_module.repair(filename, outfilename, axons=[filename], repair_flags=repair_flags)
-        neuron_out = load_neuron(outfilename)
-        axon = neuron_out.section(41)
-        assert axon.type == NeuriteType.axon
-        assert_array_equal(neuron_in.section(41).points[0],
-                           neuron_out.section(41).points[0])
+    # Test disactivating the axon repair
+    repair_flags = {RepairType.axon: False}
+    test_module.repair(filename, outfilename, axons=[filename], repair_flags=repair_flags)
+    neuron_out = load_neuron(outfilename)
+    axon = neuron_out.section(41)
+    assert axon.type == NeuriteType.axon
+    assert_array_equal(neuron_in.section(41).points[0],
+                       neuron_out.section(41).points[0])
 
-        assert len(neuron_out.section(41).points) == len(neuron_in.section(41).points), 'The section should not have been regrown'
+    assert len(neuron_out.section(41).points) == len(neuron_in.section(41).points), 'The section should not have been regrown'
 
 
-def test_repair_no_intact_axon():
+def test_repair_no_intact_axon(tmpdir):
     filename = DATA_PATH / 'no-intact-basals.h5'
-    with TemporaryDirectory('test-cli-axon') as tmp_folder:
-        outfilename = Path(tmp_folder, 'out.asc')
-        test_module.repair(filename, outfilename, axons=[filename])
+    outfilename = Path(tmpdir, 'out.asc')
+    test_module.repair(filename, outfilename, axons=[filename])
 
 
-def test_repair_no_trunk():
+def test_repair_no_trunk(tmpdir):
     '''Test repair when the morph has oblique sections but no trunk'''
     filename = DATA_PATH / 'Fluo42_right.h5'
-    with TemporaryDirectory('test-no-trunk') as tmp_folder:
-        outfilename = Path(tmp_folder, 'out.asc')
-        test_module.repair(filename, outfilename, legacy_detection=True)
+    outfilename = Path(tmpdir, 'out.asc')
+    test_module.repair(filename, outfilename, legacy_detection=True)
 
 
 def test_legacy_compare_with_legacy_result():
