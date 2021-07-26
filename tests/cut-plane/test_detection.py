@@ -63,9 +63,9 @@ def test_success_function():
     assert res == 513-1830
 
 
-@pytest.mark.skipif(version.parse(scipy.__version__) >= version.parse('1.6'),
-                    reason="requires scipy < 1.6")
-def test_minimize():
+@pytest.mark.skipif(version.parse(scipy.__version__) >= version.parse('1.7'),
+                    reason="requires scipy < 1.7")
+def test_minimize_less17():
     params = 4, 45, -21, 0, 0, 61
 
     result = _minimize(params, _get_points(), bin_width=10)
@@ -74,15 +74,16 @@ def test_minimize():
                      -2.71528635e-04, 6.88986409e+01])
 
 
-@pytest.mark.skipif(version.parse(scipy.__version__) < version.parse('1.6'),
-                    reason="requires scipy >= 1.6")
-def test_minimize():
+@pytest.mark.skipif(version.parse(scipy.__version__) < version.parse('1.7'),
+                    reason="requires scipy >= 1.7")
+def test_minimize_more17():
     params = 4, 45, -21, 0, 0, 61
 
     result = _minimize(params, _get_points(), bin_width=10)
     assert_allclose(result,
                     [4.1510e+00, 4.6763e+01, -2.0966e+01, -2.7207e-04, -4.5070e-04, 6.8804e+01],
                     rtol=1e-4)
+
 
 def test__compute_probabilities():
     plane = test_module.CutPlane((1, 0, 0, 4), None, None, None)
