@@ -2,7 +2,6 @@ from pathlib import Path
 import numpy as np
 
 from morphio import Morphology
-from nose.tools import assert_equal
 from numpy.testing import assert_array_almost_equal
 
 import neuror.cut_plane.cut_leaves as test_module
@@ -55,7 +54,7 @@ def test_get_cut_leaves():
         dtype=float,
     )
     assert_array_almost_equal(np.array(leaves, dtype=float), expected_leaves, decimal=5)
-    assert_equal(quality, 25.0)
+    assert quality == 25.0
 
 
 def test_find_cut_leaves():
@@ -99,4 +98,4 @@ def test_find_cut_leaves():
         dtype=float,
     )
     assert_array_almost_equal(np.array(leaves, dtype=float), expected_leaves, decimal=5)
-    assert_equal(qualities, [{"axis": "Z", "side": -1, "quality": 25.0}])
+    assert qualities == [{"axis": "Z", "side": -1, "quality": 25.0}]

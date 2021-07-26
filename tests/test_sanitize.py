@@ -1,21 +1,20 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
 import numpy as np
 
 from morphio import Morphology
-from nose.tools import assert_raises
+import pytest
 from numpy.testing import assert_array_equal, assert_equal
 
 from morph_tool.utils import iter_morphology_files
 from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
 from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all
 
-PATH = Path(__file__).parent / 'data'
+DATA = Path(__file__).parent / 'data'
 
 
 def test_fix_non_zero_segments():
-    neuron = fix_non_zero_segments(Path(PATH, 'simple-with-duplicates.asc'))
-    assert_equal(len(neuron.root_sections), 1)
+    neuron = fix_non_zero_segments(Path(DATA, 'simple-with-duplicates.asc'))
+    assert len(neuron.root_sections) == 1
     assert_array_equal(neuron.section(0).points,
                        [[0., 0., 0.],
                         [1., 1., 0.],
@@ -23,64 +22,60 @@ def test_fix_non_zero_segments():
                         [3., 0., 0.]])
 
 
-def test_sanitize():
-    with TemporaryDirectory('test-sanitize') as tmp_folder:
-        output_path = Path(tmp_folder, 'sanitized.asc')
-        sanitize(Path(PATH, 'simple-with-duplicates.asc'), output_path)
-        neuron = Morphology(output_path)
-        assert_equal(len(neuron.root_sections), 1)
-        assert_array_equal(neuron.section(0).points,
-                           [[0., 0., 0.],
-                            [1., 1., 0.],
-                            [2., 0., 0.],
-                            [3., 0., 0.]])
+def test_sanitize(tmpdir):
+    output_path = Path(tmpdir, 'sanitized.asc')
+    sanitize(Path(DATA, 'simple-with-duplicates.asc'), output_path)
+    neuron = Morphology(output_path)
+    assert len(neuron.root_sections) == 1
+    assert_array_equal(neuron.section(0).points,
+                       [[0., 0., 0.],
+                        [1., 1., 0.],
+                        [2., 0., 0.],
+                        [3., 0., 0.]])
 
-        for input_morph, expected_exception in [
-                ('no-soma.asc',
-                 '{} has an invalid or no soma'.format(Path(PATH, 'no-soma.asc'))),
+    with pytest.raises(CorruptedMorphology,
+                       match=f'{DATA / "no-soma.asc"} has an invalid or no soma'):
+        sanitize(DATA / 'no-soma.asc', Path(tmpdir, 'output.asc'))
 
-                ('neurite-with-multiple-types.swc',
-                 ('{} has a neurite whose type changes along the way\n'
-                  'Child section (id: 5) has a different type (SectionType.basal_dendrite) '
-                  'than its parent (id: 3) (type: SectionType.axon)').format(
-                      Path(PATH, 'neurite-with-multiple-types.swc')))
-        ]:
-            with assert_raises(CorruptedMorphology) as cm:
-                sanitize(PATH / input_morph, Path(tmp_folder, 'output.asc'))
-            assert_equal(str(cm.exception), expected_exception)
+    with pytest.raises(CorruptedMorphology) as e:
+        sanitize(DATA / 'neurite-with-multiple-types.swc', Path(tmpdir, 'output.asc'))
+    assert e.value.args[0] == (
+        f'{DATA / "neurite-with-multiple-types.swc"} has a neurite whose type changes'
+        ' along the way\nChild section (id: 5) has a different type (SectionType.'
+        'basal_dendrite) than its parent (id: 3) (type: SectionType.axon)')
 
-        out_path = Path(tmp_folder, 'output.asc')
-        sanitize(PATH / 'negative-diameters.asc', out_path)
-        assert_equal(next(Morphology(out_path).iter()).diameters, [2, 2, 0, 2])
+    out_path = Path(tmpdir, 'output.asc')
+    sanitize(DATA / 'negative-diameters.asc', out_path)
+    assert_array_equal(next(Morphology(out_path).iter()).diameters, [2, 2, 0, 2])
 
 
-def test_sanitize_all():
-    with TemporaryDirectory('test-sanitize') as tmp_folder:
-        tmp_folder = Path(tmp_folder)
-        sanitize_all(PATH / 'input-sanitize-all', tmp_folder)
+def test_sanitize_all(tmpdir):
+    tmpdir = Path(tmpdir)
+    sanitize_all(DATA / 'input-sanitize-all', tmpdir)
 
-        assert_array_equal(list(sorted(tmp_folder.rglob('*.asc'))),
-                           [tmp_folder / 'a.asc',
-                            tmp_folder / 'sub-folder/sub-sub-folder/c.asc'])
+    assert_array_equal(list(sorted(tmpdir.rglob('*.asc'))),
+                       [tmpdir / 'a.asc',
+                        tmpdir / 'sub-folder/sub-sub-folder/c.asc'])
 
-    with TemporaryDirectory('test-sanitize') as tmp_folder:
-        tmp_folder = Path(tmp_folder)
-        sanitize_all(PATH / 'input-sanitize-all', tmp_folder, nprocesses=2)
 
-        assert_array_equal(list(sorted(tmp_folder.rglob('*.asc'))),
-                           [tmp_folder / 'a.asc',
-                            tmp_folder / 'sub-folder/sub-sub-folder/c.asc'])
+def test_sanitize_all_np2(tmpdir):
+    tmpdir = Path(tmpdir)
+    sanitize_all(DATA / 'input-sanitize-all', tmpdir, nprocesses=2)
+
+    assert_array_equal(list(sorted(tmpdir.rglob('*.asc'))),
+                       [tmpdir / 'a.asc',
+                        tmpdir / 'sub-folder/sub-sub-folder/c.asc'])
 
 
 def test_error_annotation():
     annotation, summary, markers = annotate_neurolucida(
-        Path(PATH, 'test-error-detection/error-morph.asc')
+        Path(DATA, 'test-error-detection/error-morph.asc')
     )
-    assert_equal(summary, {'fat end': 1,
+    assert summary == {'fat end': 1,
                            'zjump': 1,
                            'narrow start': 1,
                            'dangling': 1,
-                           'Multifurcation': 1})
+                           'Multifurcation': 1}
     assert_equal(markers, [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
                             'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},
                            {'name': 'zjump', 'label': 'Circle2', 'color': 'Green',
@@ -96,16 +91,16 @@ def test_error_annotation():
 
 def test_error_annotation_all():
 
-    input_dir = Path(PATH, 'test-error-detection')
+    input_dir = Path(DATA, 'test-error-detection')
     # this ensure morphs are ordered as expected
     morph_paths = sorted([str(morph) for morph in iter_morphology_files(input_dir)])
     annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
-    assert_equal(summaries, {str(morph_paths[0]): {'fat end': 1,
+    assert summaries == {str(morph_paths[0]): {'fat end': 1,
                                                    'zjump': 1,
                                                    'narrow start': 1,
                                                    'dangling': 1,
                                                    'Multifurcation': 1},
-                             str(morph_paths[1]): {}})
+                             str(morph_paths[1]): {}}
     assert_equal(markers, {
         str(morph_paths[0]): [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
                                'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},
