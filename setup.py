@@ -24,7 +24,7 @@ setup(
         'matplotlib>=2.2.3',
         'morph-tool>=2.4.4',
         'morphio>=3.0.0',
-        'neurom>=2.0.0',
+        'neurom>=3.0.0',
         'numpy>=1.19.2',
         'nptyping>=1.3.0',
         'pandas>=0.24.2',

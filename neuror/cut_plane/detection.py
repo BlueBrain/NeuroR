@@ -11,7 +11,7 @@ import neurom as nm
 import numpy as np
 
 from neurom import geom
-from neurom.core import Section, Neuron
+from neurom.core import Section, Morphology
 from scipy import optimize, special
 
 from neuror.cut_plane import legacy_detection, planes
@@ -29,7 +29,7 @@ class CutPlane(planes.HalfSpace):
 
     def __init__(self, coefs: List[float],
                  upward: bool,
-                 morphology: Union[None, str, Path, Neuron],
+                 morphology: Union[None, str, Path, Morphology],
                  bin_width: float):
         '''Cut plane ctor.
 
@@ -42,7 +42,7 @@ class CutPlane(planes.HalfSpace):
         '''
         super().__init__(coefs[0], coefs[1], coefs[2], coefs[3], upward)
 
-        if isinstance(morphology, Neuron):
+        if isinstance(morphology, Morphology):
             self.morphology = morphology
         elif isinstance(morphology, (str, Path)):
             self.morphology = nm.load_neuron(morphology)
@@ -133,7 +133,7 @@ class CutPlane(planes.HalfSpace):
         warnings.warn("This method will be deprecated in favor or cut_leaves.find_cut_leaves"
                       "it also has bugs if one uses +1 in searched_half_spaces and multiple"
                       "combinations of searched_arguments.", DeprecationWarning)
-        if not isinstance(neuron, Neuron):
+        if not isinstance(neuron, Morphology):
             neuron = nm.load_neuron(neuron)
 
         # pylint: disable=invalid-unary-operand-type
@@ -167,7 +167,7 @@ class CutPlane(planes.HalfSpace):
         As implemented in:
         https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
         '''
-        if not isinstance(neuron, Neuron):
+        if not isinstance(neuron, Morphology):
             neuron = nm.load_neuron(neuron)
 
         cut_leaves, side = legacy_detection.internal_cut_detection(neuron, axis)

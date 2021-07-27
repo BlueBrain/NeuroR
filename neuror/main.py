@@ -324,7 +324,7 @@ class Repair(object):
         # the faster the radii will convert to tip_radius.
         # TODO: maybe we would need this per neurite_type
         max_path_length = self.params["path_length_ratio"] * np.max(
-            nm.get("terminal_path_lengths_per_neurite", self.neuron)
+            nm.get("terminal_path_lengths", self.neuron)
         )
         self.taper = (
             lambda trunk_radius: (trunk_radius - self.tip_radius)
