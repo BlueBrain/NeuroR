@@ -24,7 +24,8 @@ setup(
         'matplotlib>=2.2.3',
         'morph-tool>=2.4.4',
         'morphio>=3.0.0',
-        'neurom>=3.0.0',
+        # TODO replace it with 'neurom>=3.0.0', when 3.0.0 is released
+        'neurom @ git+https://git@github.com/BlueBrain/neurom.git@3.0.0#egg=neurom',
         'numpy>=1.19.2',
         'nptyping>=1.3.0',
         'pandas>=0.24.2',
