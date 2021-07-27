@@ -10,5 +10,5 @@ DATA = Path(__file__).parent / 'data'
 
 def test_report(tmpdir):
     runner = CliRunner()
-    result = runner.invoke(cli, ['report', str(DATA), str(tmpdir)])
+    result = runner.invoke(cli, ['report', str(DATA), str(tmpdir)], catch_exceptions=False)
     assert result.exit_code == 0

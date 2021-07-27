@@ -45,7 +45,7 @@ class CutPlane(planes.HalfSpace):
         if isinstance(morphology, Morphology):
             self.morphology = morphology
         elif isinstance(morphology, (str, Path)):
-            self.morphology = nm.load_neuron(morphology)
+            self.morphology = nm.load_morphology(morphology)
         elif morphology is not None:
             raise Exception(f'Unsupported morphology type: {type(morphology)}')
 
@@ -134,7 +134,7 @@ class CutPlane(planes.HalfSpace):
                       "it also has bugs if one uses +1 in searched_half_spaces and multiple"
                       "combinations of searched_arguments.", DeprecationWarning)
         if not isinstance(neuron, Morphology):
-            neuron = nm.load_neuron(neuron)
+            neuron = nm.load_morphology(neuron)
 
         # pylint: disable=invalid-unary-operand-type
         coef_d = -fix_position if fix_position is not None else 0
@@ -168,7 +168,7 @@ class CutPlane(planes.HalfSpace):
         https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
         '''
         if not isinstance(neuron, Morphology):
-            neuron = nm.load_neuron(neuron)
+            neuron = nm.load_morphology(neuron)
 
         cut_leaves, side = legacy_detection.internal_cut_detection(neuron, axis)
 
@@ -177,7 +177,7 @@ class CutPlane(planes.HalfSpace):
                     upward=(side < 0),
                     morphology=None,
                     bin_width=0)
-        plane.morphology = nm.load_neuron(neuron)
+        plane.morphology = nm.load_morphology(neuron)
         plane.cut_leaves_coordinates = cut_leaves
         return plane
 

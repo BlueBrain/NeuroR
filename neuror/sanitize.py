@@ -8,10 +8,10 @@ from tqdm import tqdm
 import numpy as np
 from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
-from neurom.check import neuron_checks as nc
+from neurom.check import morphology_checks as mc
 from neurom.check import CheckResult
 from neurom.apps.annotate import annotate
-from neurom import load_neuron
+from neurom import load_morphology
 
 L = logging.getLogger('neuror')
 _ZERO_LENGTH = 1e-4
@@ -162,15 +162,15 @@ def annotate_neurolucida(morph_path, checkers=None):
     """
     if checkers is None:
         checkers = {
-            nc.has_no_fat_ends: {"name": "fat end", "label": "Circle3", "color": "Blue"},
-            partial(nc.has_no_jumps, axis="z"): {
+            mc.has_no_fat_ends: {"name": "fat end", "label": "Circle3", "color": "Blue"},
+            partial(mc.has_no_jumps, axis="z"): {
                 "name": "zjump",
                 "label": "Circle2",
                 "color": "Green",
             },
-            nc.has_no_narrow_start: {"name": "narrow start", "label": "Circle1", "color": "Blue"},
-            nc.has_no_dangling_branch: {"name": "dangling", "label": "Circle6", "color": "Magenta"},
-            nc.has_multifurcation: {
+            mc.has_no_narrow_start: {"name": "narrow start", "label": "Circle1", "color": "Blue"},
+            mc.has_no_dangling_branch: {"name": "dangling", "label": "Circle6", "color": "Magenta"},
+            mc.has_multifurcation: {
                 "name": "Multifurcation",
                 "label": "Circle8",
                 "color": "Yellow",
@@ -186,7 +186,7 @@ def annotate_neurolucida(morph_path, checkers=None):
             L.exception(e, exc_info=True)
             return CheckResult(True)
 
-    neuron = load_neuron(morph_path)
+    neuron = load_morphology(morph_path)
     results = [_try(checker, neuron) for checker in checkers]
     markers = [
         dict(setting, data=result.info)

@@ -9,7 +9,7 @@ from pprint import pprint
 import click
 from morph_tool.utils import iter_morphology_files
 from morphio.mut import Morphology  # pylint: disable=import-error
-from neurom import load_neuron
+from neurom import load_morphology
 from neurom.utils import NeuromJSON
 
 from neuror.cut_plane.detection import CutPlane
@@ -297,7 +297,7 @@ def _export_cut_plane(filename, output, width, display, searched_axes, fix_posit
 
     if display:
         from neuror.cut_plane.detection import plot
-        plot(load_neuron(filename), result)
+        plot(load_morphology(filename), result)
 
 
 @compute.command(short_help='Compute a cut plane for morphology FILENAME')

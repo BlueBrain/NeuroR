@@ -15,10 +15,10 @@ import numpy as np
 from morph_tool import apical_point_section_segment
 from morph_tool.spatial import point_to_section_segment
 from morphio import PointLevel, SectionType
-from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
+from neurom import NeuriteType, iter_neurites, iter_sections, load_morphology
 from neurom.core.dataformat import COLS
 from neurom.core import Section
-from neurom.features.sectionfunc import branch_order, section_path_length
+from neurom.features.section import branch_order, section_path_length
 from nptyping import NDArray
 from scipy.spatial.distance import cdist
 
@@ -286,7 +286,7 @@ class Repair(object):
         else:
             self.cut_leaves = np.asarray(cut_leaves_coordinates)
 
-        self.neuron = load_neuron(inputfile)
+        self.neuron = load_morphology(inputfile)
         self.repair_type_map = dict()
         self.max_y_cylindrical_extent = _max_y_dendritic_cylindrical_extent(self.neuron)
         self.max_y_extent = max(np.max(section.points[:, COLS.Y])

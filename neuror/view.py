@@ -9,8 +9,8 @@ import numpy as np
 from matplotlib.backends.backend_pdf import (  # noqa, pylint: disable=ungrouped-imports,wrong-import-order,wrong-import-position
     PdfPages,
 )
-from neurom import geom, load_neuron
-from neurom.view.view import plot_neuron
+from neurom import geom, load_morphology
+from neurom.view.plotly_impl import plot_morph
 
 L = logging.getLogger('neuror')
 
@@ -41,7 +41,7 @@ def plot(neuron, bbox, subplot, title, **kwargs):
     xlim = (bbox[0][0], bbox[1][0])
     ylim = (bbox[0][2], bbox[1][2])
 
-    plot_neuron(ax, neuron, **kwargs)
+    plot_morph(neuron, ax, **kwargs)
     ax.set_title(title)
     ax.set_aspect('equal', adjustable='box')
     ax.set_xlim(xlim)
@@ -51,7 +51,7 @@ def plot(neuron, bbox, subplot, title, **kwargs):
 def _neuron_subplot(folders, f, pp, subplot, titles):
     kwargs = {'plane': 'xz'}
     fig = plt.figure()
-    neurons = [load_neuron(os.path.join(folder, f)) for folder in folders]
+    neurons = [load_morphology(os.path.join(folder, f)) for folder in folders]
 
     common_bbox = get_common_bounding_box(neurons)
 
