@@ -230,7 +230,6 @@ def fix_points_in_soma(morph):
         in_soma = np.argwhere(morph.soma.overlaps(sec_pts)).flatten()
 
         if in_soma.size > 0:
-            # warnings.warn("Points inside the soma!")
             changed = True
 
             last_in_soma = in_soma[-1]

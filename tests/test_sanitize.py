@@ -166,12 +166,12 @@ def test_fix_points_in_soma():
             [3., 3., 3., 1.],
             [2., 2., 2., 1.],
             [3., 2., 3., 1.],
-            [0., 0., 1.00001 ,1.],
-            [0., 0., 2.,1.],
-            [0., 0., 2.,1.],
-            [0., 1., 3.,1.],
-            [0., 0., 2.,1.],
-            [0., -1., 3.,1.],
+            [0., 0., 1.00001 , 1.],
+            [0., 0., 2., 1.],
+            [0., 0., 2., 1.],
+            [0., 1., 3., 1.],
+            [0., 0., 2., 1.],
+            [0., -1., 3., 1.],
         ],
         dtype=neuron.points.dtype
     )
@@ -180,3 +180,8 @@ def test_fix_points_in_soma():
         neuron.points,
         expected
     )
+
+    # Test that it fails when an entire section is located inside the soma
+    neuron.soma.radius = 10
+    with pytest.raises(CorruptedMorphology, match="An entire section is located inside the soma"):
+        fix_points_in_soma(neuron)
