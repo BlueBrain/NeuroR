@@ -6,7 +6,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 import numpy as np
-from morphio import MorphioError, SomaType, set_maximum_warnings
+from morphio import MorphioError, PointLevel, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
 from neurom.check import morphology_checks as mc
 from neurom.check import CheckResult
@@ -220,3 +220,41 @@ def annotate_neurolucida_all(morph_paths, nprocesses=1):
             morph_path = str(morph_path)
             annotations[morph_path], summaries[morph_path], markers[morph_path] = result
     return annotations, summaries, markers
+
+
+def fix_points_in_soma(morph):
+    """Ensure section points are not inside the soma."""
+    changed = False
+    for root_sec in morph.root_sections:
+        sec_pts = root_sec.points
+        in_soma = np.argwhere(morph.soma.overlaps(sec_pts)).flatten()
+
+        if in_soma.size > 0:
+            # warnings.warn("Points inside the soma!")
+            changed = True
+
+            last_in_soma = in_soma[-1]
+
+            if last_in_soma >= len(sec_pts) - 1:
+                raise CorruptedMorphology("An entire section is located inside the soma")
+
+            in_pt = sec_pts[last_in_soma]
+            out_pt = sec_pts[last_in_soma + 1]
+            vec = out_pt - in_pt
+            new_pt = [morph.soma.center + vec / np.linalg.norm(vec) * morph.soma.radius]
+            if np.linalg.norm(new_pt[0] - root_sec.points[last_in_soma + 1]) <= _ZERO_LENGTH:
+                new_sec_pts = root_sec.points[last_in_soma + 1:]
+                last_in_soma += 1
+            else:
+                new_sec_pts = np.concatenate([new_pt, root_sec.points[last_in_soma + 1:]])
+            ptl = PointLevel(
+                new_sec_pts,
+                root_sec.diameters[last_in_soma:],
+                root_sec.perimeters[last_in_soma:],
+            )
+            new_sec = morph.append_root_section(ptl, root_sec.type)
+            for child in root_sec.children:
+                new_sec.append_section(child, recursive=True)
+            morph.delete_section(root_sec)
+
+    return changed
