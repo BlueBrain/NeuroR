@@ -15,10 +15,10 @@ import numpy as np
 from morph_tool import apical_point_section_segment
 from morph_tool.spatial import point_to_section_segment
 from morphio import PointLevel, SectionType
-from neurom import NeuriteType, iter_neurites, iter_sections, load_neuron
+from neurom import NeuriteType, iter_neurites, iter_sections, load_morphology
 from neurom.core.dataformat import COLS
 from neurom.core import Section
-from neurom.features.sectionfunc import branch_order, section_path_length
+from neurom.features.section import branch_order, section_path_length
 from nptyping import NDArray
 from scipy.spatial.distance import cdist
 
@@ -273,9 +273,9 @@ class Repair(object):
         np.random.seed(seed)
         self.legacy_detection = legacy_detection
         self.inputfile = inputfile
-        self.axon_donors = axons or list()
-        self.donated_intact_axon_sections = list()
-        self.repair_flags = repair_flags or dict()
+        self.axon_donors = axons or []
+        self.donated_intact_axon_sections = []
+        self.repair_flags = repair_flags or {}
         self.params = params if params is not None else _PARAMS
 
         CutPlane = cut_plane.CutPlane
@@ -286,13 +286,13 @@ class Repair(object):
         else:
             self.cut_leaves = np.asarray(cut_leaves_coordinates)
 
-        self.neuron = load_neuron(inputfile)
-        self.repair_type_map = dict()
+        self.neuron = load_morphology(inputfile)
+        self.repair_type_map = {}
         self.max_y_cylindrical_extent = _max_y_dendritic_cylindrical_extent(self.neuron)
         self.max_y_extent = max(np.max(section.points[:, COLS.Y])
                                 for section in self.neuron.iter())
 
-        self.info = dict()
+        self.info = {}
         apical_section_id = None
         if apical_point != -1:
             if apical_point:
@@ -324,7 +324,7 @@ class Repair(object):
         # the faster the radii will convert to tip_radius.
         # TODO: maybe we would need this per neurite_type
         max_path_length = self.params["path_length_ratio"] * np.max(
-            nm.get("terminal_path_lengths_per_neurite", self.neuron)
+            nm.get("terminal_path_lengths", self.neuron)
         )
         self.taper = (
             lambda trunk_radius: (trunk_radius - self.tip_radius)
@@ -343,7 +343,7 @@ class Repair(object):
             return
 
         # See https://github.com/BlueBrain/MorphIO/issues/161
-        keep_axons_alive = list()
+        keep_axons_alive = []
 
         for axon_donor in self.axon_donors:
             if self.legacy_detection:
@@ -713,7 +713,7 @@ def repair(inputfile: Path,  # pylint: disable=too-many-arguments
         morphio.set_ignored_warning(warning, True)
 
     if axons is None:
-        axons = list()
+        axons = []
 
     if params is None:
         params = _PARAMS

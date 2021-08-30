@@ -5,7 +5,7 @@ import morphio
 import numpy as np
 from morph_tool.transform import align, translate
 from neurom import COLS
-from neurom.features.sectionfunc import branch_order, strahler_order
+from neurom.features.section import branch_order, strahler_order
 
 from neuror.utils import section_length
 
@@ -77,7 +77,7 @@ def _similar_section(intact_axons, section):
     Note:
     I have *absolutely* no clue why sorting by this metric
     '''
-    dists = list()
+    dists = []
     for root in intact_axons:
         origin = root.points[0]
         origin_cut = section.points[0]

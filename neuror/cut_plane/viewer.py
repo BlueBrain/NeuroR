@@ -7,7 +7,7 @@ import json
 
 import neurom as nm
 import numpy as np
-from neurom import load_neuron
+from neurom import load_morphology
 from neurom.geom import bounding_box
 from pyquaternion import Quaternion
 
@@ -163,7 +163,7 @@ NEURON = FIGURE = BBOX = None
 def set_neuron(filename):
     '''Globally loads the neuron'''
     global NEURON, FIGURE, BBOX  # pylint: disable=global-statement
-    NEURON = load_neuron(filename)
+    NEURON = load_morphology(filename)
     FIGURE = NeuronBuilder(NEURON, '3d').get_figure()
     BBOX = bounding_box(NEURON)
 

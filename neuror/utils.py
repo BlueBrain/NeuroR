@@ -25,7 +25,7 @@ class RepairType(Enum):
 
 def repair_type_map(neuron, apical_section):
     '''Return a dict of extended types'''
-    extended_types = dict()
+    extended_types = {}
     for section in iter_sections(neuron):
         if section.type == SectionType.apical_dendrite:
             extended_types[section] = RepairType.oblique

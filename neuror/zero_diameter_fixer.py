@@ -186,7 +186,7 @@ def _fix_upstream(section, upstream_good_diameter):
 def fix_neurite(root_section, legacy=False):
     '''Apply all fixes to a neurite'''
     _fix_downstream(root_section)
-    _fix_in_between(root_section, list(), legacy)
+    _fix_in_between(root_section, [], legacy)
     _fix_upstream(root_section, 0)
 
 
