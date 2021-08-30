@@ -24,10 +24,8 @@ setup(
         'matplotlib>=2.2.3',
         'morph-tool>=2.4.4',
         'morphio>=3.0.0',
-        # TODO replace it with 'neurom>=3.0.0', when 3.0.0 is released
-        'neurom @ git+https://git@github.com/BlueBrain/neurom.git@3.0.0#egg=neurom',
-        # TODO replace it with 'plotly-helper>=0.0.8', when it is released
-        'plotly-helper @ git+https://git@github.com/BlueBrain/plotly-helper.git@neurom-v3#egg=plotly-helper',
+        'neurom>=3.0,<4.0',
+        'plotly-helper>=0.0.8,<1.0',
         'numpy>=1.19.2',
         'nptyping>=1.3.0',
         'pandas>=0.24.2',
