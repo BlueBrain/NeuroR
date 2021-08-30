@@ -123,7 +123,7 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
         a fixed morphio.mut.Morphology
     '''
     neuron = Morphology(neuron)
-    to_be_deleted = list()
+    to_be_deleted = []
     for section in neuron.iter():
         points = section.points
         distances = np.linalg.norm(np.diff(points, axis=0), axis=1)

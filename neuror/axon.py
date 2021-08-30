@@ -77,7 +77,7 @@ def _similar_section(intact_axons, section):
     Note:
     I have *absolutely* no clue why sorting by this metric
     '''
-    dists = list()
+    dists = []
     for root in intact_axons:
         origin = root.points[0]
         origin_cut = section.points[0]
