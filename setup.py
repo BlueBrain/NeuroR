@@ -22,8 +22,8 @@ setup(
     install_requires=[
         'click>=6.7',
         'matplotlib>=2.2.3',
-        'morph-tool>=2.4.4',
-        'morphio>=3.0.0',
+        'morph-tool>=2.4.4,<3.0',
+        'morphio>=3.0.0,<4.0',
         'neurom>=3.0,<4.0',
         'plotly-helper>=0.0.8,<1.0',
         'numpy>=1.19.2',
