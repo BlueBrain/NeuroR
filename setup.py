@@ -20,7 +20,7 @@ setup(
     url="https://github.com/bluebrain/neuror",
     license="LGPLv3",
     install_requires=[
-        'click>=0.7.0',
+        'click>=6.7',
         'matplotlib>=2.2.3',
         'morph-tool>=2.4.4',
         'morphio>=3.0.0',
