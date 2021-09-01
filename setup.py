@@ -25,7 +25,6 @@ setup(
         'morph-tool>=2.8.0,<3.0',
         'morphio>=3.0.0,<4.0',
         'neurom>=3.0,<4.0',
-        'plotly-helper>=0.0.8,<1.0',
         'numpy>=1.19.2',
         'nptyping>=1.3.0',
         'pandas>=0.24.2',
@@ -37,7 +36,7 @@ setup(
             'dash-core-components>=0.46.0',  # HTML components
             'dash-table>=3.6.0',  # Interactive DataTable component (new!)
             'dash>=0.41.0',  # The core dash backend
-            'plotly-helper>=0.0.2',
+            'plotly-helper>=0.0.8,<1.0',
         ],
         'docs': [
             'sphinx-autorun>=1.1.1',
