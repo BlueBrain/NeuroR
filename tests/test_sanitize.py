@@ -1,5 +1,3 @@
-import tempfile
-from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -8,7 +6,7 @@ from morphio import Morphology
 from numpy.testing import assert_array_equal, assert_equal, assert_array_almost_equal
 
 from morph_tool.utils import iter_morphology_files
-from neurom import COLS, load_neuron
+from neurom import load_neuron
 from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
 from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all
 from neuror.sanitize import fix_points_in_soma
@@ -118,18 +116,6 @@ def test_error_annotation_all():
                               {'name': 'Multifurcation', 'label': 'Circle8', 'color': 'Yellow',
                                'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]}],
         str(morph_paths[1]): []})
-
-
-@contextmanager
-def _tmp_file(content, extension):
-    with tempfile.NamedTemporaryFile(suffix='.' + extension, mode='w') as tmp_file:
-        tmp_file.write(content)
-        tmp_file.flush()
-        tmp_file.seek(0)
-
-        yield tmp_file
-
-        tmp_file.close()
 
 
 def test_fix_points_in_soma():
