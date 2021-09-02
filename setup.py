@@ -22,7 +22,7 @@ setup(
     install_requires=[
         'click>=6.7',
         'matplotlib>=2.2.3',
-        'morph-tool>=2.8.0,<3.0',
+        'morph-tool>=2.9.0,<3.0',
         'morphio>=3.0.0,<4.0',
         'neurom>=3.0,<4.0',
         'numpy>=1.19.2',
