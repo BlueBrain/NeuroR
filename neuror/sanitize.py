@@ -223,7 +223,16 @@ def annotate_neurolucida_all(morph_paths, nprocesses=1):
 
 
 def fix_points_in_soma(morph):
-    """Ensure section points are not inside the soma."""
+    """Ensure section points are not inside the soma.
+
+    Method:
+        - for each root section, we check which points are inside the soma.
+        - if all points of a root section are inside the soma, an exception is raised because it
+          means that a bifurcation is located inside the soma, which is hard to automatically fix.
+        - if there is at least 1 point inside the soma, a new point is defined to replace them.
+          If this new point is too close to the first point outside the soma, the point is not
+          added.
+    """
     changed = False
     for root_sec in morph.root_sections:
         sec_pts = root_sec.points
