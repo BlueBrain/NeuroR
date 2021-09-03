@@ -1,13 +1,15 @@
 from pathlib import Path
-import numpy as np
 
-from morphio import Morphology
+import numpy as np
 import pytest
-from numpy.testing import assert_array_equal, assert_equal
+from morphio import Morphology
+from numpy.testing import assert_array_equal, assert_equal, assert_array_almost_equal
 
 from morph_tool.utils import iter_morphology_files
+from neurom import load_neuron
 from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
 from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all
+from neuror.sanitize import fix_points_in_soma
 
 DATA = Path(__file__).parent / 'data'
 
@@ -114,3 +116,58 @@ def test_error_annotation_all():
                               {'name': 'Multifurcation', 'label': 'Circle8', 'color': 'Yellow',
                                'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]}],
         str(morph_paths[1]): []})
+
+
+def test_fix_points_in_soma():
+    neuron = load_neuron(DATA / "simple_inside_soma.asc")
+
+    fix_points_in_soma(neuron)
+
+    # In the given morph:
+    #     * in the first dendrite, the function should just remove the first point, because the
+    #       one that should be added is too close to the second point.
+    #     * in the second dendrite, the function should do nothing, because all points are outside
+    #       the soma.
+    #     * in the third dendrite, the function should replace the first point with a new one.
+    #     * in the forth dendrite, the function should remove the six first points, because the
+    #       one that should be added is too close to the second point.
+    expected = np.array(
+        [
+            [1., 0., 0., 1.],
+            [2., 0., 0., 1.],
+            [2., 0., 0., 1.],
+            [3., 1., 0., 1.],
+            [2., 0., 0., 1.],
+            [3., -1., 0., 1.],
+            [0., 1., 0., 1.],
+            [0., 2., 0., 1.],
+            [0., 2., 0., 1.],
+            [1., 3., 0., 1.],
+            [0., 2., 0., 1.],
+            [-1., 3., 0., 1.],
+            [0.57735026, 0.57735026, 0.57735026, 1.],
+            [1., 1., 1., 1.],
+            [2., 2., 2., 1.],
+            [2., 2., 2., 1.],
+            [3., 3., 3., 1.],
+            [2., 2., 2., 1.],
+            [3., 2., 3., 1.],
+            [0., 0., 1.00001 , 1.],
+            [0., 0., 2., 1.],
+            [0., 0., 2., 1.],
+            [0., 1., 3., 1.],
+            [0., 0., 2., 1.],
+            [0., -1., 3., 1.],
+        ],
+        dtype=neuron.points.dtype
+    )
+
+    assert_array_almost_equal(
+        neuron.points,
+        expected
+    )
+
+    # Test that it fails when an entire section is located inside the soma
+    neuron.soma.radius = 10
+    with pytest.raises(CorruptedMorphology, match="An entire section is located inside the soma"):
+        fix_points_in_soma(neuron)

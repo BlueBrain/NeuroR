@@ -220,3 +220,43 @@ def annotate_neurolucida_all(morph_paths, nprocesses=1):
             morph_path = str(morph_path)
             annotations[morph_path], summaries[morph_path], markers[morph_path] = result
     return annotations, summaries, markers
+
+
+def fix_points_in_soma(morph):
+    """Ensure section points are not inside the soma.
+
+    Method:
+        - for each root section, we check which points are inside the soma.
+        - if all points of a root section are inside the soma, an exception is raised because it
+          means that a bifurcation is located inside the soma, which is hard to automatically fix.
+        - if there is at least 1 point inside the soma, a new point is defined to replace them.
+          If this new point is too close to the first point outside the soma, the point is not
+          added.
+    """
+    changed = False
+    for root_sec in morph.root_sections:
+        sec_pts = root_sec.points
+        in_soma = np.argwhere(morph.soma.overlaps(sec_pts)).flatten()
+
+        if in_soma.size > 0:
+            changed = True
+
+            last_in_soma = in_soma[-1]
+
+            if last_in_soma >= len(sec_pts) - 1:
+                raise CorruptedMorphology("An entire section is located inside the soma")
+
+            in_pt = sec_pts[last_in_soma]
+            out_pt = sec_pts[last_in_soma + 1]
+            vec = out_pt - in_pt
+            new_pt = morph.soma.center + vec / np.linalg.norm(vec) * morph.soma.radius
+            if np.linalg.norm(new_pt - root_sec.points[last_in_soma + 1]) <= _ZERO_LENGTH:
+                new_sec_pts = root_sec.points[last_in_soma + 1:]
+                last_in_soma += 1
+            else:
+                new_sec_pts = np.concatenate([[new_pt], root_sec.points[last_in_soma + 1:]])
+            root_sec.points = new_sec_pts
+            root_sec.diameters = root_sec.diameters[last_in_soma:]
+            root_sec.perimeters = root_sec.perimeters[last_in_soma:]
+
+    return changed
