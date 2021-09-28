@@ -58,7 +58,11 @@ class PlaneEquation(object):
         return np.abs(points.dot(u) + self.coefs[D]) / np.linalg.norm(u)
 
     def __str__(self):
-        return '({0}) * X + ({1}) * Y + ({2}) * Z + ({3}) = 0'.format(*self.coefs)
+        return (f'({self.coefs[0]}) * X + '
+                f'({self.coefs[1]}) * Y + '
+                f'({self.coefs[2]}) * Z + '
+                f'({self.coefs[3]}) = 0'
+                )
 
     def to_json(self):
         '''Returns a dict for json serialization'''
@@ -103,10 +107,10 @@ class HalfSpace(PlaneEquation):
 
     def to_json(self):
         '''Returns a dict for json serialization'''
+        inequality = '>' if self.upward else '<'
         return dict(a=self.coefs[A], b=self.coefs[B], c=self.coefs[C], d=self.coefs[D],
                     upward=self.upward,
-                    comment="Equation: a*X + b*Y + c*Z + d {} 0".format(
-                        '>' if self.upward else '<'))
+                    comment=f"Equation: a*X + b*Y + c*Z + d {inequality} 0")
 
     def project_on_directed_normal(self, points):
         '''Project on the normal oriented toward the inside of the half-space'''
