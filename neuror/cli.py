@@ -202,7 +202,7 @@ def report(folders, title):
     if title:
         assert len(title) == len(folders)
     else:
-        title = ['Plot {}'.format(i) for i in range(1, len(folders) + 1)]
+        title = [f'Plot {i}' for i in range(1, len(folders) + 1)]
     view_all(folders, title)
 
 
@@ -280,7 +280,7 @@ def _export_cut_plane(filename, output, width, display, searched_axes, fix_posit
     It returns the cut plane and the positions of all cut terminations.
 '''
     if os.path.isdir(filename):
-        raise Exception('filename ({}) should not be a directory'.format(filename))
+        raise Exception(f'filename ({filename}) should not be a directory')
 
     result = CutPlane.find(filename,
                            width,

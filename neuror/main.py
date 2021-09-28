@@ -401,7 +401,7 @@ class Repair(object):
             elif type_ == RepairType.trunk:
                 L.debug('Trunk repair is not (nor has ever been) implemented')
             else:
-                raise Exception('Unknown type: {}'.format(type_))
+                raise Exception(f'Unknown type: {type_}')
 
         if plot_file is not None:
             try:

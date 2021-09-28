@@ -91,7 +91,7 @@ def test__compute_probabilities():
     plane._compute_probabilities()
     assert plane.minus_log_prob == 10.0
     assert (plane.status ==
-                 'The probability that there is in fact NO cut plane is high: -log(p) = 10.0 !')
+                 'The probability that there is in fact NO cut plane is high: -log(p) = 10.0!')
 
     plane.histogram = MagicMock(return_value=[np.array([])])
     plane._compute_probabilities()

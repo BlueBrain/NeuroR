@@ -98,6 +98,6 @@ def plot_repaired_neuron(neuron, cut_points, plot_file=None):
 
         if plot_file is not None:
             root, ext = os.path.splitext(plot_file)
-            plot_file = '{}_{}{}'.format(root, mode, ext)
+            plot_file = f'{root}_{mode}{ext}'
 
         builder.plot(show_link=False, auto_open=False, filename=plot_file)

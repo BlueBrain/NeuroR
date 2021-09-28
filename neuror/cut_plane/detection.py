@@ -248,7 +248,7 @@ class CutPlane(planes.HalfSpace):
             self.status = 'The proba is NaN, something went wrong'
         elif self.minus_log_prob < _THRESHOLD:
             self.status = ('The probability that there is in fact NO '
-                           'cut plane is high: -log(p) = {0} !').format(self.minus_log_prob)
+                           f'cut plane is high: -log(p) = {self.minus_log_prob}!')
         else:
             self.status = 'ok'
 
@@ -321,7 +321,7 @@ def plot(neuron, result, inline=False):
 
     for display_plane, idx in [('xz', 0), ('yz', 1), ('3d', None)]:
         builder = NeuronBuilder(neuron, display_plane, inline=inline,
-                                line_width=4, title='{}'.format(neuron.name))
+                                line_width=4, title=str(neuron.name))
         if idx is not None:
             if plane['a'] == 0 and plane['b'] == 0:
                 builder.helper.add_shapes([

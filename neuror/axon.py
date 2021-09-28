@@ -50,8 +50,9 @@ def _tree_distance(sec1, sec2):
         sec2 = sec2.parent
         dist += 2
         if None in {sec1, sec2}:
-            raise Exception('Sections {} and {} are not part of the same neurite'.format(
-                original_sections[0], original_sections[1]))
+            raise Exception(
+                f'Sections {original_sections[0]} and {original_sections[1]} '
+                'are not part of the same neurite')
 
     return dist
 

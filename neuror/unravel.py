@@ -203,8 +203,8 @@ def unravel_plane(plane, mapping):
     distances, indices = t.query(leaves)
     not_matching_leaves = np.where(distances > 1e-5)[0]
     if not_matching_leaves.size:
-        raise Exception('Cannot find the following leaves in the mapping:\n{}'.format(
-                        leaves[not_matching_leaves]))
+        raise Exception('Cannot find the following leaves in the mapping:\n' +
+                        str(leaves[not_matching_leaves]))
     plane.cut_leaves_coordinates = mapping.iloc[indices][['x1', 'y1', 'z1']].values
     return plane
 
@@ -216,7 +216,7 @@ def unravel_all(raw_dir, unravelled_dir,
     '''Repair all morphologies in input folder
     '''
     if not os.path.exists(raw_planes_dir):
-        raise Exception('{} does not exist'.format(raw_planes_dir))
+        raise Exception(f'{raw_planes_dir} does not exist')
 
     if not os.path.exists(unravelled_planes_dir):
         os.mkdir(unravelled_planes_dir)

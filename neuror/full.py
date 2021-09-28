@@ -22,7 +22,8 @@ def repair_all(input_dir, output_dir, seed=0, axons=None, cut_points_dir=None, p
             cut_points = None
 
         if plots_dir is not None:
-            name = 'neuron_{}.html'.format(Path(inputfilename).stem.replace(' ', '_'))
+            name = Path(inputfilename).stem.replace(' ', '_')
+            name = f'neuron_{name}.html'
             plot_file = str(Path(plots_dir, name))
         else:
             plot_file = None
