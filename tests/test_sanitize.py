@@ -41,6 +41,13 @@ def test_sanitize(tmpdir):
 
     with pytest.raises(CorruptedMorphology) as e:
         sanitize(DATA / 'neurite-with-multiple-types.swc', Path(tmpdir, 'output.asc'))
+
+    # allowing inhomogeneous types should let sanitize finish without throwing
+    sanitize(
+        DATA / 'neurite-with-multiple-types.swc', Path(tmpdir, 'output.asc'),
+        allow_inhomogeneous_trees=True
+    )
+
     assert e.value.args[0] == (
         f'{DATA / "neurite-with-multiple-types.swc"} has a neurite whose type changes'
         ' along the way\nChild section (id: 5) has a different type (SectionType.'

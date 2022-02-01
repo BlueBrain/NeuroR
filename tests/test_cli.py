@@ -6,68 +6,118 @@ from neuror.cli import cli
 DATA = Path(__file__).parent / 'data'
 
 
-def test_error_annotation_file(tmpdir):
+def assert_cli_runs(cmd):
     runner = CliRunner()
-    result = runner.invoke(cli, ['error-annotation', 'file',
-                                 str(DATA / 'test-error-detection/error-morph.asc'),
-                                 str(tmpdir / 'out.asc')])
+    result = runner.invoke(cli, cmd)
     assert result.exit_code == 0, result.exception
+
+
+def test_error_annotation_file(tmpdir):
+    assert_cli_runs(
+        [
+            'error-annotation', 'file',
+            str(DATA / 'test-error-detection/error-morph.asc'),
+            str(tmpdir / 'out.asc')
+        ]
+    )
 
 
 def test_error_annotation_folder(tmpdir):
-    runner = CliRunner()
-    result = runner.invoke(cli, ['error-annotation', 'folder',
-                                 str(DATA / 'test-error-detection'),
-                                 str(tmpdir)])
-    assert result.exit_code == 0, result.exception
+    assert_cli_runs(
+        [
+            'error-annotation', 'folder',
+            str(DATA / 'test-error-detection'),
+            str(tmpdir)
+        ]
+    )
     assert (set(str(p.relative_to(tmpdir)) for p in Path(tmpdir).rglob('*')) ==
                  {'simple.asc', 'error-morph.asc'})
 
 
 def test_repair_file(tmpdir):
-    runner = CliRunner()
-    result = runner.invoke(cli, ['cut-plane', 'repair', 'file',
-                                 str(DATA / 'real.asc'),
-                                 str(tmpdir / 'out.asc')])
-    assert result.exit_code == 0, result.exception
+    assert_cli_runs(
+        [
+            'cut-plane', 'repair', 'file',
+            str(DATA / 'real.asc'),
+            str(tmpdir / 'out.asc')
+        ]
+    )
 
 
 def test_repair_folder(tmpdir):
-    runner = CliRunner()
-    result = runner.invoke(cli, ['cut-plane', 'repair', 'folder',
-                                 str(DATA / 'input-repair-all'),
-                                 str(tmpdir)])
-    assert result.exit_code == 0, result.exception
+    assert_cli_runs(
+        [
+            'cut-plane', 'repair', 'folder',
+            str(DATA / 'input-repair-all'),
+            str(tmpdir)
+        ]
+    )
     assert (set(str(p.relative_to(tmpdir)) for p in Path(tmpdir).rglob('*')) ==
                  {'simple.asc', 'simple2.asc'})
 
 
 def test_repair_with_plane(tmpdir):
-    runner = CliRunner()
     input_path = DATA / 'input-repair-all'
-    result = runner.invoke(cli, ['cut-plane', 'repair', 'folder',
-                                 str(input_path),
-                                 str(tmpdir),
-                                 '--cut-file-dir', str(input_path / 'planes')])
-    assert result.exit_code == 0, result.exc_info
+
+    assert_cli_runs(
+        [
+            'cut-plane', 'repair', 'folder',
+            str(input_path),
+            str(tmpdir),
+            '--cut-file-dir', str(input_path / 'planes')
+
+        ]
+    )
 
 
 def test_cli_axon(tmpdir):
-    runner = CliRunner()
-    result = runner.invoke(cli, ['cut-plane', 'repair', 'file',
-                                 '-a', str(DATA / 'real-with-axon.asc'),
-                                 str(DATA / 'real-with-axon.asc'),
-                                 str(tmpdir / 'output.asc')])
-    assert result.exit_code == 0
+    assert_cli_runs(
+        [
+            'cut-plane', 'repair', 'file',
+            '-a', str(DATA / 'real-with-axon.asc'),
+            str(DATA / 'real-with-axon.asc'),
+            str(tmpdir / 'output.asc')
+
+        ]
+    )
 
 
 def test_sanitize(tmpdir):
-    runner = CliRunner()
-    result = runner.invoke(cli, ['sanitize', 'file',
-                                 str(DATA / 'simple-with-duplicates.asc'),
-                                 str(tmpdir / 'output.asc')])
-    assert result.exit_code == 0
 
-    result = runner.invoke(cli, ['sanitize', 'folder',
-                                str(DATA), str(tmpdir)])
-    assert result.exit_code == 0
+    assert_cli_runs(
+        [
+            'sanitize', 'file',
+            str(DATA / 'simple-with-duplicates.asc'),
+            str(tmpdir / 'output.asc')
+        ]
+    )
+    assert Path(tmpdir, 'output.asc').exists()
+
+    assert_cli_runs(
+        [
+            'sanitize', 'file',
+            str(DATA / 'neurite-with-multiple-types.swc'),
+            str(tmpdir / 'file-neurite-with-multiple-types.swc'),
+            '--allow-inhomogeneous-trees',
+        ]
+    )
+    assert Path(tmpdir, 'file-neurite-with-multiple-types.swc').exists()
+
+    assert_cli_runs(
+        [
+            'sanitize', 'folder',
+            str(DATA), str(tmpdir)
+        ]
+    )
+    # the inhomogeneous cell will not be sanitized
+    assert not Path(tmpdir, 'neurite-with-multiple-types.swc').exists()
+
+    assert_cli_runs(
+        [
+            'sanitize', 'folder',
+            str(DATA), str(tmpdir),
+            '--allow-inhomogeneous-trees',
+        ]
+    )
+    # the inhomogeneous cell will be sanitized
+    assert Path(tmpdir, 'neurite-with-multiple-types.swc').exists()

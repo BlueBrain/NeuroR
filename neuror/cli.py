@@ -221,10 +221,15 @@ def zero_diameters(input_file, output_file):
 @sanitize.command(short_help='Sanitize a morphology')
 @click.argument('input_file')
 @click.argument('output_file')
-def file(input_file, output_file):
+@click.option('--allow-inhomogeneous-trees', is_flag=True)
+def file(input_file, output_file, allow_inhomogeneous_trees):
     '''Sanitize a raw morphology.'''
     from neuror.sanitize import sanitize  # pylint: disable=redefined-outer-name
-    sanitize(input_file, output_file)
+    sanitize(
+        input_file,
+        output_file,
+        allow_inhomogeneous_trees=allow_inhomogeneous_trees
+    )
 
 
 # pylint: disable=function-redefined
@@ -232,10 +237,16 @@ def file(input_file, output_file):
 @click.argument('input_folder')
 @click.argument('output_folder')
 @click.option('--nprocesses', default=1, help='The number of processes to spawn')
-def folder(input_folder, output_folder, nprocesses):
+@click.option('--allow-inhomogeneous-trees', is_flag=True)
+def folder(input_folder, output_folder, nprocesses, allow_inhomogeneous_trees):
     '''Sanitize all morphologies in the folder.'''
     from neuror.sanitize import sanitize_all
-    sanitize_all(input_folder, output_folder, nprocesses=nprocesses)
+    sanitize_all(
+        input_folder,
+        output_folder,
+        nprocesses=nprocesses,
+        allow_inhomogeneous_trees=allow_inhomogeneous_trees
+    )
 
 
 @cut_plane.group()

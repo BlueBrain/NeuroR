@@ -26,7 +26,7 @@ def iter_morphologies(folder):
     return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
 
 
-def sanitize(input_neuron, output_path):
+def sanitize(input_neuron, output_path, allow_inhomogeneous_trees=False):
     '''Sanitize one morphology.
 
     - ensures it can be loaded with MorphIO
@@ -39,6 +39,9 @@ def sanitize(input_neuron, output_path):
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
+        allow_inhomogeneous_neurites (bool):
+            If enabled, neurites that have mixed sections types will not throw a CorruptedMorphology
+            error. A warning will be emitted instead. Default is False.
     '''
     neuron = Morphology(input_neuron)
 
@@ -50,19 +53,21 @@ def sanitize(input_neuron, output_path):
     for section in neuron.iter():
         section.diameters = np.clip(section.diameters, 0, None)
 
-    for root in neuron.root_sections:  # pylint: disable=not-an-iterable
-        for section in root.iter():
-            if section.type != root.type:
-                raise CorruptedMorphology(f'{input_neuron} has a neurite whose type changes along '
-                                          'the way\n'
-                                          f'Child section (id: {section.id}) has a different type '
-                                          f'({section.type}) than its parent (id: '
-                                          f'{section.parent.id}) (type: {section.parent.type})')
+    if not allow_inhomogeneous_trees:
+        for root in neuron.root_sections:  # pylint: disable=not-an-iterable
+            for section in root.iter():
+                if section.type != root.type:
+                    raise CorruptedMorphology(
+                        f'{input_neuron} has a neurite whose type changes along the way\n'
+                        f'Child section (id: {section.id}) has a different type '
+                        f'({section.type}) than its parent (id: '
+                        f'{section.parent.id}) (type: {section.parent.type})'
+                    )
 
     fix_non_zero_segments(neuron).write(str(output_path))
 
 
-def _sanitize_one(path, input_folder, output_folder):
+def _sanitize_one(path, input_folder, output_folder, **kwargs):
     '''Function to be called by sanitize_all to catch all exceptions
     and return path if in error
 
@@ -75,14 +80,14 @@ def _sanitize_one(path, input_folder, output_folder):
         # exist_ok=True since there can be race conditions because of Pool
         output_dir.mkdir(parents=True, exist_ok=True)
     try:
-        sanitize(path, output_dir / path.name)
+        sanitize(path, output_dir / path.name, **kwargs)
     except (MorphioError, CorruptedMorphology):
         return str(path)
     else:
         return None
 
 
-def sanitize_all(input_folder, output_folder, nprocesses=1):
+def sanitize_all(input_folder, output_folder, nprocesses=1, **kwargs):
     '''Sanitize all morphologies in input_folder and its sub-directories.
 
     See :func:`~neuror.sanitize.sanitize` for more information on the sanitization process.
@@ -96,13 +101,15 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
     set_maximum_warnings(0)
 
     morphologies = list(iter_morphologies(Path(input_folder)))
-    func = partial(_sanitize_one, input_folder=input_folder, output_folder=output_folder)
+    func = partial(_sanitize_one, input_folder=input_folder, output_folder=output_folder, **kwargs)
     if nprocesses == 1:
         results = map(func, morphologies)
     else:
         with Pool(nprocesses) as pool:
             results = list(pool.imap_unordered(func, morphologies, chunksize=100))
+
     errored_paths = list(filter(None, tqdm(results, total=len(morphologies))))
+
     if errored_paths:
         L.info('Files in error:')
         for path in errored_paths:
