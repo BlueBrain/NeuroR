@@ -25,7 +25,7 @@ setup(
         'morphio>=3.0.0,<4.0',
         'neurom>=3.0.1,<4.0',
         'numpy>=1.19.2',
-        'nptyping>=1.3.0',
+        'nptyping>=2',
         'pandas>=0.24.2',
         'pyquaternion>=0.9.2',
         'scipy>=1.2.0',
