@@ -135,7 +135,7 @@ NeuroR is licensed under the terms of the GNU Lesser General Public License vers
 Refer to `COPYING.LESSER <https://github.com/BlueBrain/NeuroR/blob/master/COPYING.LESSER>`__
 and `COPYING <https://github.com/BlueBrain/NeuroR/blob/master/COPYING>`__ for details.
 
-Copyright (c) 2019-2021 Blue Brain Project/EPFL
+Copyright (c) 2019-2022 Blue Brain Project/EPFL
 
 .. |build| image:: https://travis-ci.com/BlueBrain/NeuroR.svg?branch=master
               :target: https://travis-ci.com/BlueBrain/NeuroR
