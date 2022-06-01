@@ -136,7 +136,8 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
             to_be_deleted.append(section)
 
     for section in to_be_deleted:
-        neuron.delete_section(section)
+        neuron.delete_section(section, recursive=False)
+
     return neuron
 
 

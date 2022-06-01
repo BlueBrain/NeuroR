@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -22,6 +23,64 @@ def test_fix_non_zero_segments():
                         [1., 1., 0.],
                         [2., 0., 0.],
                         [3., 0., 0.]])
+
+
+def test_fix_non_zero_segments__check_downstream_tree_is_not_removed():
+
+    with tempfile.NamedTemporaryFile(suffix=".asc") as tfile:
+        filepath = tfile.name
+        with open(filepath, "w") as f:
+            f.write(
+                """
+                ("CellBody"
+                  (Color Red)
+                  (CellBody)
+                  ( 0.1  0.1 0.0 0.1)
+                  (-0.1  0.1 0.0 0.1)
+                  (-0.1 -0.1 0.0 0.1)
+                  ( 0.1 -0.1 0.0 0.1)
+                )
+
+                ( (Color Cyan)
+                  (Axon)
+                  (0.0  0.0 0.0 2.0)
+                  (0.0 -4.0 0.0 2.0)
+                  (
+                    (0.0 -4.0 0.0 4.0)
+                    (0.0 -4.0 0.0 4.0)
+                    (0.0 -4.0 0.0 4.0)
+                    (
+                        (6.0 -4.0 0.0 4.0)
+                        (7.0 -5.0 0.0 4.0)
+                    |
+                        (6.0 -4.0 0.0 4.0)
+                        (8.0 -4.0 0.0 4.0)
+                    )
+                  |
+                    ( 0.0 -4.0 0.0 4.0)
+                    (-5.0 -4.0 0.0 4.0)
+                  )
+                )
+                """
+            )
+
+        morph = fix_non_zero_segments(filepath)
+
+        assert len(morph.sections) == 4
+
+        axon = morph.root_sections[0]
+
+        # the zero length section should be removed
+        # but the tree downstream should be joined upstream
+        #assert_array_equal(
+        #    axon.children[0].points,
+        #    [[6.0, -4.0, 0.0], [7.0, -5.0, 0.0]],
+        #)
+        #assert_array_equal(
+        #    axon.children[0].points,
+        #    [[6.0, -4.0, 0.0], [8.0, -4.0, 0.0]]
+        #)
+
 
 
 def test_sanitize(tmpdir):
