@@ -21,6 +21,10 @@ class CorruptedMorphology(Exception):
     '''Exception for morphologies that should not be used'''
 
 
+class ZeroLengthRootSection(Exception):
+    '''Exception for morphologies that have zero length root sections'''
+
+
 def iter_morphologies(folder):
     '''Recursively yield morphology files in folder and its sub-directories.'''
     return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
@@ -136,6 +140,11 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
             to_be_deleted.append(section)
 
     for section in to_be_deleted:
+        if section.is_root:
+            raise ZeroLengthRootSection(
+                f"Morphology has root sections at the soma with zero length. "
+                "Sanitization requires that these are fixed before the rest are treated."
+            ) 
         neuron.delete_section(section, recursive=False)
 
     return neuron

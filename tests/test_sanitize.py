@@ -8,7 +8,9 @@ from numpy.testing import assert_array_equal, assert_equal, assert_array_almost_
 
 from morph_tool.utils import iter_morphology_files
 from neurom import load_neuron
-from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
+from neuror.sanitize import (
+    ZeroLengthRootSection, CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
+)
 from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all
 from neuror.sanitize import fix_points_in_soma
 
@@ -81,6 +83,43 @@ def test_fix_non_zero_segments__check_downstream_tree_is_not_removed():
         #    [[6.0, -4.0, 0.0], [8.0, -4.0, 0.0]]
         #)
 
+def test_fix_non_zero_segments__raises_if_zero_length_root_section():
+
+    with tempfile.NamedTemporaryFile(suffix=".asc") as tfile:
+        filepath = tfile.name
+        with open(filepath, "w") as f:
+            f.write(
+                """
+                ("CellBody"
+                  (Color Red)
+                  (CellBody)
+                  ( 0.1  0.1 0.0 0.1)
+                  (-0.1  0.1 0.0 0.1)
+                  (-0.1 -0.1 0.0 0.1)
+                  ( 0.1 -0.1 0.0 0.1)
+                )
+
+                ( (Color Cyan)
+                  (Axon)
+                  (0.0 -4.0 0.0 2.0)
+                  (0.0 -4.0 0.0 2.0)
+                  (
+                    (0.0 -4.0 0.0 4.0)
+                    (0.0 -4.0 0.0 4.0)
+                    (0.0 -4.0 0.0 4.0)
+                  |
+                    ( 0.0 -4.0 0.0 4.0)
+                    (-5.0 -4.0 0.0 4.0)
+                  )
+                )
+                """
+            )
+
+        with pytest.raises(
+            ZeroLengthRootSection,
+            match="Morphology has root sections at the soma with zero length."
+        ):
+            morph = fix_non_zero_segments(filepath)
 
 
 def test_sanitize(tmpdir):
