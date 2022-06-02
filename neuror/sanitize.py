@@ -143,6 +143,8 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
         if len(indices) < 2:
             to_be_deleted.append(section)
 
+    L.debug("Sections to be deleted: %s", [s.id for s in to_be_deleted])
+
     for section in to_be_deleted:
         if section.is_root:
             raise ZeroLengthRootSection(
