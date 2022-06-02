@@ -139,7 +139,7 @@ def test_sanitize__raises_invalid_soma():
 
 
 def test_sanitize__raises_heterogeneous_neurite():
-    import re
+
     content = (
     """
      1 1  0  0 0 1. -1
