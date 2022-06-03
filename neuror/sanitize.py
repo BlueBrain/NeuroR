@@ -21,6 +21,10 @@ class CorruptedMorphology(Exception):
     '''Exception for morphologies that should not be used'''
 
 
+class ZeroLengthRootSection(Exception):
+    '''Exception for morphologies that have zero length root sections'''
+
+
 def iter_morphologies(folder):
     '''Recursively yield morphology files in folder and its sub-directories.'''
     return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
@@ -43,7 +47,7 @@ def sanitize(input_neuron, output_path):
     neuron = Morphology(input_neuron)
 
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
-        raise CorruptedMorphology(f'{input_neuron} has an invalid or no soma')
+        raise CorruptedMorphology(f'{input_neuron} has an invalid or no soma.')
 
     neuron.remove_unifurcations()
 
@@ -59,7 +63,11 @@ def sanitize(input_neuron, output_path):
                                           f'({section.type}) than its parent (id: '
                                           f'{section.parent.id}) (type: {section.parent.type})')
 
-    fix_non_zero_segments(neuron).write(str(output_path))
+    try:
+        fix_non_zero_segments(neuron).write(str(output_path))
+    except ZeroLengthRootSection as e:
+        # reraise to attach the morphology path
+        raise ZeroLengthRootSection(f"Failed morphology: {input_neuron}") from e
 
 
 def _sanitize_one(path, input_folder, output_folder):
@@ -135,8 +143,16 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
         if len(indices) < 2:
             to_be_deleted.append(section)
 
+    L.debug("Sections to be deleted: %s", [s.id for s in to_be_deleted])
+
     for section in to_be_deleted:
-        neuron.delete_section(section)
+        if section.is_root:
+            raise ZeroLengthRootSection(
+                f"Morphology has root sections at the soma with zero length."
+                f"\nZero length section points: {section.points}"
+            )
+        neuron.delete_section(section, recursive=False)
+
     return neuron
 
 

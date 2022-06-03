@@ -1,3 +1,5 @@
+import tempfile
+import contextlib
 from pathlib import Path
 
 import numpy as np
@@ -6,54 +8,203 @@ from morphio import Morphology
 from numpy.testing import assert_array_equal, assert_equal, assert_array_almost_equal
 
 from morph_tool.utils import iter_morphology_files
-from neurom import load_neuron
-from neuror.sanitize import CorruptedMorphology, fix_non_zero_segments, sanitize, sanitize_all
+from neurom import load_morphology
+from neuror import sanitize as tested
 from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all
 from neuror.sanitize import fix_points_in_soma
 
 DATA = Path(__file__).parent / 'data'
 
 
-def test_fix_non_zero_segments():
-    neuron = fix_non_zero_segments(Path(DATA, 'simple-with-duplicates.asc'))
-    assert len(neuron.root_sections) == 1
-    assert_array_equal(neuron.section(0).points,
-                       [[0., 0., 0.],
-                        [1., 1., 0.],
-                        [2., 0., 0.],
-                        [3., 0., 0.]])
+@contextlib.contextmanager
+def _tmp_file(content, extension):
+    with tempfile.NamedTemporaryFile(suffix=f".{extension}") as tmp_file:
+        filepath = tmp_file.name
+        if content:
+            with open(filepath, "w") as f:
+                f.write(content)
+        yield filepath
 
 
-def test_sanitize(tmpdir):
-    output_path = Path(tmpdir, 'sanitized.asc')
-    sanitize(Path(DATA, 'simple-with-duplicates.asc'), output_path)
-    neuron = Morphology(output_path)
-    assert len(neuron.root_sections) == 1
-    assert_array_equal(neuron.section(0).points,
-                       [[0., 0., 0.],
-                        [1., 1., 0.],
-                        [2., 0., 0.],
-                        [3., 0., 0.]])
+def test_fix_non_zero_segments__check_downstream_tree_is_not_removed():
 
-    with pytest.raises(CorruptedMorphology,
-                       match=f'{DATA / "no-soma.asc"} has an invalid or no soma'):
-        sanitize(DATA / 'no-soma.asc', Path(tmpdir, 'output.asc'))
+    content = (
+    """
+    ("CellBody"
+      (Color Red)
+      (CellBody)
+      ( 0.1  0.1 0.0 0.1)
+      (-0.1  0.1 0.0 0.1)
+      (-0.1 -0.1 0.0 0.1)
+      ( 0.1 -0.1 0.0 0.1)
+    )
 
-    with pytest.raises(CorruptedMorphology) as e:
-        sanitize(DATA / 'neurite-with-multiple-types.swc', Path(tmpdir, 'output.asc'))
-    assert e.value.args[0] == (
-        f'{DATA / "neurite-with-multiple-types.swc"} has a neurite whose type changes'
-        ' along the way\nChild section (id: 5) has a different type (SectionType.'
-        'basal_dendrite) than its parent (id: 3) (type: SectionType.axon)')
+    ( (Color Cyan)
+      (Axon)
+      (0.0  0.0 0.0 2.0)
+      (0.0 -4.0 0.0 2.0)
+      (
+        (0.0 -4.0 0.0 4.0)
+        (0.0 -4.0 0.0 4.0)
+        (0.0 -4.0 0.0 4.0)
+        (
+            (6.0 -4.0 0.0 4.0)
+            (7.0 -5.0 0.0 4.0)
+        |
+            (6.0 -4.0 0.0 4.0)
+            (8.0 -4.0 0.0 4.0)
+        )
+      |
+        ( 0.0 -4.0 0.0 4.0)
+        (-5.0 -4.0 0.0 4.0)
+      )
+    )
+    """
+    )
+    with _tmp_file(content, extension="asc") as filepath:
 
-    out_path = Path(tmpdir, 'output.asc')
-    sanitize(DATA / 'negative-diameters.asc', out_path)
-    assert_array_equal(next(Morphology(out_path).iter()).diameters, [2, 2, 0, 2])
+        morph = tested.fix_non_zero_segments(filepath)
+
+        # no surprizes here
+        assert len(morph.root_sections) == 1
+
+        # 1 section is removed, 4 are left
+        assert len(morph.sections) == 4
+
+        # Removing the zero length section will introduce a trifurcation
+        assert len(morph.root_sections[0].children) == 3
+
+
+def test_fix_non_zero_segments__raises_if_zero_length_root_section():
+
+    content = (
+    """
+    ("CellBody"
+      (Color Red)
+      (CellBody)
+      ( 0.1  0.1 0.0 0.1)
+      (-0.1  0.1 0.0 0.1)
+      (-0.1 -0.1 0.0 0.1)
+      ( 0.1 -0.1 0.0 0.1)
+    )
+
+    ( (Color Cyan)
+      (Axon)
+      (0.0 -4.0 0.0 2.0)
+      (0.0 -4.0 0.0 2.0)
+      (
+        (0.0 -4.0 0.0 4.0)
+        (0.0 -4.0 0.0 4.0)
+        (0.0 -4.0 0.0 4.0)
+      |
+        ( 0.0 -4.0 0.0 4.0)
+        (-5.0 -4.0 0.0 4.0)
+      )
+    )
+    """
+    )
+    with _tmp_file(content, extension="asc") as filepath:
+
+        with pytest.raises(
+            tested.ZeroLengthRootSection,
+            match="Morphology has root sections at the soma with zero length."
+        ):
+            tested.fix_non_zero_segments(filepath)
+
+
+def test_sanitize__raises_invalid_soma():
+
+    content = (
+    """
+    ( (Color DarkCyan)
+      (Axon)
+      (   16.67    -0.44   -20.29     0.55)  ; Root
+      (   16.67     2.89   -21.19     0.83)  ; 1, R
+      (   16.11     7.04   -21.05     0.83)  ; 2
+      (   14.17    12.03   -21.05     0.83)  ; 3
+      (   13.34    16.74   -15.40     0.83)  ; 4
+      (   11.96    20.62   -11.20     0.83)  ; 5
+      (   16.64    38.10    -9.14     0.83)  ; 9
+      ;  End of split
+    )  ;  End of tree
+    """
+    )
+    with _tmp_file(content, extension="asc") as filepath:
+
+        with pytest.raises(
+            tested.CorruptedMorphology,
+            match=f'{filepath} has an invalid or no soma.',
+        ):
+            tested.sanitize(filepath, None)
+
+
+def test_sanitize__raises_heterogeneous_neurite():
+
+    content = (
+    """
+     1 1  0  0 0 1. -1
+     2 3  0  0 0 1.  1
+     3 3  0  5 0 1.  2
+     4 3 -5  5 0 1.5 3
+     5 3  6  5 0 1.5 3
+     6 2  0  0 0 1.  1
+     7 2  0 -4 0 1.  6
+     8 2  6 -4 0 2.  7
+     9 3 -5 -4 0 2.  7  # Type went from 2 to 3
+    """
+    )
+    with _tmp_file(content, extension="swc") as filepath:
+        with pytest.raises(
+            tested.CorruptedMorphology,
+            match=(
+                f'{filepath} has a neurite whose type changes along the way\n'
+                r'Child section \(id: 5\) has a different type \(SectionType.basal_dendrite\) '
+                r'than its parent \(id: 3\) \(type: SectionType.axon\)'
+            ),
+        ):
+            tested.sanitize(filepath, None)
+
+
+def test_sanitize__negative_diameters():
+
+    content = (
+    """
+    ("CellBody"
+    (Color Red)
+    (CellBody)
+    (0 0 0 2)
+    )
+
+    ((Dendrite)
+      (0 0 0 1)
+      (1 1 0 2)
+      (2 0 0 -3)
+      (3 0 0 4)
+      (
+        (3 0 0 4)
+        (4 1 0 5)
+        |
+        (3 0 0 4)
+        (6 4 2 5)
+      )
+    )
+    """
+    )
+    with _tmp_file(content, extension="asc") as input_filepath, \
+         _tmp_file("", extension="asc") as output_filepath:
+
+        tested.sanitize(input_filepath, output_filepath)
+
+        assert_array_equal(
+            Morphology(output_filepath).diameters,
+            [1., 2., 0., 4., 4., 5., 4., 5.],
+        )
+
 
 
 def test_sanitize_all(tmpdir):
     tmpdir = Path(tmpdir)
-    sanitize_all(DATA / 'input-sanitize-all', tmpdir)
+    tested.sanitize_all(DATA / 'input-sanitize-all', tmpdir)
 
     assert_array_equal(list(sorted(tmpdir.rglob('*.asc'))),
                        [tmpdir / 'a.asc',
@@ -62,7 +213,7 @@ def test_sanitize_all(tmpdir):
 
 def test_sanitize_all_np2(tmpdir):
     tmpdir = Path(tmpdir)
-    sanitize_all(DATA / 'input-sanitize-all', tmpdir, nprocesses=2)
+    tested.sanitize_all(DATA / 'input-sanitize-all', tmpdir, nprocesses=2)
 
     assert_array_equal(list(sorted(tmpdir.rglob('*.asc'))),
                        [tmpdir / 'a.asc',
@@ -119,7 +270,7 @@ def test_error_annotation_all():
 
 
 def test_fix_points_in_soma():
-    neuron = load_neuron(DATA / "simple_inside_soma.asc")
+    neuron = load_morphology(DATA / "simple_inside_soma.asc")
 
     fix_points_in_soma(neuron)
 
@@ -169,5 +320,5 @@ def test_fix_points_in_soma():
 
     # Test that it fails when an entire section is located inside the soma
     neuron.soma.radius = 10
-    with pytest.raises(CorruptedMorphology, match="An entire section is located inside the soma"):
+    with pytest.raises(tested.CorruptedMorphology, match="An entire section is located inside the soma"):
         fix_points_in_soma(neuron)
