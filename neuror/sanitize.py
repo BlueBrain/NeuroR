@@ -49,8 +49,6 @@ def sanitize(input_neuron, output_path):
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
         raise CorruptedMorphology(f'{input_neuron} has an invalid or no soma.')
 
-    neuron.remove_unifurcations()
-
     for section in neuron.iter():
         section.diameters = np.clip(section.diameters, 0, None)
 
@@ -64,10 +62,13 @@ def sanitize(input_neuron, output_path):
                                           f'{section.parent.id}) (type: {section.parent.type})')
 
     try:
-        fix_non_zero_segments(neuron).write(str(output_path))
+        sanitized_neuron = fix_non_zero_segments(neuron)
     except ZeroLengthRootSection as e:
         # reraise to attach the morphology path
         raise ZeroLengthRootSection(f"Failed morphology: {input_neuron}") from e
+
+    sanitized_neuron.remove_unifurcations()
+    sanitized_neuron.write(str(output_path))
 
 
 def _sanitize_one(path, input_folder, output_folder):
