@@ -201,6 +201,32 @@ def test_sanitize__negative_diameters():
         )
 
 
+def test_sanitize__zero_length_leaf():
+
+    content = (
+    """
+     1 1  0  0 0 1. -1
+     2 2  0  0 0 1.  1
+     3 2  1  0 0 1.  2
+     4 2  2  0 0 1.  3
+     5 2  1  0 0 1.  3  # 0-length leaf
+    """
+    )
+    with _tmp_file(content, extension="swc") as input_filepath, \
+         _tmp_file("", extension="swc") as output_filepath:
+
+        tested.sanitize(input_filepath, output_filepath)
+
+        assert_array_equal(
+            Morphology(output_filepath).points,
+            [
+                [0, 0, 0],
+                [1, 0, 0],
+                [2, 0, 0],
+                # Here the leaf was completly deleted
+            ],
+        )
+
 
 def test_sanitize_all(tmpdir):
     tmpdir = Path(tmpdir)
