@@ -19,7 +19,7 @@ DATA = Path(__file__).parent.parent / 'data'
 
 def _get_points():
     '''Utility function to get all neuron points'''
-    neuron = nm.load_neuron(DATA / 'rotated.h5')
+    neuron = nm.load_morphology(DATA / 'rotated.h5')
     return np.array([point
                      for neurite in neuron.neurites
                      for section in nm.iter_sections(neurite)
@@ -151,7 +151,7 @@ def test_from_json():
 
 def test_find():
     filename = DATA / 'rotated.h5'
-    neuron = nm.load_neuron(filename)
+    neuron = nm.load_morphology(filename)
     result = test_module.CutPlane.find(neuron, bin_width=10).to_json()
     assert (set(result.keys()) ==
                  {'details', 'cut-plane', 'cut-leaves', 'status'})

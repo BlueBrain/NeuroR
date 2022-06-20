@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from morph_tool import diff
-from neurom import load_neuron
+from neurom import load_morphology
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.unravel as test_module
@@ -11,7 +11,7 @@ from neuror.cut_plane.detection import CutPlane
 
 DATA = Path(__file__).parent / 'data'
 
-SIMPLE = load_neuron(DATA / 'simple.swc')
+SIMPLE = load_morphology(DATA / 'simple.swc')
 
 def test_get_principal_direction():
     direction = test_module._get_principal_direction([[0.,0,0], [1,1,2]])
