@@ -8,8 +8,7 @@ import pytest
 from mock import patch
 from morph_tool.spatial import point_to_section_segment
 from morphio import SectionType
-from neurom import COLS, NeuriteType
-from neurom import load_morphology
+from neurom import COLS, NeuriteType, load_morphology
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.main as test_module
