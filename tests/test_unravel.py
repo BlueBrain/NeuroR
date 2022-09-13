@@ -33,11 +33,11 @@ def test_unravel():
     assert_array_almost_equal(neuron.root_sections[0].points,
                               np.array([[ 0.      ,  0.      ,  0.      ],
                                         [1.      , 1.      , 0.      ],
-                                        [2.      , 2.      , 0.      ],
-                                        [2.707107, 1.292893, 0.      ]]))
+                                        [2.      , 0.      , 0.      ],
+                                        [3.      , 0.      , 0.      ]]))
 
     assert_array_almost_equal(neuron.root_sections[0].children[0].points[0],
-                              np.array([2.707107, 1.292893, 0.    ]))
+                              np.array([3.0    , 0.    , 0.    ]))
 
     vals = [
             [0.0, 0.0, 0.0],
