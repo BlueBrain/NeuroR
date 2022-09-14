@@ -95,7 +95,8 @@ def _unravel_section_path_length(sec, window_half_length, soma, legacy_behavior)
 
         if window_start != window_end:
             L.warning(
-                """we cannot unravel with path length %s, consider resampling
+                """we cannot unravel a point with path length %s, consider resampling with
+                    :func:`morph_tool.resampling.resample_linear_density`
                    as there are points to far from each others.""", window_half_length
             )
             continue
