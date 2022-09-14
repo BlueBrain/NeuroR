@@ -152,7 +152,6 @@ def test_legacy():
         legacy_behavior=True,
         use_path_length=False,
     )
-    actual.write(DATA / "legacy-unravel/expected-1-pt-soma.h5")
     assert not diff(actual, DATA / "legacy-unravel/expected-1-pt-soma.h5")
 
     actual, _ = test_module.unravel(
@@ -160,5 +159,4 @@ def test_legacy():
         legacy_behavior=True,
         use_path_length=False,
                                     )
-    actual.write(DATA / "legacy-unravel/expected-3-pts-soma.h5")
     assert not diff(actual, DATA / "legacy-unravel/expected-3-pts-soma.h5")

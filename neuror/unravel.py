@@ -94,10 +94,11 @@ def _unravel_section_path_length(sec, window_half_length, soma, legacy_behavior)
         window_end = np.argmin(abs(_l_right - window_half_length))
 
         if window_start != window_end:
-            raise Exception(
-                f"""we cannot unravel with path length {window_half_length},
-                consider resampling as there are points to far from each others."""
+            L.warning(
+                """we cannot unravel with path length %s, consider resampling
+                   as there are points to far from each others.""", window_half_length
             )
+            continue
 
         # if we are near the first point of the section we increase window from the right/left
         # the 0.9 is only to not do that to often
