@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from morph_tool.utils import iter_morphology_files
 from neurom.morphmath import interval_lengths
-from scipy.spatial.ckdtree import cKDTree
+from scipy.spatial import cKDTree
 
 from neuror.cut_plane import CutPlane
 from neuror.utils import RepairJSON
@@ -34,7 +34,7 @@ def _get_principal_direction(points):
     return v[:, w.argmax()]
 
 
-def _unravel_section(section, window_half_length, soma, legacy_behavior):
+def _unravel_section(section, window_half_length, soma, legacy_behavior, use_path_length):
     '''Unravel a section using number of adjacent points as window_half_length'''
     # pylint: disable=too-many-locals
     points = section.points
@@ -50,8 +50,22 @@ def _unravel_section(section, window_half_length, soma, legacy_behavior):
         unravelled_points = [section.parent.points[-1]]
 
     for window_center in range(1, point_count):
-        window_start = int(max(0, window_center - window_half_length - 1))
-        window_end = int(min(point_count, window_center + window_half_length + 1))
+        if use_path_length:
+            intervals = interval_lengths(points)
+            path_lengths = np.insert(np.cumsum(intervals), 0, 0)
+            path_lengths -= path_lengths[window_center]
+
+            # if no points in the window, we skip unravel
+            if len(path_lengths[abs(path_lengths) < window_half_length]) == 1:
+                unravelled_points.append(points[window_center])
+                continue
+
+            window_start = np.argmin(abs(path_lengths + window_half_length))
+            window_end = np.argmin(abs(path_lengths - window_half_length)) + 1
+        else:
+            window_start = int(max(0, window_center - window_half_length - 1))
+            window_end = int(min(point_count, window_center + window_half_length + 1))
+
         direction = _get_principal_direction(points[window_start:window_end])
 
         segment = points[window_center] - points[window_center - 1]
@@ -71,71 +85,6 @@ def _unravel_section(section, window_half_length, soma, legacy_behavior):
     if legacy_behavior and section.is_root and len(soma.points) > 1:
         section.diameters = np.hstack((soma.diameters[0], section.diameters))
 
-
-# pylint: disable=too-many-locals
-def _unravel_section_path_length(sec, window_half_length, soma, legacy_behavior):
-    '''Unravel a section using path length as window_half_length'''
-    unraveled_points = sec.points
-    n_points = len(sec.points)
-
-    if legacy_behavior and sec.is_root and len(soma.points) > 1:
-        unraveled_points = np.vstack((soma.points[0], unraveled_points))
-
-    # ensure the first point is the parent's last point
-    if not sec.is_root:
-        unraveled_points[0] = sec.parent.points[-1]
-
-    for window_center in range(1, n_points):
-        # find how many segement on the left and right to be close to window_half_length
-        intervals = interval_lengths(sec.points)
-        _l_left = np.cumsum(intervals[window_center::-1])
-        _l_right = np.cumsum(intervals[min(n_points - 2, window_center):])
-        window_start = np.argmin(abs(_l_left - window_half_length))
-        window_end = np.argmin(abs(_l_right - window_half_length))
-
-        if window_start != window_end:
-            L.warning(
-                """we cannot unravel a point with path length %s, consider resampling with
-                    :func:`morph_tool.resampling.resample_linear_density`
-                   as there are points too far from each others.""", window_half_length
-            )
-            continue
-
-        # if we are near the first point of the section we increase window from the right/left
-        # the 0.9 is only to not do that to often
-        _left_length = _l_left[window_start]
-        if _left_length < 0.9 * window_half_length:
-            window_end = np.argmin(abs(_l_right - (2 * window_half_length - _left_length)))
-        _right_length = _l_right[window_end]
-        if _right_length < 0.9 * window_half_length:
-            window_start = np.argmin(abs(_l_left - (2 * window_half_length - _right_length)))
-
-        # center bounds to windows center
-        window_start = window_center - window_start
-        window_end = window_center + window_end
-
-        # if windows as 0 width, extend by one segment on each side if possible
-        if window_start == window_end:
-            window_start = max(0, window_start - 1)
-            window_end = min(n_points, window_end + 1)
-
-        direction = _get_principal_direction(sec.points[window_start:window_end])
-        original_segment = sec.points[window_center] - sec.points[window_center - 1]
-
-        # make it span length the same as the original segment within the window
-        direction *= np.linalg.norm(original_segment)
-
-        # point it in the same direction as the window
-        window_direction = sec.points[window_end - 1] - sec.points[window_start]
-        scalar_product = np.dot(window_direction, direction)
-        direction *= np.sign(scalar_product or 1.)
-
-        # update the unravel points
-        unraveled_points[window_center] = unraveled_points[window_center - 1] + direction
-
-    sec.points = unraveled_points
-    if legacy_behavior and sec.is_root and len(soma.points) > 1:
-        sec.diameters = np.hstack((soma.diameters[0], sec.diameters))
 
 
 def unravel(filename, window_half_length=None,
@@ -174,12 +123,9 @@ def unravel(filename, window_half_length=None,
     coord_before = np.empty([0, 3])
     coord_after = np.empty([0, 3])
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
-        if use_path_length:
-            _unravel_section_path_length(
-                new_section, window_half_length, morph.soma, legacy_behavior
-            )
-        else:
-            _unravel_section(new_section, int(window_half_length), morph.soma, legacy_behavior)
+        _unravel_section(
+             new_section, window_half_length, morph.soma, legacy_behavior, use_path_length
+        )
 
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
