@@ -32,17 +32,15 @@ def test_unravel():
     neuron, mapping = test_module.unravel(DATA / 'simple.asc')
 
     assert_array_almost_equal(neuron.root_sections[0].points,
-                              np.array([[ 0.        ,  0.        ,  0.        ],
-                                        [ 1.4047837 , -0.16304241,  0.        ],
-                                        [ 2.8095675 , -0.32608482,  0.        ],
-                                        [ 3.8028996 , -0.44137323,  0.        ]], dtype=np.float32)
-                              )
+                              np.array([[0.        ,  0.        ,  0.        ],
+                                        [1.4047837 , -0.16304241,  0.        ],
+                                        [2.8095675 , -0.32608482,  0.        ],
+                                        [3.8028996 , -0.44137323,  0.        ]]))
 
     assert_array_almost_equal(neuron.root_sections[0].children[0].points[0],
-                              np.array([ 3.8028996 , -0.44137323,  0.        ], dtype=np.float32)
-                              )
+                              np.array([3.8028996 , -0.44137323,  0.    ]))
 
-    assert_array_almost_equal(mapping[["x0", "y0", "z0"]].values,
+    assert_array_almost_equal(mapping[['x0', 'y0', 'z0']].values,
                               [[0., 0., 0.],
                                [1., 1., 0.],
                                [2., 0., 0.],
@@ -50,10 +48,9 @@ def test_unravel():
                                [3., 0., 0.],
                                [4., 1., 0.],
                                [3., 0., 0.],
-                               [6., 4., 2.]]
-                              )
+                               [6., 4., 2.]])
 
-    assert_array_almost_equal(mapping[["x1", "y1", "z1"]].values,
+    assert_array_almost_equal(mapping[['x1', 'y1', 'z1']].values,
                               [[0.        ,  0.        ,  0.        ],
                                [1.40478373, -0.16304241,  0.        ],
                                [2.80956745, -0.32608482,  0.        ],
@@ -103,15 +100,13 @@ def test_unravel_with_backward_segment():
     (direction from the window first to the window last point)
     '''
     neuron, mapping = test_module.unravel(DATA / 'simple-with-backward-segment.asc')
-    assert_array_almost_equal(
-        neuron.root_sections[0].points,
-        np.array([[0.       ,  0.       ,  0.       ],
-                  [1.264911 , -0.6324555,  0.       ],
-                  [2.529822 , -1.264911 ,  0.       ],
-                  [4.3186765, -2.1593382,  0.       ],
-                  [6.1075306, -3.0537655,  0.       ],
-                  [7.001958 , -3.5009792,  0.       ]], dtype=np.float32),
-    )
+    assert_array_almost_equal(neuron.root_sections[0].points,
+                              np.array([[0.       ,  0.       ,  0.       ],
+                                        [1.264911 , -0.6324555,  0.       ],
+                                        [2.529822 , -1.264911 ,  0.       ],
+                                        [4.3186765, -2.1593382,  0.       ],
+                                        [6.1075306, -3.0537655,  0.       ],
+                                        [7.001958 , -3.5009792,  0.       ]], dtype=np.float32))
 
 
 def test_unravel_plane():
@@ -154,8 +149,8 @@ def test_unravel_all(tmpdir):
 
 
 def test_legacy():
-    actual, _ = test_module.unravel(DATA / "legacy-unravel/1-pt-soma.swc", legacy_behavior=True)
-    assert not diff(actual, DATA / "legacy-unravel/expected-1-pt-soma.h5")
+    actual, _ = test_module.unravel(DATA / 'legacy-unravel/1-pt-soma.swc', legacy_behavior=True)
+    assert not diff(actual, DATA / 'legacy-unravel/expected-1-pt-soma.h5')
 
-    actual, _ = test_module.unravel(DATA / "legacy-unravel/3-pts-soma.swc", legacy_behavior=True)
-    assert not diff(actual, DATA / "legacy-unravel/expected-3-pts-soma.h5")
+    actual, _ = test_module.unravel(DATA / 'legacy-unravel/3-pts-soma.swc', legacy_behavior=True)
+    assert not diff(actual, DATA / 'legacy-unravel/expected-3-pts-soma.h5')
