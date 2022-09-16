@@ -1,8 +1,8 @@
-'''Module for the legacy cut plane detection.
+"""Module for the legacy cut plane detection.
 
 As implemented in:
 https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
-'''
+"""
 import logging
 from collections import defaultdict
 
@@ -18,22 +18,22 @@ L = logging.getLogger(__name__)
 
 
 def children_ids(section):
-    '''
+    """
     https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#111
 
     The original code returns the ids of the descendant sections
     but this implementation return the Section objects instead.
-    '''
+    """
     return list(section.ipreorder())
 
 
 def cut_detect(neuron, cut, offset, axis):
-    '''Detect the cut leaves the old way
+    """Detect the cut leaves the old way
 
     The cut leaves are simply the leaves that live
     on the half-space (split along the 'axis' coordinate)
     with the biggest number of leaves
-    '''
+    """
     count_plus = count_minus = sum_plus = sum_minus = 0
 
     for leaf in iter_sections(neuron, iterator_type=Section.ileaf):
@@ -61,15 +61,14 @@ def cut_detect(neuron, cut, offset, axis):
 
 
 def internal_cut_detection(neuron, axis):
-    '''As in:
+    """As in:
 
     https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
 
     Use cut_detect to get the side of the half space the points live in.
     Then mark points which are children of the apical section.
-
-'''
-    axis = {'x': COLS.X, 'y': COLS.Y, 'z': COLS.Z}[axis.lower()]
+    """
+    axis = {"x": COLS.X, "y": COLS.Y, "z": COLS.Z}[axis.lower()]
 
     cut = defaultdict(lambda key: False)
     side = cut_detect(neuron, cut, 0, axis)
@@ -99,20 +98,25 @@ def internal_cut_detection(neuron, axis):
 
 
 def get_obliques(neuron, extended_types):
-    '''
+    """
     Returns the oblique roots.
 
     https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#212
-    '''
-    return [section for section in iter_sections(neuron)
-            if (extended_types[section] == RepairType.oblique and
-                (section.parent is None or extended_types[section.parent] == RepairType.trunk))]
+    """
+    return [
+        section
+        for section in iter_sections(neuron)
+        if (
+            extended_types[section] == RepairType.oblique
+            and (section.parent is None or extended_types[section.parent] == RepairType.trunk)
+        )
+    ]
 
 
 def cut_mark(sections, cut, offset, side, axis):
-    '''
+    """
     https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#654
-    '''
+    """
     for sec in sections:
         if sec.children:
             cut[sec] = False

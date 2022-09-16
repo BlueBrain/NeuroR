@@ -1,4 +1,4 @@
-'''Utils module'''
+"""Utils module"""
 import json
 import logging
 from enum import Enum
@@ -7,15 +7,16 @@ import numpy as np
 from morphio import SectionType
 from neurom import NeuriteType, iter_sections
 
-L = logging.getLogger('neuror')
+L = logging.getLogger("neuror")
 
 
 class RepairType(Enum):
-    '''The types used for the repair.
+    """The types used for the repair.
 
     based on
     https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22
-    '''
+    """
+
     trunk = 0
     tuft = 1
     oblique = 2
@@ -24,7 +25,7 @@ class RepairType(Enum):
 
 
 def repair_type_map(neuron, apical_section):
-    '''Return a dict of extended types'''
+    """Return a dict of extended types"""
     extended_types = {}
     for section in iter_sections(neuron):
         if section.type == SectionType.apical_dendrite:
@@ -45,7 +46,7 @@ def repair_type_map(neuron, apical_section):
 
 
 def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
+    """Returns the unit vector of the vector."""
     return vector / np.linalg.norm(vector)
 
 
@@ -60,9 +61,13 @@ def rotation_matrix(axis, theta):  # pylint: disable=too-many-locals
     b, c, d = -axis * np.sin(theta / 2.0)
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                     [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
+    return np.array(
+        [
+            [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+            [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+            [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
+        ]
+    )
 
 
 def angle_between(v1, v2):
@@ -83,11 +88,11 @@ def angle_between(v1, v2):
 
 
 class RepairJSON(json.JSONEncoder):
-    '''JSON encoder that handles numpy types
+    """JSON encoder that handles numpy types
 
     In python3, numpy.dtypes don't serialize to correctly, so a custom converter
     is needed.
-    '''
+    """
 
     def default(self, o):  # pylint: disable=method-hidden
         if isinstance(o, np.floating):
@@ -102,18 +107,18 @@ class RepairJSON(json.JSONEncoder):
 
 
 def direction(section):
-    '''Return the direction vector of a section
+    """Return the direction vector of a section
 
     Args:
         section (morphio.mut.Section): section
-    '''
+    """
     return np.diff(section.points[[0, -1]], axis=0)[0]
 
 
 def section_length(section):
-    '''Section length
+    """Section length
 
     Args:
         section (morphio.mut.Section): section
-    '''
+    """
     return np.linalg.norm(direction(section))

@@ -1,19 +1,18 @@
-import tempfile
 import contextlib
+import tempfile
 from pathlib import Path
 
 import numpy as np
 import pytest
-from morphio import Morphology
-from numpy.testing import assert_array_equal, assert_equal, assert_array_almost_equal
-
 from morph_tool.utils import iter_morphology_files
+from morphio import Morphology
 from neurom import load_morphology
-from neuror import sanitize as tested
-from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all
-from neuror.sanitize import fix_points_in_soma
+from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_equal
 
-DATA = Path(__file__).parent / 'data'
+from neuror import sanitize as tested
+from neuror.sanitize import annotate_neurolucida, annotate_neurolucida_all, fix_points_in_soma
+
+DATA = Path(__file__).parent / "data"
 
 
 @contextlib.contextmanager
@@ -28,8 +27,7 @@ def _tmp_file(content, extension):
 
 def test_fix_non_zero_segments__check_downstream_tree_is_not_removed():
 
-    content = (
-    """
+    content = """
     ("CellBody"
       (Color Red)
       (CellBody)
@@ -60,7 +58,6 @@ def test_fix_non_zero_segments__check_downstream_tree_is_not_removed():
       )
     )
     """
-    )
     with _tmp_file(content, extension="asc") as filepath:
 
         morph = tested.fix_non_zero_segments(filepath)
@@ -77,8 +74,7 @@ def test_fix_non_zero_segments__check_downstream_tree_is_not_removed():
 
 def test_fix_non_zero_segments__raises_if_zero_length_root_section():
 
-    content = (
-    """
+    content = """
     ("CellBody"
       (Color Red)
       (CellBody)
@@ -102,20 +98,18 @@ def test_fix_non_zero_segments__raises_if_zero_length_root_section():
       )
     )
     """
-    )
     with _tmp_file(content, extension="asc") as filepath:
 
         with pytest.raises(
             tested.ZeroLengthRootSection,
-            match="Morphology has root sections at the soma with zero length."
+            match="Morphology has root sections at the soma with zero length.",
         ):
             tested.fix_non_zero_segments(filepath)
 
 
 def test_sanitize__raises_invalid_soma():
 
-    content = (
-    """
+    content = """
     ( (Color DarkCyan)
       (Axon)
       (   16.67    -0.44   -20.29     0.55)  ; Root
@@ -128,20 +122,18 @@ def test_sanitize__raises_invalid_soma():
       ;  End of split
     )  ;  End of tree
     """
-    )
     with _tmp_file(content, extension="asc") as filepath:
 
         with pytest.raises(
             tested.CorruptedMorphology,
-            match=f'{filepath} has an invalid or no soma.',
+            match=f"{filepath} has an invalid or no soma.",
         ):
             tested.sanitize(filepath, None)
 
 
 def test_sanitize__raises_heterogeneous_neurite():
 
-    content = (
-    """
+    content = """
      1 1  0  0 0 1. -1
      2 3  0  0 0 1.  1
      3 3  0  5 0 1.  2
@@ -152,14 +144,13 @@ def test_sanitize__raises_heterogeneous_neurite():
      8 2  6 -4 0 2.  7
      9 3 -5 -4 0 2.  7  # Type went from 2 to 3
     """
-    )
     with _tmp_file(content, extension="swc") as filepath:
         with pytest.raises(
             tested.CorruptedMorphology,
             match=(
-                f'{filepath} has a neurite whose type changes along the way\n'
-                r'Child section \(id: 5\) has a different type \(SectionType.basal_dendrite\) '
-                r'than its parent \(id: 3\) \(type: SectionType.axon\)'
+                f"{filepath} has a neurite whose type changes along the way\n"
+                r"Child section \(id: 5\) has a different type \(SectionType.basal_dendrite\) "
+                r"than its parent \(id: 3\) \(type: SectionType.axon\)"
             ),
         ):
             tested.sanitize(filepath, None)
@@ -167,8 +158,7 @@ def test_sanitize__raises_heterogeneous_neurite():
 
 def test_sanitize__negative_diameters():
 
-    content = (
-    """
+    content = """
     ("CellBody"
     (Color Red)
     (CellBody)
@@ -189,31 +179,30 @@ def test_sanitize__negative_diameters():
       )
     )
     """
-    )
-    with _tmp_file(content, extension="asc") as input_filepath, \
-         _tmp_file("", extension="asc") as output_filepath:
+    with _tmp_file(content, extension="asc") as input_filepath, _tmp_file(
+        "", extension="asc"
+    ) as output_filepath:
 
         tested.sanitize(input_filepath, output_filepath)
 
         assert_array_equal(
             Morphology(output_filepath).diameters,
-            [1., 2., 0., 4., 4., 5., 4., 5.],
+            [1.0, 2.0, 0.0, 4.0, 4.0, 5.0, 4.0, 5.0],
         )
 
 
 def test_sanitize__zero_length_leaf():
 
-    content = (
-    """
+    content = """
      1 1  0  0 0 1. -1
      2 2  0  0 0 1.  1
      3 2  1  0 0 1.  2
      4 2  2  0 0 1.  3
      5 2  1  0 0 1.  3  # 0-length leaf
     """
-    )
-    with _tmp_file(content, extension="swc") as input_filepath, \
-         _tmp_file("", extension="swc") as output_filepath:
+    with _tmp_file(content, extension="swc") as input_filepath, _tmp_file(
+        "", extension="swc"
+    ) as output_filepath:
 
         tested.sanitize(input_filepath, output_filepath)
 
@@ -230,69 +219,142 @@ def test_sanitize__zero_length_leaf():
 
 def test_sanitize_all(tmpdir):
     tmpdir = Path(tmpdir)
-    tested.sanitize_all(DATA / 'input-sanitize-all', tmpdir)
+    tested.sanitize_all(DATA / "input-sanitize-all", tmpdir)
 
-    assert_array_equal(list(sorted(tmpdir.rglob('*.asc'))),
-                       [tmpdir / 'a.asc',
-                        tmpdir / 'sub-folder/sub-sub-folder/c.asc'])
+    assert_array_equal(
+        list(sorted(tmpdir.rglob("*.asc"))),
+        [tmpdir / "a.asc", tmpdir / "sub-folder/sub-sub-folder/c.asc"],
+    )
 
 
 def test_sanitize_all_np2(tmpdir):
     tmpdir = Path(tmpdir)
-    tested.sanitize_all(DATA / 'input-sanitize-all', tmpdir, nprocesses=2)
+    tested.sanitize_all(DATA / "input-sanitize-all", tmpdir, nprocesses=2)
 
-    assert_array_equal(list(sorted(tmpdir.rglob('*.asc'))),
-                       [tmpdir / 'a.asc',
-                        tmpdir / 'sub-folder/sub-sub-folder/c.asc'])
+    assert_array_equal(
+        list(sorted(tmpdir.rglob("*.asc"))),
+        [tmpdir / "a.asc", tmpdir / "sub-folder/sub-sub-folder/c.asc"],
+    )
 
 
 def test_error_annotation():
     annotation, summary, markers = annotate_neurolucida(
-        Path(DATA, 'test-error-detection/error-morph.asc')
+        Path(DATA, "test-error-detection/error-morph.asc")
     )
-    assert summary == {'fat end': 1,
-                           'zjump': 1,
-                           'narrow start': 1,
-                           'dangling': 1,
-                           'Multifurcation': 1}
-    assert_equal(markers, [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
-                            'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},
-                           {'name': 'zjump', 'label': 'Circle2', 'color': 'Green',
-                            'data': [(2, [np.array([0., 5., 0., 1.], dtype=np.float32),
-                                          np.array([0.,  5., 40.,  1.], dtype=np.float32)])]},
-                           {'name': 'narrow start', 'label': 'Circle1', 'color': 'Blue',
-                            'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]},
-                           {'name': 'dangling', 'label': 'Circle6', 'color': 'Magenta',
-                            'data': [(5, [np.array([10., -20.,  -4., 1.], dtype=np.float32)])]},
-                           {'name': 'Multifurcation', 'label': 'Circle8', 'color': 'Yellow',
-                            'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]}])
+    assert summary == {
+        "fat end": 1,
+        "zjump": 1,
+        "narrow start": 1,
+        "dangling": 1,
+        "Multifurcation": 1,
+    }
+    assert_equal(
+        markers,
+        [
+            {
+                "name": "fat end",
+                "label": "Circle3",
+                "color": "Blue",
+                "data": [(7, np.array([[-5.0, -4.0, 0.0, 20.0]], dtype=np.float32))],
+            },
+            {
+                "name": "zjump",
+                "label": "Circle2",
+                "color": "Green",
+                "data": [
+                    (
+                        2,
+                        [
+                            np.array([0.0, 5.0, 0.0, 1.0], dtype=np.float32),
+                            np.array([0.0, 5.0, 40.0, 1.0], dtype=np.float32),
+                        ],
+                    )
+                ],
+            },
+            {
+                "name": "narrow start",
+                "label": "Circle1",
+                "color": "Blue",
+                "data": [(0, np.array([[0.0, 5.0, 0.0, 1.0]], dtype=np.float32))],
+            },
+            {
+                "name": "dangling",
+                "label": "Circle6",
+                "color": "Magenta",
+                "data": [(5, [np.array([10.0, -20.0, -4.0, 1.0], dtype=np.float32)])],
+            },
+            {
+                "name": "Multifurcation",
+                "label": "Circle8",
+                "color": "Yellow",
+                "data": [(0, np.array([[0.0, 5.0, 0.0, 1.0]], dtype=np.float32))],
+            },
+        ],
+    )
 
 
 def test_error_annotation_all():
 
-    input_dir = Path(DATA, 'test-error-detection')
+    input_dir = Path(DATA, "test-error-detection")
     # this ensure morphs are ordered as expected
     morph_paths = sorted([str(morph) for morph in iter_morphology_files(input_dir)])
     annotations, summaries, markers = annotate_neurolucida_all(morph_paths)
-    assert summaries == {str(morph_paths[0]): {'fat end': 1,
-                                                   'zjump': 1,
-                                                   'narrow start': 1,
-                                                   'dangling': 1,
-                                                   'Multifurcation': 1},
-                             str(morph_paths[1]): {}}
-    assert_equal(markers, {
-        str(morph_paths[0]): [{'name': 'fat end', 'label': 'Circle3', 'color': 'Blue',
-                               'data': [(7, np.array([[-5., -4.,  0., 20.]], dtype=np.float32))]},
-                              {'name': 'zjump', 'label': 'Circle2', 'color': 'Green',
-                               'data': [(2, [np.array([0., 5., 0., 1.], dtype=np.float32),
-                                             np.array([0.,  5., 40.,  1.], dtype=np.float32)])]},
-                              {'name': 'narrow start', 'label': 'Circle1', 'color': 'Blue',
-                               'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]},
-                              {'name': 'dangling', 'label': 'Circle6', 'color': 'Magenta',
-                               'data': [(5, [np.array([10., -20.,  -4., 1.], dtype=np.float32)])]},
-                              {'name': 'Multifurcation', 'label': 'Circle8', 'color': 'Yellow',
-                               'data': [(0, np.array([[0., 5., 0., 1.]], dtype=np.float32))]}],
-        str(morph_paths[1]): []})
+    assert summaries == {
+        str(morph_paths[0]): {
+            "fat end": 1,
+            "zjump": 1,
+            "narrow start": 1,
+            "dangling": 1,
+            "Multifurcation": 1,
+        },
+        str(morph_paths[1]): {},
+    }
+    assert_equal(
+        markers,
+        {
+            str(morph_paths[0]): [
+                {
+                    "name": "fat end",
+                    "label": "Circle3",
+                    "color": "Blue",
+                    "data": [(7, np.array([[-5.0, -4.0, 0.0, 20.0]], dtype=np.float32))],
+                },
+                {
+                    "name": "zjump",
+                    "label": "Circle2",
+                    "color": "Green",
+                    "data": [
+                        (
+                            2,
+                            [
+                                np.array([0.0, 5.0, 0.0, 1.0], dtype=np.float32),
+                                np.array([0.0, 5.0, 40.0, 1.0], dtype=np.float32),
+                            ],
+                        )
+                    ],
+                },
+                {
+                    "name": "narrow start",
+                    "label": "Circle1",
+                    "color": "Blue",
+                    "data": [(0, np.array([[0.0, 5.0, 0.0, 1.0]], dtype=np.float32))],
+                },
+                {
+                    "name": "dangling",
+                    "label": "Circle6",
+                    "color": "Magenta",
+                    "data": [(5, [np.array([10.0, -20.0, -4.0, 1.0], dtype=np.float32)])],
+                },
+                {
+                    "name": "Multifurcation",
+                    "label": "Circle8",
+                    "color": "Yellow",
+                    "data": [(0, np.array([[0.0, 5.0, 0.0, 1.0]], dtype=np.float32))],
+                },
+            ],
+            str(morph_paths[1]): [],
+        },
+    )
 
 
 def test_fix_points_in_soma():
@@ -310,41 +372,40 @@ def test_fix_points_in_soma():
     #       one that should be added is too close to the second point.
     expected = np.array(
         [
-            [1., 0., 0., 1.],
-            [2., 0., 0., 1.],
-            [2., 0., 0., 1.],
-            [3., 1., 0., 1.],
-            [2., 0., 0., 1.],
-            [3., -1., 0., 1.],
-            [0., 1., 0., 1.],
-            [0., 2., 0., 1.],
-            [0., 2., 0., 1.],
-            [1., 3., 0., 1.],
-            [0., 2., 0., 1.],
-            [-1., 3., 0., 1.],
-            [0.57735026, 0.57735026, 0.57735026, 1.],
-            [1., 1., 1., 1.],
-            [2., 2., 2., 1.],
-            [2., 2., 2., 1.],
-            [3., 3., 3., 1.],
-            [2., 2., 2., 1.],
-            [3., 2., 3., 1.],
-            [0., 0., 1.00001 , 1.],
-            [0., 0., 2., 1.],
-            [0., 0., 2., 1.],
-            [0., 1., 3., 1.],
-            [0., 0., 2., 1.],
-            [0., -1., 3., 1.],
+            [1.0, 0.0, 0.0, 1.0],
+            [2.0, 0.0, 0.0, 1.0],
+            [2.0, 0.0, 0.0, 1.0],
+            [3.0, 1.0, 0.0, 1.0],
+            [2.0, 0.0, 0.0, 1.0],
+            [3.0, -1.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0, 1.0],
+            [0.0, 2.0, 0.0, 1.0],
+            [0.0, 2.0, 0.0, 1.0],
+            [1.0, 3.0, 0.0, 1.0],
+            [0.0, 2.0, 0.0, 1.0],
+            [-1.0, 3.0, 0.0, 1.0],
+            [0.57735026, 0.57735026, 0.57735026, 1.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [2.0, 2.0, 2.0, 1.0],
+            [2.0, 2.0, 2.0, 1.0],
+            [3.0, 3.0, 3.0, 1.0],
+            [2.0, 2.0, 2.0, 1.0],
+            [3.0, 2.0, 3.0, 1.0],
+            [0.0, 0.0, 1.00001, 1.0],
+            [0.0, 0.0, 2.0, 1.0],
+            [0.0, 0.0, 2.0, 1.0],
+            [0.0, 1.0, 3.0, 1.0],
+            [0.0, 0.0, 2.0, 1.0],
+            [0.0, -1.0, 3.0, 1.0],
         ],
-        dtype=neuron.points.dtype
+        dtype=neuron.points.dtype,
     )
 
-    assert_array_almost_equal(
-        neuron.points,
-        expected
-    )
+    assert_array_almost_equal(neuron.points, expected)
 
     # Test that it fails when an entire section is located inside the soma
     neuron.soma.radius = 10
-    with pytest.raises(tested.CorruptedMorphology, match="An entire section is located inside the soma"):
+    with pytest.raises(
+        tested.CorruptedMorphology, match="An entire section is located inside the soma"
+    ):
         fix_points_in_soma(neuron)

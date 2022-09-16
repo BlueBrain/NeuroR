@@ -1,7 +1,9 @@
 """Detect cut leaves with new algo."""
 from itertools import product
+
 import numpy as np
 from neurom.core.dataformat import COLS
+
 from neuror.cut_plane.planes import HalfSpace
 
 

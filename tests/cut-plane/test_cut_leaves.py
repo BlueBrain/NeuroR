@@ -1,6 +1,6 @@
 from pathlib import Path
-import numpy as np
 
+import numpy as np
 from morphio import Morphology
 from numpy.testing import assert_array_almost_equal
 

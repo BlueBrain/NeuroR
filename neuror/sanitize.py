@@ -1,37 +1,37 @@
-'''Module for the sanitization of raw morphologies.'''
+"""Module for the sanitization of raw morphologies."""
 import logging
 from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-from tqdm import tqdm
 
 import numpy as np
 from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
-from neurom.check import morphology_checks as mc
-from neurom.check import CheckResult
-from neurom.apps.annotate import annotate
 from neurom import load_morphology
+from neurom.apps.annotate import annotate
+from neurom.check import CheckResult
+from neurom.check import morphology_checks as mc
+from tqdm import tqdm
 
-L = logging.getLogger('neuror')
+L = logging.getLogger("neuror")
 _ZERO_LENGTH = 1e-4
 
 
 class CorruptedMorphology(Exception):
-    '''Exception for morphologies that should not be used'''
+    """Exception for morphologies that should not be used"""
 
 
 class ZeroLengthRootSection(Exception):
-    '''Exception for morphologies that have zero length root sections'''
+    """Exception for morphologies that have zero length root sections"""
 
 
 def iter_morphologies(folder):
-    '''Recursively yield morphology files in folder and its sub-directories.'''
-    return (path for path in folder.rglob('*') if path.suffix.lower() in {'.swc', '.h5', '.asc'})
+    """Recursively yield morphology files in folder and its sub-directories."""
+    return (path for path in folder.rglob("*") if path.suffix.lower() in {".swc", ".h5", ".asc"})
 
 
 def sanitize(input_neuron, output_path):
-    '''Sanitize one morphology.
+    """Sanitize one morphology.
 
     - ensures it can be loaded with MorphIO
     - raises if the morphology has no soma or of invalid format
@@ -43,11 +43,11 @@ def sanitize(input_neuron, output_path):
     Args:
         input_neuron (str|pathlib.Path|morphio.Morphology|morphio.mut.Morphology): input neuron
         output_path (str|pathlib.Path): output name
-    '''
+    """
     neuron = Morphology(input_neuron)
 
     if neuron.soma.type == SomaType.SOMA_UNDEFINED:  # pylint: disable=no-member
-        raise CorruptedMorphology(f'{input_neuron} has an invalid or no soma.')
+        raise CorruptedMorphology(f"{input_neuron} has an invalid or no soma.")
 
     for section in neuron.iter():
         section.diameters = np.clip(section.diameters, 0, None)
@@ -55,11 +55,13 @@ def sanitize(input_neuron, output_path):
     for root in neuron.root_sections:  # pylint: disable=not-an-iterable
         for section in root.iter():
             if section.type != root.type:
-                raise CorruptedMorphology(f'{input_neuron} has a neurite whose type changes along '
-                                          'the way\n'
-                                          f'Child section (id: {section.id}) has a different type '
-                                          f'({section.type}) than its parent (id: '
-                                          f'{section.parent.id}) (type: {section.parent.type})')
+                raise CorruptedMorphology(
+                    f"{input_neuron} has a neurite whose type changes along "
+                    "the way\n"
+                    f"Child section (id: {section.id}) has a different type "
+                    f"({section.type}) than its parent (id: "
+                    f"{section.parent.id}) (type: {section.parent.type})"
+                )
 
     try:
         sanitized_neuron = fix_non_zero_segments(neuron)
@@ -72,12 +74,12 @@ def sanitize(input_neuron, output_path):
 
 
 def _sanitize_one(path, input_folder, output_folder):
-    '''Function to be called by sanitize_all to catch all exceptions
+    """Function to be called by sanitize_all to catch all exceptions
     and return path if in error
 
     Since Pool.imap_unordered only supports one argument, the argument
     is a tuple: (path, input_folder, output_folder).
-    '''
+    """
     relative_path = path.relative_to(input_folder)
     output_dir = output_folder / relative_path.parent
     if not output_dir.exists():
@@ -92,7 +94,7 @@ def _sanitize_one(path, input_folder, output_folder):
 
 
 def sanitize_all(input_folder, output_folder, nprocesses=1):
-    '''Sanitize all morphologies in input_folder and its sub-directories.
+    """Sanitize all morphologies in input_folder and its sub-directories.
 
     See :func:`~neuror.sanitize.sanitize` for more information on the sanitization process.
 
@@ -101,7 +103,7 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
         output_folder (str|pathlib.Path): output name
 
     .. note:: the sub-directory structure is maintained.
-    '''
+    """
     set_maximum_warnings(0)
 
     morphologies = list(iter_morphologies(Path(input_folder)))
@@ -113,13 +115,13 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
             results = list(pool.imap_unordered(func, morphologies, chunksize=100))
     errored_paths = list(filter(None, tqdm(results, total=len(morphologies))))
     if errored_paths:
-        L.info('Files in error:')
+        L.info("Files in error:")
         for path in errored_paths:
             L.info(path)
 
 
 def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
-    '''Return a neuron with zero length segments removed
+    """Return a neuron with zero length segments removed
 
     Sections composed of a single zero length segment are deleted, where zero is parametrized
     by zero_length
@@ -130,7 +132,7 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
 
     Returns:
         a fixed morphio.mut.Morphology
-    '''
+    """
     neuron = Morphology(neuron)
     to_be_deleted = []
     for section in neuron.iter():
@@ -179,14 +181,26 @@ def annotate_neurolucida(morph_path, checkers=None):
     """
     if checkers is None:
         checkers = {
-            mc.has_no_fat_ends: {"name": "fat end", "label": "Circle3", "color": "Blue"},
+            mc.has_no_fat_ends: {
+                "name": "fat end",
+                "label": "Circle3",
+                "color": "Blue",
+            },
             partial(mc.has_no_jumps, axis="z"): {
                 "name": "zjump",
                 "label": "Circle2",
                 "color": "Green",
             },
-            mc.has_no_narrow_start: {"name": "narrow start", "label": "Circle1", "color": "Blue"},
-            mc.has_no_dangling_branch: {"name": "dangling", "label": "Circle6", "color": "Magenta"},
+            mc.has_no_narrow_start: {
+                "name": "narrow start",
+                "label": "Circle1",
+                "color": "Blue",
+            },
+            mc.has_no_dangling_branch: {
+                "name": "dangling",
+                "label": "Circle6",
+                "color": "Magenta",
+            },
             mc.has_multifurcation: {
                 "name": "Multifurcation",
                 "label": "Circle8",
@@ -231,9 +245,7 @@ def annotate_neurolucida_all(morph_paths, nprocesses=1):
     """
     summaries, annotations, markers = {}, {}, {}
     with Pool(nprocesses) as pool:
-        for morph_path, result in zip(
-            morph_paths, pool.map(annotate_neurolucida, morph_paths)
-        ):
+        for morph_path, result in zip(morph_paths, pool.map(annotate_neurolucida, morph_paths)):
             morph_path = str(morph_path)
             annotations[morph_path], summaries[morph_path], markers[morph_path] = result
     return annotations, summaries, markers
@@ -268,10 +280,10 @@ def fix_points_in_soma(morph):
             vec = out_pt - in_pt
             new_pt = morph.soma.center + vec / np.linalg.norm(vec) * morph.soma.radius
             if np.linalg.norm(new_pt - root_sec.points[last_in_soma + 1]) <= _ZERO_LENGTH:
-                new_sec_pts = root_sec.points[last_in_soma + 1:]
+                new_sec_pts = root_sec.points[last_in_soma + 1 :]
                 last_in_soma += 1
             else:
-                new_sec_pts = np.concatenate([[new_pt], root_sec.points[last_in_soma + 1:]])
+                new_sec_pts = np.concatenate([[new_pt], root_sec.points[last_in_soma + 1 :]])
             root_sec.points = new_sec_pts
             root_sec.diameters = root_sec.diameters[last_in_soma:]
             root_sec.perimeters = root_sec.perimeters[last_in_soma:]
