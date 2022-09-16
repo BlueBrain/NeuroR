@@ -86,7 +86,6 @@ def _unravel_section(section, window_half_length, soma, legacy_behavior, use_pat
         section.diameters = np.hstack((soma.diameters[0], section.diameters))
 
 
-
 def unravel(filename, window_half_length=None,
             legacy_behavior=False, use_path_length=True):
     '''Return an unravelled neuron
@@ -124,9 +123,8 @@ def unravel(filename, window_half_length=None,
     coord_after = np.empty([0, 3])
     for sec, new_section in zip(morph.iter(), new_morph.iter()):
         _unravel_section(
-             new_section, window_half_length, morph.soma, legacy_behavior, use_path_length
+            new_section, window_half_length, morph.soma, legacy_behavior, use_path_length
         )
-
         coord_before = np.append(coord_before, sec.points, axis=0)
         coord_after = np.append(coord_after, new_section.points, axis=0)
 
