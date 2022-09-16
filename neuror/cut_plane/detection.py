@@ -1,17 +1,16 @@
-'''Module for the detection of the cut plane'''
+"""Module for the detection of the cut plane"""
+import itertools as it
 import json
 import logging
-import itertools as it
 import operator
-from pathlib import Path
 import warnings
+from pathlib import Path
 from typing import List, Union
 
 import neurom as nm
 import numpy as np
-
 from neurom import geom
-from neurom.core import Section, Morphology
+from neurom.core import Morphology, Section
 from scipy import optimize, special
 
 from neuror.cut_plane import legacy_detection, planes
@@ -20,18 +19,21 @@ L = logging.getLogger(__name__)
 
 
 class CutPlane(planes.HalfSpace):
-    '''The cut plane class
+    """The cut plane class
 
     It is composed of a HalfSpace and a morphology
     The morphology is part of the HalfSpace, the cut space is
     the complementary HalfSpace
-    '''
+    """
 
-    def __init__(self, coefs: List[float],
-                 upward: bool,
-                 morphology: Union[None, str, Path, Morphology],
-                 bin_width: float):
-        '''Cut plane ctor.
+    def __init__(
+        self,
+        coefs: List[float],
+        upward: bool,
+        morphology: Union[None, str, Path, Morphology],
+        bin_width: float,
+    ):
+        """Cut plane ctor.
 
         Args:
             coefs: the [abcd] coefficients of a plane equation: a X + b Y + c Z + d = 0
@@ -39,7 +41,7 @@ class CutPlane(planes.HalfSpace):
                     else, they satisfy: a X + b Y + c Z + d < 0
             morphology: the morphology
             bin_width: the bin width
-        '''
+        """
         super().__init__(coefs[0], coefs[1], coefs[2], coefs[3], upward)
 
         if isinstance(morphology, Morphology):
@@ -47,7 +49,7 @@ class CutPlane(planes.HalfSpace):
         elif isinstance(morphology, (str, Path)):
             self.morphology = nm.load_morphology(morphology)
         elif morphology is not None:
-            raise Exception(f'Unsupported morphology type: {type(morphology)}')
+            raise Exception(f"Unsupported morphology type: {type(morphology)}")
 
         self.bin_width = bin_width
         self.cut_leaves_coordinates = None
@@ -60,26 +62,28 @@ class CutPlane(planes.HalfSpace):
 
     @classmethod
     def from_json(cls, cut_plane_obj, morphology=None):
-        '''Factory constructor from a JSON file
+        """Factory constructor from a JSON file
 
         cut_plane_obj (dict|str|pathlib.Path): a cut plane
             It can be a python dictionary or a path to a json file that contains one
-        '''
+        """
         assert isinstance(cut_plane_obj, (str, dict, Path))
 
         if not isinstance(cut_plane_obj, dict):
             with open(cut_plane_obj) as f:
                 cut_plane_obj = json.load(f)
 
-        data = cut_plane_obj['cut-plane']
-        obj = CutPlane([data['a'], data['b'], data['c'], data['d']],
-                       data['upward'],
-                       morphology,
-                       cut_plane_obj['details']['bin-width'])
+        data = cut_plane_obj["cut-plane"]
+        obj = CutPlane(
+            [data["a"], data["b"], data["c"], data["d"]],
+            data["upward"],
+            morphology,
+            cut_plane_obj["details"]["bin-width"],
+        )
 
-        obj.cut_leaves_coordinates = np.array(cut_plane_obj['cut-leaves'])
-        obj.status = cut_plane_obj['status']
-        obj.minus_log_prob = cut_plane_obj['details']['-LogP']
+        obj.cut_leaves_coordinates = np.array(cut_plane_obj["cut-leaves"])
+        obj.status = cut_plane_obj["status"]
+        obj.minus_log_prob = cut_plane_obj["details"]["-LogP"]
         return obj
 
     # pylint: disable=arguments-differ
@@ -89,10 +93,14 @@ class CutPlane(planes.HalfSpace):
         return cls(plane.coefs, True, morphology, bin_width)
 
     @classmethod
-    def find(cls, neuron, bin_width=3,
-             searched_axes=('X', 'Y', 'Z'),
-             searched_half_spaces=(-1, 1),
-             fix_position=None):
+    def find(
+        cls,
+        neuron,
+        bin_width=3,
+        searched_axes=("X", "Y", "Z"),
+        searched_half_spaces=(-1, 1),
+        fix_position=None,
+    ):
         """
         Find and return the cut plane that is oriented along X, Y or Z.
         6 potential positions are considered: for each axis, they correspond
@@ -130,23 +138,34 @@ class CutPlane(planes.HalfSpace):
         Returns:
             A cut plane object
         """
-        warnings.warn("This method will be deprecated in favor or cut_leaves.find_cut_leaves"
-                      "it also has bugs if one uses +1 in searched_half_spaces and multiple"
-                      "combinations of searched_arguments.", DeprecationWarning)
+        warnings.warn(
+            "This method will be deprecated in favor or cut_leaves.find_cut_leaves"
+            "it also has bugs if one uses +1 in searched_half_spaces and multiple"
+            "combinations of searched_arguments.",
+            DeprecationWarning,
+        )
         if not isinstance(neuron, Morphology):
             neuron = nm.load_morphology(neuron)
 
         # pylint: disable=invalid-unary-operand-type
         coef_d = -fix_position if fix_position is not None else 0
 
-        cut_planes = [CutPlane([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
-                                int(axis.upper() == 'Z'), coef_d],
-                               upward=(side > 0),
-                               morphology=neuron,
-                               bin_width=bin_width)
-                      for axis, side in it.product(searched_axes, searched_half_spaces)]
+        cut_planes = [
+            CutPlane(
+                [
+                    int(axis.upper() == "X"),
+                    int(axis.upper() == "Y"),
+                    int(axis.upper() == "Z"),
+                    coef_d,
+                ],
+                upward=(side > 0),
+                morphology=neuron,
+                bin_width=bin_width,
+            )
+            for axis, side in it.product(searched_axes, searched_half_spaces)
+        ]
 
-        best_cut_plane = max(cut_planes, key=operator.attrgetter('minus_log_prob'))
+        best_cut_plane = max(cut_planes, key=operator.attrgetter("minus_log_prob"))
 
         if fix_position is None:
             _, bins = best_cut_plane.histogram()
@@ -158,66 +177,82 @@ class CutPlane(planes.HalfSpace):
         else:
             best_cut_plane.coefs[3] = coef_d
         return CutPlane(
-            best_cut_plane.coefs, best_cut_plane.upward, neuron, best_cut_plane.bin_width)
+            best_cut_plane.coefs,
+            best_cut_plane.upward,
+            neuron,
+            best_cut_plane.bin_width,
+        )
 
     @classmethod
     def find_legacy(cls, neuron, axis):
-        '''Find the cut points according to the legacy algorithm
+        """Find the cut points according to the legacy algorithm
 
         As implemented in:
         https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
-        '''
+        """
         if not isinstance(neuron, Morphology):
             neuron = nm.load_morphology(neuron)
 
         cut_leaves, side = legacy_detection.internal_cut_detection(neuron, axis)
 
-        plane = cls([int(axis.upper() == 'X'), int(axis.upper() == 'Y'),
-                     int(axis.upper() == 'Z'), 0],
-                    upward=(side < 0),
-                    morphology=None,
-                    bin_width=0)
+        plane = cls(
+            [
+                int(axis.upper() == "X"),
+                int(axis.upper() == "Y"),
+                int(axis.upper() == "Z"),
+                0,
+            ],
+            upward=(side < 0),
+            morphology=None,
+            bin_width=0,
+        )
         plane.morphology = nm.load_morphology(neuron)
         plane.cut_leaves_coordinates = cut_leaves
         return plane
 
     @property
     def cut_sections(self):
-        '''Returns sections that ends within the cut plane'''
-        leaves = np.array([leaf
-                           for neurite in self.morphology.neurites
-                           for leaf in nm.iter_sections(neurite, iterator_type=Section.ileaf)])
+        """Returns sections that ends within the cut plane"""
+        leaves = np.array(
+            [
+                leaf
+                for neurite in self.morphology.neurites
+                for leaf in nm.iter_sections(neurite, iterator_type=Section.ileaf)
+            ]
+        )
         leaves_coord = [leaf.points[-1, nm.COLS.XYZ] for leaf in leaves]
         return leaves[self.distance(leaves_coord) < self.bin_width]
 
     def _compute_cut_leaves_coordinates(self):
-        '''Returns cut leaves coordinates'''
+        """Returns cut leaves coordinates"""
         leaves = [leaf.points[-1, nm.COLS.XYZ] for leaf in self.cut_sections]
         self.cut_leaves_coordinates = np.vstack(leaves) if leaves else np.array([])
 
     def to_json(self):
-        '''Return a dictionary with the following items:
+        """Return a dictionary with the following items:
 
-            - status: 'ok' if everything went right, else an informative string
-            - cut_plane: a tuple (plane, position) where 'plane' is 'X', 'Y' or 'Z'
-                       and 'position' is the position
-            - cut_leaves: an np.array of all termination points in the cut plane
-            - figures: if 'display' option was used, a dict where values are tuples (fig, ax)
-                     for each figure
-            - details: A dict currently only containing -LogP of the bin where the cut plane was
-                     found
-        '''
-        return {'cut-leaves': self.cut_leaves_coordinates,
-                'status': self.status,
-                'details': {'-LogP': self.minus_log_prob, 'bin-width': self.bin_width},
-                'cut-plane': super().to_json()}
+        - status: 'ok' if everything went right, else an informative string
+        - cut_plane: a tuple (plane, position) where 'plane' is 'X', 'Y' or 'Z'
+                   and 'position' is the position
+        - cut_leaves: an np.array of all termination points in the cut plane
+        - figures: if 'display' option was used, a dict where values are tuples (fig, ax)
+                 for each figure
+        - details: A dict currently only containing -LogP of the bin where the cut plane was
+                 found
+        """
+        return {
+            "cut-leaves": self.cut_leaves_coordinates,
+            "status": self.status,
+            "details": {"-LogP": self.minus_log_prob, "bin-width": self.bin_width},
+            "cut-plane": super().to_json(),
+        }
 
     def histogram(self):
-        '''Get the point distribution projected along the normal to the plane
+        """Get the point distribution projected along the normal to the plane
 
         Returns:
             a numpy.histogram
-        '''
+        """
         points = _get_points(self.morphology)
         projected_points = self.project_on_directed_normal(points)
         min_, max_ = np.min(projected_points, axis=0), np.max(projected_points, axis=0)
@@ -225,13 +260,13 @@ class CutPlane(planes.HalfSpace):
         return np.histogram(projected_points, bins=binning)
 
     def _compute_probabilities(self):
-        '''Returns -log(p) where p is the a posteriori probabilities of the observed values
+        """Returns -log(p) where p is the a posteriori probabilities of the observed values
         in the bins X min, X max, Y min, Y max, Z min, Z max
 
         Parameters:
             hist: a dict of the X, Y and Z 1D histograms
 
-        Returns: a dict of -log(p) values'''
+        Returns: a dict of -log(p) values"""
 
         hist = self.histogram()
         if not hist[0].size:
@@ -242,20 +277,22 @@ class CutPlane(planes.HalfSpace):
         return self.minus_log_prob
 
     def _compute_status(self):
-        '''Returns ok if the probability that there is a cut plane is high enough'''
+        """Returns ok if the probability that there is a cut plane is high enough"""
         _THRESHOLD = 50
         if np.isnan(self.minus_log_prob):
-            self.status = 'The proba is NaN, something went wrong'
+            self.status = "The proba is NaN, something went wrong"
         elif self.minus_log_prob < _THRESHOLD:
-            self.status = ('The probability that there is in fact NO '
-                           f'cut plane is high: -log(p) = {self.minus_log_prob}!')
+            self.status = (
+                "The probability that there is in fact NO "
+                f"cut plane is high: -log(p) = {self.minus_log_prob}!"
+            )
         else:
-            self.status = 'ok'
+            self.status = "ok"
 
 
 def _success_function(params, points, bin_width):
-    '''The success function is low (=good) when the difference of points
-    on the left side and right side of the plane is high'''
+    """The success function is low (=good) when the difference of points
+    on the left side and right side of the plane is high"""
     plane = planes.PlaneEquation.from_rotations_translations(params)
     n_left, n_right = plane.count_near_plane(points, bin_width)
     res = -abs(n_left - n_right)
@@ -263,20 +300,30 @@ def _success_function(params, points, bin_width):
 
 
 def _minimize(x0, points, bin_width):
-    '''Returns a tuple of the optimized values of
-    (rot_x, rot_y, rot_z, transl_x, transl_y, transl_z)'''
+    """Returns a tuple of the optimized values of
+    (rot_x, rot_y, rot_z, transl_x, transl_y, transl_z)"""
     delta_angle = 10  # in degrees
     delta_transl = 10
-    delta = np.array([delta_angle, delta_angle, delta_angle,
-                      delta_transl, delta_transl, delta_transl])
+    delta = np.array(
+        [
+            delta_angle,
+            delta_angle,
+            delta_angle,
+            delta_transl,
+            delta_transl,
+            delta_transl,
+        ]
+    )
     bounds_min = x0 - delta
     bounds_max = x0 + delta
     bounds = list(zip(bounds_min, bounds_max))
-    result = optimize.minimize(_success_function,
-                               x0=x0,
-                               args=(points, bin_width),
-                               bounds=bounds,
-                               method='Nelder-Mead')
+    result = optimize.minimize(
+        _success_function,
+        x0=x0,
+        args=(points, bin_width),
+        bounds=bounds,
+        method="Nelder-Mead",
+    )
 
     if result.status:
         raise Exception(result.message)
@@ -284,51 +331,66 @@ def _minimize(x0, points, bin_width):
 
 
 def get_minus_log_p(k, mu):
-    '''Compute -Log(p|k) where p is the a posteriori probability to observe k counts
+    """Compute -Log(p|k) where p is the a posteriori probability to observe k counts
     in bin given than the mean value was "mu":
     demo: p(k|mu) = exp(-mu) * mu**k / k!
-    '''
+    """
     return mu - k * np.log(mu) + np.log(special.factorial(k))
 
 
 def _get_points(neuron):
-    return np.array([point
-                     for neurite in (neuron.neurites or [])
-                     for section in nm.iter_sections(neurite)
-                     for point in section.points])
+    return np.array(
+        [
+            point
+            for neurite in (neuron.neurites or [])
+            for section in nm.iter_sections(neurite)
+            for point in section.points
+        ]
+    )
 
 
 def plot(neuron, result, inline=False):
-    '''Plot the neuron, the cut plane and the cut leaves.
+    """Plot the neuron, the cut plane and the cut leaves.
 
     Args:
         neuron (Neuron): the neuron to be plotted
         result (dict): the cut plane object in dictionary form
         inline (bool): if True, plot as an interactive plot (for example in a Jupyter notebook)
-    '''
+    """
     try:
         from plotly_helper.neuron_viewer import NeuronBuilder
         from plotly_helper.object_creator import scatter
         from plotly_helper.shapes import line
     except ImportError as e:
         raise ImportError(
-            'neuror[plotly] is not installed.'
-            ' Please install it by doing: pip install neuror[plotly]') from e
+            "neuror[plotly] is not installed."
+            " Please install it by doing: pip install neuror[plotly]"
+        ) from e
 
     bbox = geom.bounding_box(neuron)
 
-    plane = result['cut-plane']
+    plane = result["cut-plane"]
 
-    for display_plane, idx in [('xz', 0), ('yz', 1), ('3d', None)]:
-        builder = NeuronBuilder(neuron, display_plane, inline=inline,
-                                line_width=4, title=str(neuron.name))
+    for display_plane, idx in [("xz", 0), ("yz", 1), ("3d", None)]:
+        builder = NeuronBuilder(
+            neuron, display_plane, inline=inline, line_width=4, title=str(neuron.name)
+        )
         if idx is not None:
-            if plane['a'] == 0 and plane['b'] == 0:
-                builder.helper.add_shapes([
-                    line(bbox[0][idx], -plane['d'], bbox[1][idx], -plane['d'], width=4)
-                ])
-            builder.helper.add_data({'a': scatter(result['cut-leaves'][:, [idx, 2]],
-                                                  showlegend=False, width=5)})
+            if plane["a"] == 0 and plane["b"] == 0:
+                builder.helper.add_shapes(
+                    [
+                        line(
+                            bbox[0][idx],
+                            -plane["d"],
+                            bbox[1][idx],
+                            -plane["d"],
+                            width=4,
+                        )
+                    ]
+                )
+            builder.helper.add_data(
+                {"a": scatter(result["cut-leaves"][:, [idx, 2]], showlegend=False, width=5)}
+            )
         else:
-            builder.helper.add_data({'a': scatter(result['cut-leaves'], width=2)})
+            builder.helper.add_data({"a": scatter(result["cut-leaves"], width=2)})
         builder.plot()

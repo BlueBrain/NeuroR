@@ -1,17 +1,17 @@
 from pathlib import Path
 
+import pytest
 from morph_tool import diff
 from morphio import SectionType
 from neurom import load_neuron
-import pytest
 from numpy.testing import assert_array_equal
 
 import neuror.axon as test_module
 
-DATA_PATH = Path(__file__).parent / 'data'
+DATA_PATH = Path(__file__).parent / "data"
 
-SIMPLE_PATH = DATA_PATH / 'simple.swc'
-SLICE_PATH = DATA_PATH / 'neuron-slice.h5'
+SIMPLE_PATH = DATA_PATH / "simple.swc"
+SLICE_PATH = DATA_PATH / "neuron-slice.h5"
 SIMPLE = load_neuron(SIMPLE_PATH)
 SLICE = load_neuron(SLICE_PATH)
 
@@ -50,17 +50,17 @@ def test__sort_intact_sections_by_score():
 
 
 def test__repair():
-    neuron = load_neuron(Path(DATA_PATH, 'valid.h5'))
+    neuron = load_neuron(Path(DATA_PATH, "valid.h5"))
     axon = neuron.root_sections[0]
     assert axon.type == SectionType.axon
     test_module.repair(neuron, axon, [axon], [axon], set(), y_extent=10000)
     assert len(axon.children) == 1
     assert_array_equal(axon.children[0].points[0], axon.points[-1])
-    assert not diff(neuron, DATA_PATH / 'axon-repair.h5')
+    assert not diff(neuron, DATA_PATH / "axon-repair.h5")
 
 
 def test__repair_no_intact_axon():
-    filename = Path(DATA_PATH, 'valid.h5')
+    filename = Path(DATA_PATH, "valid.h5")
     neuron = load_neuron(filename)
     axon = neuron.root_sections[0]
     used_axon_branches = set()

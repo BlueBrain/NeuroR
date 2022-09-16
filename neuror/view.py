@@ -1,4 +1,4 @@
-'''Generate output plots'''
+"""Generate output plots"""
 import logging
 import os
 from datetime import datetime
@@ -12,20 +12,20 @@ from matplotlib.backends.backend_pdf import (  # noqa, pylint: disable=ungrouped
 from neurom import geom, load_morphology
 from neurom.view.plotly_impl import plot_morph
 
-L = logging.getLogger('neuror')
+L = logging.getLogger("neuror")
 
 try:
     from plotly_helper.neuron_viewer import NeuronBuilder
 except ImportError as e:
     raise ImportError(
-        'neuror[plotly] is not installed.'
-        ' Please install it by doing: pip install neuror[plotly]') from e
+        "neuror[plotly] is not installed. Please install it by doing: pip install neuror[plotly]"
+    ) from e
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 
 
 def get_common_bounding_box(neurons):
-    '''Returns the bounding box that wraps all neurons'''
+    """Returns the bounding box that wraps all neurons"""
     common_bbox = geom.bounding_box(neurons[0])
     for neuron in neurons[1:]:
         bbox = geom.bounding_box(neuron)
@@ -36,20 +36,20 @@ def get_common_bounding_box(neurons):
 
 
 def plot(neuron, bbox, subplot, title, **kwargs):
-    '''2D neuron plot'''
-    ax = plt.subplot(subplot, facecolor='w', aspect='equal')
+    """2D neuron plot"""
+    ax = plt.subplot(subplot, facecolor="w", aspect="equal")
     xlim = (bbox[0][0], bbox[1][0])
     ylim = (bbox[0][2], bbox[1][2])
 
     plot_morph(neuron, ax, **kwargs)
     ax.set_title(title)
-    ax.set_aspect('equal', adjustable='box')
+    ax.set_aspect("equal", adjustable="box")
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
 
 def _neuron_subplot(folders, f, pp, subplot, titles):
-    kwargs = {'plane': 'xz'}
+    kwargs = {"plane": "xz"}
     fig = plt.figure()
     neurons = [load_morphology(os.path.join(folder, f)) for folder in folders]
 
@@ -62,10 +62,10 @@ def _neuron_subplot(folders, f, pp, subplot, titles):
 
 
 def view_all(folders, titles, output_pdf=None):
-    '''Generate PDF report'''
+    """Generate PDF report"""
     if not output_pdf:
-        path = './plots'
-        output_pdf = os.path.join(path, datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.pdf')
+        path = "./plots"
+        output_pdf = os.path.join(path, datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".pdf")
         if not os.path.exists(path):
             os.mkdir(path)
 
@@ -81,23 +81,23 @@ def view_all(folders, titles, output_pdf=None):
             _neuron_subplot(folders, f, pp, subplot, titles)
         except Exception as _e:  # pylint: disable=broad-except
             L.info("e: %s", _e)
-            L.info('failu: %s', f)
+            L.info("failu: %s", f)
     pp.close()
-    L.info('Done writing %s', output_pdf)
+    L.info("Done writing %s", output_pdf)
 
 
 def plot_repaired_neuron(neuron, cut_points, plot_file=None):
-    ''' Draw a neuron using plotly
+    """Draw a neuron using plotly
 
-    Repaired section are displayed with a different colors'''
+    Repaired section are displayed with a different colors"""
 
-    for mode in ['3d', 'xz']:
+    for mode in ["3d", "xz"]:
         builder = NeuronBuilder(neuron, mode, neuron.name, False)
         for section, offset in cut_points.items():
-            builder.color_section(section, 'green', recursive=True, start_point=offset)
+            builder.color_section(section, "green", recursive=True, start_point=offset)
 
         if plot_file is not None:
             root, ext = os.path.splitext(plot_file)
-            plot_file = f'{root}_{mode}{ext}'
+            plot_file = f"{root}_{mode}{ext}"
 
         builder.plot(show_link=False, auto_open=False, filename=plot_file)
