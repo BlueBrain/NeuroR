@@ -22,7 +22,7 @@ class PlaneEquation(object):
     def __init__(self, a, b, c, d):
         if (a, b, c) == (0, 0, 0):
             raise ValueError('Cannot define a plane with a == b == c == 0')
-        self.coefs = np.array([a, b, c, d], dtype=np.float)
+        self.coefs = np.array([a, b, c, d], dtype=float)
 
     @classmethod
     def from_dict(cls, data):

@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from morph_tool import diff
-from neurom import load_neuron
+from neurom import load_morphology
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.unravel as test_module
@@ -11,7 +11,8 @@ from neuror.cut_plane.detection import CutPlane
 
 DATA = Path(__file__).parent / 'data'
 
-SIMPLE = load_neuron(DATA / 'simple.swc')
+SIMPLE = load_morphology(DATA / 'simple.swc')
+
 
 def test_get_principal_direction():
     direction = test_module._get_principal_direction([[0.,0,0], [1,1,2]])
@@ -25,16 +26,19 @@ def test_get_principal_direction():
                                                                     [10, -1, 0],
                                                                     [10, 1, 0]]),
                               np.array([1, 0, 0]))
+
+
 def test_unravel():
     neuron, mapping = test_module.unravel(DATA / 'simple.asc')
+
     assert_array_almost_equal(neuron.root_sections[0].points,
-                              np.array([[ 0.      ,  0.      ,  0.      ],
-                                        [1.      , 1.      , 0.      ],
-                                        [2.      , 2.      , 0.      ],
-                                        [2.707107, 1.292893, 0.      ]]))
+                              np.array([[0.        ,  0.        ,  0.        ],
+                                        [1.4047837 , -0.16304241,  0.        ],
+                                        [2.8095675 , -0.32608482,  0.        ],
+                                        [3.8028996 , -0.44137323,  0.        ]]))
 
     assert_array_almost_equal(neuron.root_sections[0].children[0].points[0],
-                              np.array([2.707107, 1.292893, 0.    ]))
+                              np.array([3.8028996 , -0.44137323,  0.    ]))
 
     assert_array_almost_equal(mapping[['x0', 'y0', 'z0']].values,
                               [[0., 0., 0.],
@@ -45,15 +49,17 @@ def test_unravel():
                                [4., 1., 0.],
                                [3., 0., 0.],
                                [6., 4., 2.]])
+
     assert_array_almost_equal(mapping[['x1', 'y1', 'z1']].values,
-                              [[0.        , 0.        , 0.        ],
-                               [0.99999994, 0.99999994, 0.        ],
-                               [1.99999988, 1.99999988, 0.        ],
-                               [2.70710659, 1.29289317, 0.        ],
-                               [2.70710659, 1.29289317, 0.        ],
-                               [3.70710659, 2.29289317, 0.        ],
-                               [2.70710659, 1.29289317, 0.        ],
-                               [5.70710659, 5.29289341, 2.        ]])
+                              [[0.        ,  0.        ,  0.        ],
+                               [1.40478373, -0.16304241,  0.        ],
+                               [2.80956745, -0.32608482,  0.        ],
+                               [3.8028996 , -0.44137323,  0.        ],
+                               [3.8028996 , -0.44137323,  0.        ],
+                               [4.80289936,  0.55862671,  0.        ],
+                               [3.8028996 , -0.44137323,  0.        ],
+                               [6.80289936,  3.55862665,  2.        ]]
+                              )
 
 
 def test_unravel_no_path_length():
@@ -95,12 +101,12 @@ def test_unravel_with_backward_segment():
     '''
     neuron, mapping = test_module.unravel(DATA / 'simple-with-backward-segment.asc')
     assert_array_almost_equal(neuron.root_sections[0].points,
-                              np.array([[0.        , 0.        , 0.        ],
-                                        [0.99999994, 0.99999994, 0.        ],
-                                        [1.9999999 , 1.9999999 , 0.        ],
-                                        [3.4142134 , 3.4142134 , 0.        ],
-                                        [4.828427  , 4.828427  , 0.        ],
-                                        [5.5355334 , 4.1213202 , 0.        ]], dtype=np.float32))
+                              np.array([[0.       ,  0.       ,  0.       ],
+                                        [1.264911 , -0.6324555,  0.       ],
+                                        [2.529822 , -1.264911 ,  0.       ],
+                                        [4.3186765, -2.1593382,  0.       ],
+                                        [6.1075306, -3.0537655,  0.       ],
+                                        [7.001958 , -3.5009792,  0.       ]], dtype=np.float32))
 
 
 def test_unravel_plane():
@@ -140,6 +146,7 @@ def test_unravel_all(tmpdir):
 
     test_module.unravel_all(input, tmpdir, raw_planes, unravel_planes)
     assert_array_equal(list(tmpdir.rglob('*.h5')), [tmpdir / 'Neuron_slice.h5'])
+
 
 def test_legacy():
     actual, _ = test_module.unravel(DATA / 'legacy-unravel/1-pt-soma.swc', legacy_behavior=True)
