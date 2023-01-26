@@ -20,6 +20,7 @@ setup(
     license="LGPLv3",
     install_requires=[
         'click>=6.7',
+        'jsonschema',
         'matplotlib>=2.2.3',
         'morph-tool>=2.9.0,<3.0',
         'morphio>=3.0.0,<4.0',

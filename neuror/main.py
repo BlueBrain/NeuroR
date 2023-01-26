@@ -9,6 +9,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import jsonschema
 import morphio
 import neurom as nm
 import numpy as np
@@ -27,13 +28,62 @@ from neuror.utils import RepairType, direction, repair_type_map, rotation_matrix
 
 _PARAMS = {
     'seg_length': 5.0,  # lenghts of new segments
-    'sholl_layer_size': 10,  # resoluion of the shll profile
+    'sholl_layer_size': 10,  # resolution of the sholl profile
     'noise_continuation': 0.5,  # together with seg_length, this controls the tortuosity
     'soma_repulsion': 0.2,  # if 0, previous section direction, if 1, radial direction
     'bifurcation_angle': 20,  # noise amplitude in degree around mean bif angle on the cell
     'path_length_ratio': 0.5,  # a smaller value will make a strornger taper rate
     'children_diameter_ratio': 0.8,  # 1: child diam = parent diam, 0: child diam = tip diam
     'tip_percentile': 25,  # percentile of tip radius distributions to use as tip radius
+}
+
+_PARAM_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "seg_length": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "sholl_layer_size": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "noise_continuation": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "soma_repulsion": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "bifurcation_angle": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "path_length_ratio": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "children_diameter_ratio": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "tip_percentile": {
+            "type": "number",
+            "minimum": 0,
+        }
+    },
+    "additionalProperties": False,
+    "required": [
+        "seg_length",
+        "sholl_layer_size",
+        "noise_continuation",
+        "soma_repulsion",
+        "bifurcation_angle",
+        "path_length_ratio",
+        "children_diameter_ratio",
+        "tip_percentile",
+    ]
 }
 
 # Epsilon can not be to small otherwise leaves stored in json files
@@ -246,7 +296,7 @@ class Repair(object):
         params dictionary. By default, they are:
         _PARAMS = {
             'seg_length': 5.0,  # lenghts of new segments
-            'sholl_layer_size': 10,  # resoluion of the shll profile
+            'sholl_layer_size': 10,  # resolution of the sholl profile
             'noise_continuation': 0.5,  # together with seg_length, this controls the tortuosity
             'soma_repulsion': 0.2,  # if 0, previous section direction, if 1, radial direction
             'bifurcation_angle': 20,  # noise amplitude in degree around mean bif angle on the cell
@@ -277,6 +327,7 @@ class Repair(object):
         self.donated_intact_axon_sections = []
         self.repair_flags = repair_flags or {}
         self.params = params if params is not None else _PARAMS
+        jsonschema.validate(self.params, _PARAM_SCHEMA)
 
         CutPlane = cut_plane.CutPlane
         if legacy_detection:
@@ -714,9 +765,6 @@ def repair(inputfile: Path,  # pylint: disable=too-many-arguments
 
     if axons is None:
         axons = []
-
-    if params is None:
-        params = _PARAMS
 
     obj = Repair(inputfile, axons=axons, seed=seed, cut_leaves_coordinates=cut_leaves_coordinates,
                  legacy_detection=legacy_detection, repair_flags=repair_flags,
