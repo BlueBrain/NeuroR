@@ -2,6 +2,7 @@
 
 It is based on the BlueRepairSDK's implementation
 '''
+import copy
 import logging
 from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
@@ -24,6 +25,7 @@ from nptyping import NDArray, Shape, Float
 from scipy.spatial.distance import cdist
 
 from neuror import axon, cut_plane
+from neuror.exceptions import NeuroRError
 from neuror.utils import RepairType, direction, repair_type_map, rotation_matrix, section_length
 
 _PARAMS = {
@@ -71,6 +73,7 @@ _PARAM_SCHEMA = {
         "tip_percentile": {
             "type": "number",
             "minimum": 0,
+            "maximum": 100,
         }
     },
     "additionalProperties": False,
@@ -288,7 +291,8 @@ class Repair(object):
                  legacy_detection: bool = False,
                  repair_flags: Optional[Dict[RepairType, bool]] = None,
                  apical_point: NDArray[Shape["3"], Float] = None,
-                 params: Dict = None):
+                 params: Dict = None,
+                 validate_params=False):
         '''Repair the input morphology
 
         The repair algorithm uses sholl analysis of intact branches to grow new branches from cut
@@ -326,8 +330,12 @@ class Repair(object):
         self.axon_donors = axons or []
         self.donated_intact_axon_sections = []
         self.repair_flags = repair_flags or {}
-        self.params = params if params is not None else _PARAMS
-        self.validate_params(self.params)
+        self.params = copy.deepcopy(_PARAMS)
+
+        if params is not None:
+            self.params.update(params)
+        if validate_params:
+            self.validate_params(self.params)
 
         CutPlane = cut_plane.CutPlane
         if legacy_detection:
@@ -457,7 +465,7 @@ class Repair(object):
             elif type_ == RepairType.trunk:
                 L.debug('Trunk repair is not (nor has ever been) implemented')
             else:
-                raise Exception(f'Unknown type: {type_}')  # pylint: disable=broad-exception-raised
+                raise NeuroRError(f'Unknown type: {type_}')
 
         if plot_file is not None:
             try:

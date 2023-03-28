@@ -15,6 +15,7 @@ from neurom.core import Section, Morphology
 from scipy import optimize, special
 
 from neuror.cut_plane import legacy_detection, planes
+from neuror.exceptions import NeuroRError
 
 L = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class CutPlane(planes.HalfSpace):
             self.morphology = nm.load_morphology(morphology)
         elif morphology is not None:
             # pylint: disable=broad-exception-raised
-            raise Exception(f'Unsupported morphology type: {type(morphology)}')
+            raise NeuroRError(f'Unsupported morphology type: {type(morphology)}')
 
         self.bin_width = bin_width
         self.cut_leaves_coordinates = None
@@ -281,7 +282,7 @@ def _minimize(x0, points, bin_width):
 
     if result.status:
         # pylint: disable=broad-exception-raised
-        raise Exception(result.message)
+        raise NeuroRError(result.message)
     return result.x
 
 

@@ -2,7 +2,9 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+import jsonschema
 import numpy as np
+import pytest
 from mock import patch
 from morph_tool.spatial import point_to_section_segment
 from morphio import SectionType
@@ -28,6 +30,16 @@ class DummySection:
     def __init__(self, points, children=None):
         self.points = np.array(points)
         self.children = children or []
+
+
+def test_validation():
+    Repair(SIMPLE_PATH, params={"tip_percentile": 1}, validate_params=True)
+
+    with pytest.raises(jsonschema.ValidationError):
+        Repair(SIMPLE_PATH, params={"tip_percentile": -1}, validate_params=True)
+
+    with pytest.raises(ValueError):
+        Repair(SIMPLE_PATH, params={"tip_percentile": -1})
 
 
 def test_is_cut_section():

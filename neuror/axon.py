@@ -7,6 +7,7 @@ from morph_tool.transform import align, translate
 from neurom import COLS
 from neurom.features.section import branch_order, strahler_order
 
+from neuror.exceptions import NeuroRError
 from neuror.utils import section_length
 
 L = logging.getLogger('neuror')
@@ -50,8 +51,7 @@ def _tree_distance(sec1, sec2):
         sec2 = sec2.parent
         dist += 2
         if None in {sec1, sec2}:
-            # pylint: disable=broad-exception-raised
-            raise Exception(
+            raise NeuroRError(
                 f'Sections {original_sections[0]} and {original_sections[1]} '
                 'are not part of the same neurite')
 

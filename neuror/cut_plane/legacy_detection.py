@@ -12,6 +12,7 @@ from neurom import iter_sections
 from neurom.core import Section
 from neurom.core.dataformat import COLS
 
+from neuror.exceptions import NeuroRError
 from neuror.utils import RepairType, repair_type_map
 
 L = logging.getLogger(__name__)
@@ -47,7 +48,9 @@ def cut_detect(neuron, cut, offset, axis):
 
     if count_plus == 0 or count_minus == 0:
         # pylint: disable=broad-exception-raised
-        raise Exception("cut detection warning:one of the sides is empty. can't decide on cut side")
+        raise NeuroRError(
+            "cut detection warning:one of the sides is empty. can't decide on cut side"
+        )
 
     if -sum_minus / count_minus > sum_plus / count_plus:
         sign = 1

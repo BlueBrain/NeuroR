@@ -13,6 +13,7 @@ from neurom import load_morphology
 from neurom.utils import NeuromJSON
 
 from neuror.cut_plane.detection import CutPlane
+from neuror.exceptions import NeuroRError
 from neuror.unravel import DEFAULT_WINDOW_HALF_LENGTH
 
 logging.basicConfig()
@@ -74,8 +75,7 @@ def file(input_file, output_file, error_summary_file, marker_file):
     from neuror.sanitize import annotate_neurolucida
 
     if Path(input_file).suffix not in ['.asc', '.ASC']:
-        # pylint: disable=broad-exception-raised
-        raise Exception('Only .asc/.ASC files are allowed, please convert with morph-tool.')
+        raise NeuroRError('Only .asc/.ASC files are allowed, please convert with morph-tool.')
 
     annotations, summary, markers = annotate_neurolucida(input_file)
     shutil.copy(input_file, output_file)
@@ -171,8 +171,7 @@ def file(input_file, output_file, mapping_file, window_half_length):
     neuron.write(output_file)
     if mapping_file is not None:
         if not mapping_file.lower().endswith('csv'):
-            # pylint: disable=broad-exception-raised
-            raise Exception('the mapping file must end with .csv')
+            raise NeuroRError('the mapping file must end with .csv')
         mapping.to_csv(mapping_file)
 
 
@@ -282,8 +281,7 @@ def _export_cut_plane(filename, output, width, display, searched_axes, fix_posit
     It returns the cut plane and the positions of all cut terminations.
 '''
     if os.path.isdir(filename):
-        # pylint: disable=broad-exception-raised
-        raise Exception(f'filename ({filename}) should not be a directory')
+        raise NeuroRError(f'filename ({filename}) should not be a directory')
 
     result = CutPlane.find(filename,
                            width,

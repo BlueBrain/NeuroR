@@ -13,16 +13,11 @@ from neurom.check import CheckResult
 from neurom.apps.annotate import annotate
 from neurom import load_morphology
 
+from neuror.exceptions import CorruptedMorphology
+from neuror.exceptions import ZeroLengthRootSection
+
 L = logging.getLogger('neuror')
 _ZERO_LENGTH = 1e-4
-
-
-class CorruptedMorphology(Exception):
-    '''Exception for morphologies that should not be used'''
-
-
-class ZeroLengthRootSection(Exception):
-    '''Exception for morphologies that have zero length root sections'''
 
 
 def iter_morphologies(folder):
