@@ -1,6 +1,6 @@
 '''Fix zero diameters
 
-Re-implementation of: https://bbpcode.epfl.ch/source/xref/sim/MUK/apps/Fix_Zero_Diameter.cpp
+Re-implementation of: https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/apps/Fix_Zero_Diameter.cpp
 with sections recursion instead of point recursion
 '''
 from collections import namedtuple
@@ -43,7 +43,7 @@ def _set_point_diameter(point, new_diameter):
 def _connect_average_legacy(from_point):
     '''Apply a ramp diameter between the two points
 
-    Re-implementation of https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#232
+    Re-implementation of https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
     '''
     count = 0
     next_point = None
@@ -65,7 +65,7 @@ def _connect_average_legacy(from_point):
 def _connect_average(from_point):
     '''Apply a ramp diameter between the two points
 
-    Re-implementation of https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#232
+    Re-implementation of https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
     Contrary to the previous implementation the diameter the ramp is computed in term of
     pathlength and no longer in term of point number
     '''
@@ -92,7 +92,7 @@ def _connect_average(from_point):
 
 def _fix_downstream(section):
     '''Re-implementation of recursePullFix() available at
-    https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#66
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L66
 
     If the current diameter is below the threshold, change its value to the biggest value
     among the 1-degree children downstream diameters
@@ -124,7 +124,7 @@ def _fix_downstream(section):
 
 def _fix_in_between(section, stack, legacy):
     '''Re-implementation of
-    https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#162
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L162
 
     Fix diameters between two points with valid diameters by applying a ramp
 
@@ -154,7 +154,7 @@ def _fix_in_between(section, stack, legacy):
 
 def _fix_upstream(section, upstream_good_diameter):
     '''Re-implementation of recursePushFix() available at
-    https://bbpcode.epfl.ch/source/xref/sim/MUK/muk/Zero_Diameter_Fixer.cpp#94
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L94
 
     Reset the diameter to upstream_good_diameter if the current value and all child values
     are below threshold

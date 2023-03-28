@@ -165,7 +165,7 @@ class CutPlane(planes.HalfSpace):
         '''Find the cut points according to the legacy algorithm
 
         As implemented in:
-        https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
         '''
         if not isinstance(neuron, Morphology):
             neuron = nm.load_morphology(neuron)

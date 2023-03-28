@@ -17,7 +17,7 @@ def _tree_distance(sec1, sec2):
     Returns the number of sections between the 2 sections
 
     Reimplementation of:
-    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_axon.cpp#n35
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_axon.cpp#L35
 
     raises: if both sections are not part of the same neurite
 
@@ -62,7 +62,7 @@ def _downstream_pathlength(section):
 
     Reimplementation of the C++ function "children_length":
 
-    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n112
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/morphstats.cpp#L112
     '''
     ret = section_length(section)
     for child in section.children:
@@ -73,7 +73,7 @@ def _downstream_pathlength(section):
 def _similar_section(intact_axons, section):
     '''Use the "mirror" technique of BlueRepairSDK to find out the similar section
 
-    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_axon.cpp#n83
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_axon.cpp#L83
 
     Note:
     I have *absolutely* no clue why sorting by this metric
@@ -104,7 +104,7 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
     '''Axonal repair
 
     Reimplementation of:
-    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n727
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L727
 
     1) Find the most similar section in INTACT_SECTIONS list to SECTION
     2) Sort AXON_BRANCHES according to a similarity score to the section found at step 1

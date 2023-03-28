@@ -1,7 +1,7 @@
 '''Module for the legacy cut plane detection.
 
 As implemented in:
-https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
 '''
 import logging
 from collections import defaultdict
@@ -19,7 +19,7 @@ L = logging.getLogger(__name__)
 
 def children_ids(section):
     '''
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#111
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L111
 
     The original code returns the ids of the descendant sections
     but this implementation return the Section objects instead.
@@ -63,7 +63,7 @@ def cut_detect(neuron, cut, offset, axis):
 def internal_cut_detection(neuron, axis):
     '''As in:
 
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
 
     Use cut_detect to get the side of the half space the points live in.
     Then mark points which are children of the apical section.
@@ -102,7 +102,7 @@ def get_obliques(neuron, extended_types):
     '''
     Returns the oblique roots.
 
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#212
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L212
     '''
     return [section for section in iter_sections(neuron)
             if (extended_types[section] == RepairType.oblique and
@@ -111,7 +111,7 @@ def get_obliques(neuron, extended_types):
 
 def cut_mark(sections, cut, offset, side, axis):
     '''
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#654
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L654
     '''
     for sec in sections:
         if sec.children:
