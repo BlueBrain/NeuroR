@@ -46,6 +46,7 @@ def cut_detect(neuron, cut, offset, axis):
             sum_minus += coord
 
     if count_plus == 0 or count_minus == 0:
+        # pylint: disable=broad-exception-raised
         raise Exception("cut detection warning:one of the sides is empty. can't decide on cut side")
 
     if -sum_minus / count_minus > sum_plus / count_plus:

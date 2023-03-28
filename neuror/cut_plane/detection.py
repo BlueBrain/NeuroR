@@ -47,6 +47,7 @@ class CutPlane(planes.HalfSpace):
         elif isinstance(morphology, (str, Path)):
             self.morphology = nm.load_morphology(morphology)
         elif morphology is not None:
+            # pylint: disable=broad-exception-raised
             raise Exception(f'Unsupported morphology type: {type(morphology)}')
 
         self.bin_width = bin_width
@@ -279,6 +280,7 @@ def _minimize(x0, points, bin_width):
                                method='Nelder-Mead')
 
     if result.status:
+        # pylint: disable=broad-exception-raised
         raise Exception(result.message)
     return result.x
 

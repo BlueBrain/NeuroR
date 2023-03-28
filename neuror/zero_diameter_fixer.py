@@ -1,6 +1,7 @@
 '''Fix zero diameters
 
-Re-implementation of: https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/apps/Fix_Zero_Diameter.cpp
+Re-implementation of:
+https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/apps/Fix_Zero_Diameter.cpp
 with sections recursion instead of point recursion
 '''
 from collections import namedtuple
@@ -43,7 +44,8 @@ def _set_point_diameter(point, new_diameter):
 def _connect_average_legacy(from_point):
     '''Apply a ramp diameter between the two points
 
-    Re-implementation of https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
+    Re-implementation of
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
     '''
     count = 0
     next_point = None
@@ -65,7 +67,8 @@ def _connect_average_legacy(from_point):
 def _connect_average(from_point):
     '''Apply a ramp diameter between the two points
 
-    Re-implementation of https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
+    Re-implementation of
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
     Contrary to the previous implementation the diameter the ramp is computed in term of
     pathlength and no longer in term of point number
     '''

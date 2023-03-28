@@ -66,8 +66,8 @@ class PlaneEquation(object):
 
     def to_json(self):
         '''Returns a dict for json serialization'''
-        return dict(a=self.coefs[A], b=self.coefs[B], c=self.coefs[C], d=self.coefs[D],
-                    comment="Equation: a*X + b*Y + c*Z + d = 0")
+        return {"a": self.coefs[A], "b": self.coefs[B], "c": self.coefs[C], "d": self.coefs[D],
+                "comment": "Equation: a*X + b*Y + c*Z + d = 0"}
 
     @property
     def normal(self):
@@ -108,9 +108,9 @@ class HalfSpace(PlaneEquation):
     def to_json(self):
         '''Returns a dict for json serialization'''
         inequality = '>' if self.upward else '<'
-        return dict(a=self.coefs[A], b=self.coefs[B], c=self.coefs[C], d=self.coefs[D],
-                    upward=self.upward,
-                    comment=f"Equation: a*X + b*Y + c*Z + d {inequality} 0")
+        return {"a": self.coefs[A], "b": self.coefs[B], "c": self.coefs[C], "d": self.coefs[D],
+                "upward": self.upward,
+                "comment": f"Equation: a*X + b*Y + c*Z + d {inequality} 0"}
 
     def project_on_directed_normal(self, points):
         '''Project on the normal oriented toward the inside of the half-space'''

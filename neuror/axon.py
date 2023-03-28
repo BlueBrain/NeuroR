@@ -50,6 +50,7 @@ def _tree_distance(sec1, sec2):
         sec2 = sec2.parent
         dist += 2
         if None in {sec1, sec2}:
+            # pylint: disable=broad-exception-raised
             raise Exception(
                 f'Sections {original_sections[0]} and {original_sections[1]} '
                 'are not part of the same neurite')

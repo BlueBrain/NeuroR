@@ -247,7 +247,7 @@ def _continuation(sec, origin, params, taper, tip_radius):
     # NOTE: This is not an equiprobability uniform generator
     # It is not drawing a point inside a sphere but a cube.
     # so the probability of drawing in direction of the corners is higher
-    noise_direction = (2 * np.random.random(size=3) - 1)
+    noise_direction = 2 * np.random.random(size=3) - 1
     noise_direction /= np.linalg.norm(noise_direction)
 
     direction_ = (
@@ -385,6 +385,7 @@ class Repair(object):
 
     @staticmethod
     def validate_params(params):
+        """Validate the given parameters according to the JSON schema."""
         jsonschema.validate(params, _PARAM_SCHEMA)
 
     # pylint: disable=too-many-locals, too-many-branches
@@ -456,7 +457,7 @@ class Repair(object):
             elif type_ == RepairType.trunk:
                 L.debug('Trunk repair is not (nor has ever been) implemented')
             else:
-                raise Exception(f'Unknown type: {type_}')
+                raise Exception(f'Unknown type: {type_}')  # pylint: disable=broad-exception-raised
 
         if plot_file is not None:
             try:
@@ -713,12 +714,12 @@ class Repair(object):
         '''Compute statistics'''
         branches = self._find_intact_sub_trees()
 
-        self.info = dict(
-            intact_branching_angles=self._intact_branching_angles(branches),
-            dendritic_sections=[section for section in iter_sections(self.neuron)
-                                if section.type in {nm.APICAL_DENDRITE, nm.BASAL_DENDRITE}],
-            sholl=self._compute_sholl_data(branches),
-        )
+        self.info = {
+            "intact_branching_angles": self._intact_branching_angles(branches),
+            "dendritic_sections": [section for section in iter_sections(self.neuron)
+                                   if section.type in {nm.APICAL_DENDRITE, nm.BASAL_DENDRITE}],
+            "sholl": self._compute_sholl_data(branches),
+        }
 
     def _fill_repair_type_map(self):
         '''Assign a repair section type to each section
