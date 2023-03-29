@@ -15,6 +15,7 @@ from neurom.core import Section, Morphology
 from scipy import optimize, special
 
 from neuror.cut_plane import legacy_detection, planes
+from neuror.exceptions import NeuroRError
 
 L = logging.getLogger(__name__)
 
@@ -47,7 +48,8 @@ class CutPlane(planes.HalfSpace):
         elif isinstance(morphology, (str, Path)):
             self.morphology = nm.load_morphology(morphology)
         elif morphology is not None:
-            raise Exception(f'Unsupported morphology type: {type(morphology)}')
+            # pylint: disable=broad-exception-raised
+            raise NeuroRError(f'Unsupported morphology type: {type(morphology)}')
 
         self.bin_width = bin_width
         self.cut_leaves_coordinates = None
@@ -165,7 +167,7 @@ class CutPlane(planes.HalfSpace):
         '''Find the cut points according to the legacy algorithm
 
         As implemented in:
-        https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
         '''
         if not isinstance(neuron, Morphology):
             neuron = nm.load_morphology(neuron)
@@ -279,7 +281,8 @@ def _minimize(x0, points, bin_width):
                                method='Nelder-Mead')
 
     if result.status:
-        raise Exception(result.message)
+        # pylint: disable=broad-exception-raised
+        raise NeuroRError(result.message)
     return result.x
 
 

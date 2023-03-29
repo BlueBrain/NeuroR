@@ -1,7 +1,7 @@
 '''Module for the legacy cut plane detection.
 
 As implemented in:
-https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
 '''
 import logging
 from collections import defaultdict
@@ -12,6 +12,7 @@ from neurom import iter_sections
 from neurom.core import Section
 from neurom.core.dataformat import COLS
 
+from neuror.exceptions import NeuroRError
 from neuror.utils import RepairType, repair_type_map
 
 L = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ L = logging.getLogger(__name__)
 
 def children_ids(section):
     '''
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#111
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L111
 
     The original code returns the ids of the descendant sections
     but this implementation return the Section objects instead.
@@ -46,7 +47,10 @@ def cut_detect(neuron, cut, offset, axis):
             sum_minus += coord
 
     if count_plus == 0 or count_minus == 0:
-        raise Exception("cut detection warning:one of the sides is empty. can't decide on cut side")
+        # pylint: disable=broad-exception-raised
+        raise NeuroRError(
+            "cut detection warning:one of the sides is empty. can't decide on cut side"
+        )
 
     if -sum_minus / count_minus > sum_plus / count_plus:
         sign = 1
@@ -63,7 +67,7 @@ def cut_detect(neuron, cut, offset, axis):
 def internal_cut_detection(neuron, axis):
     '''As in:
 
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/repair.cpp#263
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
 
     Use cut_detect to get the side of the half space the points live in.
     Then mark points which are children of the apical section.
@@ -102,7 +106,7 @@ def get_obliques(neuron, extended_types):
     '''
     Returns the oblique roots.
 
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#212
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L212
     '''
     return [section for section in iter_sections(neuron)
             if (extended_types[section] == RepairType.oblique and
@@ -111,7 +115,7 @@ def get_obliques(neuron, extended_types):
 
 def cut_mark(sections, cut, offset, side, axis):
     '''
-    https://bbpcode.epfl.ch/source/xref/platform/BlueRepairSDK/BlueRepairSDK/src/helper_dendrite.cpp#654
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L654
     '''
     for sec in sections:
         if sec.children:

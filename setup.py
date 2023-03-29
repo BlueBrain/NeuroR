@@ -20,6 +20,7 @@ setup(
     license="LGPLv3",
     install_requires=[
         'click>=6.7',
+        'jsonschema',
         'matplotlib>=2.2.3',
         'morph-tool>=2.9.0,<3.0',
         'morphio>=3.0.0,<4.0',
@@ -56,6 +57,8 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
     use_scm_version=True,

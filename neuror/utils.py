@@ -14,7 +14,7 @@ class RepairType(Enum):
     '''The types used for the repair.
 
     based on
-    https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.h#n22
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.h#L22
     '''
     trunk = 0
     tuft = 1

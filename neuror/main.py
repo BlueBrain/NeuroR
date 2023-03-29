@@ -2,6 +2,7 @@
 
 It is based on the BlueRepairSDK's implementation
 '''
+import copy
 import logging
 from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
@@ -9,6 +10,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import jsonschema
 import morphio
 import neurom as nm
 import numpy as np
@@ -23,17 +25,68 @@ from nptyping import NDArray, Shape, Float
 from scipy.spatial.distance import cdist
 
 from neuror import axon, cut_plane
+from neuror.exceptions import NeuroRError
 from neuror.utils import RepairType, direction, repair_type_map, rotation_matrix, section_length
 
 _PARAMS = {
     'seg_length': 5.0,  # lenghts of new segments
-    'sholl_layer_size': 10,  # resoluion of the shll profile
+    'sholl_layer_size': 10,  # resolution of the sholl profile
     'noise_continuation': 0.5,  # together with seg_length, this controls the tortuosity
     'soma_repulsion': 0.2,  # if 0, previous section direction, if 1, radial direction
     'bifurcation_angle': 20,  # noise amplitude in degree around mean bif angle on the cell
     'path_length_ratio': 0.5,  # a smaller value will make a strornger taper rate
     'children_diameter_ratio': 0.8,  # 1: child diam = parent diam, 0: child diam = tip diam
     'tip_percentile': 25,  # percentile of tip radius distributions to use as tip radius
+}
+
+_PARAM_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "seg_length": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "sholl_layer_size": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "noise_continuation": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "soma_repulsion": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "bifurcation_angle": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "path_length_ratio": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "children_diameter_ratio": {
+            "type": "number",
+            "minimum": 0,
+        },
+        "tip_percentile": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+        }
+    },
+    "additionalProperties": False,
+    "required": [
+        "seg_length",
+        "sholl_layer_size",
+        "noise_continuation",
+        "soma_repulsion",
+        "bifurcation_angle",
+        "path_length_ratio",
+        "children_diameter_ratio",
+        "tip_percentile",
+    ]
 }
 
 # Epsilon can not be to small otherwise leaves stored in json files
@@ -86,7 +139,7 @@ def _get_sholl_proba(sholl_data, section_type, sholl_layer, pseudo_order):
     Returns:
         Dict[Action, float]: probability of each action
 
-    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n398  # noqa, pylint: disable=line-too-long
+    Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#n398  # noqa, pylint: disable=line-too-long
     Note2: OrderedDict ensures the reproducibility of np.random.choice outcome
     '''
 
@@ -102,7 +155,7 @@ def _get_sholl_proba(sholl_data, section_type, sholl_layer, pseudo_order):
         action_counts = data_layer[pseudo_order]
     except KeyError:
         # No data for this order. Average on all orders for this layer
-        # As done in https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n426  # noqa, pylint: disable=line-too-long
+        # As done in https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#n426  # noqa, pylint: disable=line-too-long
 
         action_counts = Counter()
         for data in data_layer.values():
@@ -125,7 +178,7 @@ def _grow_until_sholl_sphere(
 ):
     '''Grow until reaching next sholl layer
 
-    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n363  # noqa, pylint: disable=line-too-long
+    Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#n363  # noqa, pylint: disable=line-too-long
     '''
     backwards_sections = 0
     while _get_sholl_layer(
@@ -155,7 +208,7 @@ def _branching_angles(section, order_offset=0):
     '''Return a list of 2-tuples. The first element is the branching order and the second one is
     the angles between the direction of the section and its children's ones
 
-    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n194  # noqa, pylint: disable=line-too-long
+    Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/morphstats.cpp#n194  # noqa, pylint: disable=line-too-long
     '''
     if section_length(section) < EPSILON:
         return []
@@ -175,7 +228,7 @@ def _branching_angles(section, order_offset=0):
 def _continuation(sec, origin, params, taper, tip_radius):
     '''Continue growing the section
 
-    Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n241  # noqa, pylint: disable=line-too-long
+    Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L241  # noqa, pylint: disable=line-too-long
     '''
     # The following lines is from BlueRepairSDK's code but I'm not
     # convinced by its relevance
@@ -197,7 +250,7 @@ def _continuation(sec, origin, params, taper, tip_radius):
     # NOTE: This is not an equiprobability uniform generator
     # It is not drawing a point inside a sphere but a cube.
     # so the probability of drawing in direction of the corners is higher
-    noise_direction = (2 * np.random.random(size=3) - 1)
+    noise_direction = 2 * np.random.random(size=3) - 1
     noise_direction /= np.linalg.norm(noise_direction)
 
     direction_ = (
@@ -238,7 +291,8 @@ class Repair(object):
                  legacy_detection: bool = False,
                  repair_flags: Optional[Dict[RepairType, bool]] = None,
                  apical_point: NDArray[Shape["3"], Float] = None,
-                 params: Dict = None):
+                 params: Dict = None,
+                 validate_params=False):
         '''Repair the input morphology
 
         The repair algorithm uses sholl analysis of intact branches to grow new branches from cut
@@ -246,7 +300,7 @@ class Repair(object):
         params dictionary. By default, they are:
         _PARAMS = {
             'seg_length': 5.0,  # lenghts of new segments
-            'sholl_layer_size': 10,  # resoluion of the shll profile
+            'sholl_layer_size': 10,  # resolution of the sholl profile
             'noise_continuation': 0.5,  # together with seg_length, this controls the tortuosity
             'soma_repulsion': 0.2,  # if 0, previous section direction, if 1, radial direction
             'bifurcation_angle': 20,  # noise amplitude in degree around mean bif angle on the cell
@@ -268,7 +322,7 @@ class Repair(object):
                 if apical_point == -1, no automatic detection will be tried
             params: repair internal parameters (see comments in code for details)
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n469  # noqa, pylint: disable=line-too-long
+        Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L469  # noqa, pylint: disable=line-too-long
         '''
         np.random.seed(seed)
         self.legacy_detection = legacy_detection
@@ -276,7 +330,12 @@ class Repair(object):
         self.axon_donors = axons or []
         self.donated_intact_axon_sections = []
         self.repair_flags = repair_flags or {}
-        self.params = params if params is not None else _PARAMS
+        self.params = copy.deepcopy(_PARAMS)
+
+        if params is not None:
+            self.params.update(params)
+        if validate_params:
+            self.validate_params(self.params)
 
         CutPlane = cut_plane.CutPlane
         if legacy_detection:
@@ -331,6 +390,11 @@ class Repair(object):
             * self.params["seg_length"]
             / max_path_length
         )
+
+    @staticmethod
+    def validate_params(params):
+        """Validate the given parameters according to the JSON schema."""
+        jsonschema.validate(params, _PARAM_SCHEMA)
 
     # pylint: disable=too-many-locals, too-many-branches
     def run(self,
@@ -401,7 +465,7 @@ class Repair(object):
             elif type_ == RepairType.trunk:
                 L.debug('Trunk repair is not (nor has ever been) implemented')
             else:
-                raise Exception(f'Unknown type: {type_}')
+                raise NeuroRError(f'Unknown type: {type_}')
 
         if plot_file is not None:
             try:
@@ -420,7 +484,7 @@ class Repair(object):
         Root obliques are obliques with a section parent of type 'trunk'
 
         Note: based on
-        https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n193
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#n193
         '''
         root_obliques = (section for section in iter_sections(self.neuron)
                          if (self.repair_type_map[section] == RepairType.oblique and
@@ -482,7 +546,7 @@ class Repair(object):
 
         If no data are available, fallback on aggregate data
 
-        ..note:: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n329  # noqa, pylint: disable=line-too-long
+        ..note:: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#n329  # noqa, pylint: disable=line-too-long
         '''
         angles = self.info['intact_branching_angles'][section_type]
         return angles[branching_order] or list(chain.from_iterable(angles.values()))
@@ -528,7 +592,7 @@ class Repair(object):
             branches: a collection of Neurite or Section that will be traversed
 
         Note: This is based on
-        https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/morphstats.cpp#n93
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/morphstats.cpp#n93
         '''
         data = defaultdict(lambda: defaultdict(dict))
 
@@ -572,7 +636,7 @@ class Repair(object):
     def _bifurcation(self, section, order_offset):
         '''Create 2 children at the end of the current section
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n287  # noqa, pylint: disable=line-too-long
+        Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#n287  # noqa, pylint: disable=line-too-long
         '''
         current_diameter = section.points[-1, COLS.R] * 2
 
@@ -613,7 +677,7 @@ class Repair(object):
             - create a bifurcation
             - terminate the growth
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/helper_dendrite.cpp#n387  # noqa, pylint: disable=line-too-long
+        Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#n387  # noqa, pylint: disable=line-too-long
         '''
         if (self.repair_type_map[section] == RepairType.tuft and
                 _y_cylindrical_extent(section) > self.max_y_cylindrical_extent):
@@ -658,17 +722,17 @@ class Repair(object):
         '''Compute statistics'''
         branches = self._find_intact_sub_trees()
 
-        self.info = dict(
-            intact_branching_angles=self._intact_branching_angles(branches),
-            dendritic_sections=[section for section in iter_sections(self.neuron)
-                                if section.type in {nm.APICAL_DENDRITE, nm.BASAL_DENDRITE}],
-            sholl=self._compute_sholl_data(branches),
-        )
+        self.info = {
+            "intact_branching_angles": self._intact_branching_angles(branches),
+            "dendritic_sections": [section for section in iter_sections(self.neuron)
+                                   if section.type in {nm.APICAL_DENDRITE, nm.BASAL_DENDRITE}],
+            "sholl": self._compute_sholl_data(branches),
+        }
 
     def _fill_repair_type_map(self):
         '''Assign a repair section type to each section
 
-        Note: based on https://bbpcode.epfl.ch/browse/code/platform/BlueRepairSDK/tree/BlueRepairSDK/src/repair.cpp#n242  # noqa, pylint: disable=line-too-long
+        Note: based on https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#n242  # noqa, pylint: disable=line-too-long
         '''
         self.repair_type_map = repair_type_map(self.neuron, self.apical_section)
 
@@ -714,9 +778,6 @@ def repair(inputfile: Path,  # pylint: disable=too-many-arguments
 
     if axons is None:
         axons = []
-
-    if params is None:
-        params = _PARAMS
 
     obj = Repair(inputfile, axons=axons, seed=seed, cut_leaves_coordinates=cut_leaves_coordinates,
                  legacy_detection=legacy_detection, repair_flags=repair_flags,

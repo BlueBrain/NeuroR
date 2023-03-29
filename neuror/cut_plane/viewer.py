@@ -73,14 +73,15 @@ def create_plane(pos, quat):
     y = [[positif_x[1], positif_y[1]], [negatif_y[1], negatif_x[1]]]
     z = [[positif_x[2], positif_y[2]], [negatif_y[2], negatif_x[2]]]
 
-    return dict(
-        z=z,
-        x=x,
-        y=y,
-        showscale=False,
-        type='surface',
-        surfacecolor=['green', 'green'], opacity=1
-    )
+    return {
+        "z": z,
+        "x": x,
+        "y": y,
+        "showscale": False,
+        "type": "surface",
+        "surfacecolor": ["green", "green"],
+        "opacity": 1,
+    }
 
 
 ROT_X, ROT_Y, ROT_Z = 4, 45, -21

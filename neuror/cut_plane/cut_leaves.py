@@ -79,7 +79,7 @@ def find_cut_leaves(
     # create half spaces
     searched_axes = [axis.upper() for axis in searched_axes]
     half_spaces = [
-        HalfSpace(int(axis == "X"), int(axis == "Y"), int(axis == "Z"), 0, upward=(side > 0))
+        HalfSpace(int(axis == "X"), int(axis == "Y"), int(axis == "Z"), 0, upward=side > 0)
         for axis, side in product(searched_axes, searched_half_spaces)
     ]
 
