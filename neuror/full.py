@@ -1,6 +1,4 @@
-'''
-The module to run the full repair
-'''
+'''The module to run the full repair.'''
 import logging
 from pathlib import Path
 
@@ -13,7 +11,7 @@ L = logging.getLogger('neuror')
 
 
 def repair_all(input_dir, output_dir, seed=0, axons=None, cut_points_dir=None, plots_dir=None):
-    '''Repair all morphologies in input folder'''
+    '''Repair all morphologies in input folder.'''
     for inputfilename in iter_morphology_files(input_dir):
         outfilename = Path(output_dir, inputfilename.name)
         if cut_points_dir:

@@ -25,8 +25,10 @@ DEFAULT_WINDOW_HALF_LENGTH_PATH = 8
 
 
 def _get_principal_direction(points):
-    '''Return the principal direction of a point cloud
-    It is the eigen vector of the covariance matrix with the highest eigen value'''
+    '''Return the principal direction of a point cloud.
+
+    It is the eigen vector of the covariance matrix with the highest eigen value.
+    '''
 
     X = np.copy(np.asarray(points))
     X -= np.mean(X, axis=0)
@@ -36,7 +38,7 @@ def _get_principal_direction(points):
 
 
 def _unravel_section(section, window_half_length, soma, legacy_behavior, use_path_length):
-    '''Unravel a section using number of adjacent points as window_half_length'''
+    '''Unravel a section using number of adjacent points as window_half_length.'''
     # pylint: disable=too-many-locals
     points = section.points
     if legacy_behavior and section.is_root and len(soma.points) > 1:
@@ -89,16 +91,17 @@ def _unravel_section(section, window_half_length, soma, legacy_behavior, use_pat
 
 def unravel(filename, window_half_length=None,
             legacy_behavior=False, use_path_length=True):
-    '''Return an unravelled neuron
+    '''Return an unravelled neuron.
 
     Segment are unravelled iteratively
     Each segment direction is replaced by the averaged direction in a sliding window
     around this segment, preserving the original segment length.
     The start position of the new segment is the end of the latest unravelled segment
 
-    Based initially on:
-    DOI: 10.7551/mitpress/9780262013277.001.0001
-    Section: 9.2 Repair of Neuronal Dendrites
+    .. note::
+        Based initially on: DOI: 10.7551/mitpress/9780262013277.001.0001
+
+        Section: 9.2 Repair of Neuronal Dendrites
 
     Args:
         filename (str): the neuron to unravel
@@ -109,9 +112,9 @@ def unravel(filename, window_half_length=None,
             and correspond to number of points on each side of the window.
 
     Returns:
-        a tuple (morphio.mut.Morphology, dict) where first item is the unravelled
-            morphology and the second one is the mapping of each point coordinate
-            before and after unravelling
+        tuple[morphio.mut.Morphology, pandas.DataFrame]: a tuple where first item is the unravelled
+        morphology and the second one is the mapping of each point coordinate
+        before and after unravelling
     '''
     morph = morphio.Morphology(filename, options=morphio.Option.nrn_order)
     new_morph = morphio.mut.Morphology(morph, options=morphio.Option.nrn_order)  # noqa, pylint: disable=no-member
@@ -145,8 +148,13 @@ def unravel(filename, window_half_length=None,
 
 
 def unravel_plane(plane, mapping):
-    '''Return a new CutPlane object where the cut-leaves
-    position has been updated after unravelling'''
+    '''Return a new :class:`~neuror.cut_plane.detection.CutPlane` object where the cut-leaves
+    position has been updated after unravelling.
+
+    Args:
+        plane (CutPlane): the plane
+        mapping (pandas.DataFrame): the mapping
+    '''
     leaves = plane.cut_leaves_coordinates
 
     if not np.any(leaves):
@@ -166,8 +174,7 @@ def unravel_all(raw_dir, unravelled_dir,
                 raw_planes_dir,
                 unravelled_planes_dir,
                 window_half_length=None):
-    '''Repair all morphologies in input folder
-    '''
+    '''Repair all morphologies in input folder.'''
     if not os.path.exists(raw_planes_dir):
         raise NeuroRError(f'{raw_planes_dir} does not exist')
 

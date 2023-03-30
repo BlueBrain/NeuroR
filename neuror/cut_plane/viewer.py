@@ -1,5 +1,5 @@
 '''App to find cut planes with arbitrary cut planes orientations
-with the help of a manual hint
+with the help of a manual hint.
 
 Related to https://bbpteam.epfl.ch/project/issues/browse/NGV-85
 '''
@@ -34,10 +34,10 @@ BIN_WIDTH = 10
 
 
 class NumpyEncoder(json.JSONEncoder):
-    '''JSON encoder that handles numpy types
+    '''JSON encoder that handles numpy types.
 
-    In python3, numpy.dtypes don't serialize to correctly, so a custom converter
-    is needed.
+    In python3, `numpy types <https://numpy.org/doc/stable/user/basics.types.html>`_ don't
+    serialize to correctly, so a custom converter is needed.
     '''
 
     def default(self, o):  # pylint: disable=method-hidden
@@ -51,16 +51,14 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def create_plane(pos, quat):
-    """ Create a 3d plane using a center position and a quaternion for orientation
+    """Create a 3d plane using a center position and a quaternion for orientation.
 
     Args :
         pos: x,y,z position of the plane's center (array([x,y,z]))
         quat: quaternion representing the orientations (Quaternion)
-        size_multiplier: plane size in space coordinates (float)
-        opacity: set the opacity value (float)
 
     Returns :
-        A square surface to the plotly format
+        dict: A square surface to the plotly format
     """
 
     length = np.linalg.norm(BBOX[1] - BBOX[0]) / 2.
@@ -162,7 +160,7 @@ NEURON = FIGURE = BBOX = None
 
 
 def set_neuron(filename):
-    '''Globally loads the neuron'''
+    '''Globally loads the neuron.'''
     global NEURON, FIGURE, BBOX  # pylint: disable=global-statement
     NEURON = load_morphology(filename)
     FIGURE = NeuronBuilder(NEURON, '3d').get_figure()
@@ -184,7 +182,7 @@ def set_neuron(filename):
 
 )
 def display_click_data(rot_x, rot_y, rot_z, transl_x, transl_y, transl_z, hide, layout):
-    '''callback that redraw everything when sliders are changed'''
+    '''Callback that redraw everything when sliders are changed.'''
     qx = Quaternion(axis=[1, 0, 0], angle=rot_x / 180. * np.pi)
     qy = Quaternion(axis=[0, 1, 0], angle=rot_y / 180. * np.pi)
     qz = Quaternion(axis=[0, 0, 1], angle=rot_z / 180. * np.pi)
@@ -213,7 +211,7 @@ def display_click_data(rot_x, rot_y, rot_z, transl_x, transl_y, transl_z, hide, 
         Input('translate-z-slider', 'value'),
     ])
 def update_output(rot_x, rot_y, rot_z, transl_x, transl_y, transl_z):
-    '''Update histo when sliders are changed'''
+    '''Update histo when sliders are changed.'''
     transformations = [rot_x, rot_y, rot_z, transl_x, transl_y, transl_z]
     bin_width = 10
     cut_plane = CutPlane.from_rotations_translations(transformations, NEURON, bin_width)
@@ -264,7 +262,7 @@ def update_output(rot_x, rot_y, rot_z, transl_x, transl_y, transl_z):
     ]
 )
 def optimize(n_clicks, rot_x, rot_y, rot_z, transl_x, transl_y, transl_z):
-    '''Optimize cut plane parameters'''
+    '''Optimize cut plane parameters.'''
     if not n_clicks:
         return rot_x, rot_y, rot_z, transl_x, transl_y, transl_z
     points = np.array([point
@@ -280,7 +278,7 @@ def optimize(n_clicks, rot_x, rot_y, rot_z, transl_x, transl_y, transl_z):
     Output('rotate-x-slider', 'value'),
     [Input('optimized', 'data-*')])
 def update_post_optim_x_rotate(params):
-    '''callback'''
+    '''Dash callback.'''
     return params[0]
 
 
@@ -288,7 +286,7 @@ def update_post_optim_x_rotate(params):
     Output('rotate-y-slider', 'value'),
     [Input('optimized', 'data-*')])
 def update_post_optim_y_rotate(params):
-    '''callback'''
+    '''Dash callback.'''
     return params[1]
 
 
@@ -296,7 +294,7 @@ def update_post_optim_y_rotate(params):
     Output('rotate-z-slider', 'value'),
     [Input('optimized', 'data-*')])
 def update_post_optim_z_rotate(params):
-    '''callback'''
+    '''Dash callback.'''
     return params[2]
 
 
@@ -304,7 +302,7 @@ def update_post_optim_z_rotate(params):
     Output('translate-x-slider', 'value'),
     [Input('optimized', 'data-*')])
 def update_post_optim_x_translate(params):
-    '''callback'''
+    '''Dash callback.'''
     return params[3]
 
 
@@ -312,7 +310,7 @@ def update_post_optim_x_translate(params):
     Output('translate-y-slider', 'value'),
     [Input('optimized', 'data-*')])
 def update_post_optim_y_translate(params):
-    '''callback'''
+    '''Dash callback.'''
     return params[4]
 
 
@@ -320,7 +318,7 @@ def update_post_optim_y_translate(params):
     Output('translate-z-slider', 'value'),
     [Input('optimized', 'data-*')])
 def update_post_optim_z_translate(params):
-    '''callback'''
+    '''Dash callback.'''
     return params[5]
 
 
@@ -335,7 +333,7 @@ def update_post_optim_z_translate(params):
      State('translate-z-slider', 'value'),
      State('export-path-input', 'value')])
 def export(n_clicks, rot_x, rot_y, rot_z, transl_x, transl_y, transl_z, output_path):
-    '''Write the final file cut-plane.json to disk'''
+    '''Write the final file cut-plane.json to disk.'''
     if not n_clicks:
         return
     plane = CutPlane.from_rotations_translations(

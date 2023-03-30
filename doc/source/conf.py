@@ -28,6 +28,7 @@ extensions = [
     'sphinx_autorun',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
@@ -37,10 +38,21 @@ extensions = [
 todo_include_todos = True
 suppress_warnings = ["ref.python"]
 autosummary_generate = True
-autosummary_imported_members = True
+autosummary_imported_members = False
 autodoc_default_options = {
     'members': True,
     'show-inheritance': True,
+    'private-members': (
+        '_downstream_pathlength,'  # from axon
+        '_similar_section,'  # from axon
+        '_tree_distance,'  # from axon
+        '_get_sholl_proba,'  # from main
+        '_sanitize_one,'  # from sanitize
+        '_fix_downstream,'  # from zero_diameter_fixer
+        '_fix_in_between,'  # from zero_diameter_fixer
+        '_fix_upstream,'  # from zero_diameter_fixer
+        '_get_cut_leaves,'  # from cut_plane.cut_leaves
+    )
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -63,6 +75,14 @@ html_show_sourcelink = False
 html_theme_options = {
     "repo_url": "https://github.com/BlueBrain/NeuroR/",
     "repo_name": "BlueBrain/NeuroR"
+}
+
+intersphinx_mapping = {
+    "morphio": ("https://morphio.readthedocs.io/en/latest", None),
+    "neurom": ("https://neurom.readthedocs.io/en/stable", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs", None),
+    "python": ("https://docs.python.org/3", None),
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

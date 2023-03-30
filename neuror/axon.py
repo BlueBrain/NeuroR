@@ -14,19 +14,27 @@ L = logging.getLogger('neuror')
 
 
 def _tree_distance(sec1, sec2):
-    '''
-    Returns the number of sections between the 2 sections
+    '''Returns the number of sections between the 2 sections.
 
-    Reimplementation of:
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_axon.cpp#L35
+    Args:
+        sec1 (~neurom.core.morphology.Section): the first section
+        sec2 (~neurom.core.morphology.Section): the second section
 
-    raises: if both sections are not part of the same neurite
+    Return:
+        int: The number of sections
 
-    Note:
-    I think the implementation of tree distance is true to the original
-    but I would expect the tree distance of 2 children with the same parent to be 2 and not 1
-    Because in the current case, (root, child1) and (child1, child2) have the
-    same tree distance and it should probably not be the case
+    Raises:
+        NeuroRError: if both sections are not part of the same neurite.
+
+    .. note::
+        This is a re-implementation of:
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_axon.cpp#L35
+
+    .. note::
+        I think the implementation of tree distance is ``True`` to the original
+        but I would expect the tree distance of 2 children with the same parent to be 2 and not 1
+        Because in the current case, ``(root, child1)`` and ``(child1, child2)`` have the
+        same tree distance and it should probably not be the case
     '''
     original_sections = (sec1, sec2)
     dist = 0
@@ -59,11 +67,11 @@ def _tree_distance(sec1, sec2):
 
 
 def _downstream_pathlength(section):
-    '''The sum of this section and its descendents's pathlengths
+    '''The sum of this section and its descendents's pathlengths.
 
-    Reimplementation of the C++ function "children_length":
-
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/morphstats.cpp#L112
+    .. note::
+        This is a re-implementation of the C++ function "children_length":
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/morphstats.cpp#L112
     '''
     ret = section_length(section)
     for child in section.children:
@@ -72,12 +80,14 @@ def _downstream_pathlength(section):
 
 
 def _similar_section(intact_axons, section):
-    '''Use the "mirror" technique of BlueRepairSDK to find out the similar section
+    '''Use the "mirror" technique of BlueRepairSDK to find out the similar section.
 
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_axon.cpp#L83
+    .. note::
+        This is a re-implementation of:
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_axon.cpp#L83
 
-    Note:
-    I have *absolutely* no clue why sorting by this metric
+    .. warning::
+        I have **absolutely** no clue why sorting by this metric
     '''
     dists = []
     for root in intact_axons:
@@ -91,7 +101,7 @@ def _similar_section(intact_axons, section):
 
 
 def _sort_intact_sections_by_score(section, similar_section, axon_branches):
-    '''Returns an array of sections sorted by their score'''
+    '''Returns an array of sections sorted by their score.'''
     reference = _downstream_pathlength(similar_section) - section_length(section)
 
     def score(branch):
@@ -102,10 +112,7 @@ def _sort_intact_sections_by_score(section, similar_section, axon_branches):
 
 
 def repair(morphology, section, intact_sections, axon_branches, used_axon_branches, y_extent):
-    '''Axonal repair
-
-    Reimplementation of:
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L727
+    '''Axonal repair.
 
     1) Find the most similar section in INTACT_SECTIONS list to SECTION
     2) Sort AXON_BRANCHES according to a similarity score to the section found at step 1
@@ -115,22 +122,25 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
     5) Mark this section as used and do not re-use it
 
     Args:
-        morphology (neurom.Neuron): the morphology to repair
-        section (neurom.core._neuron.Section): the section to repair
-        intact_sections (List[Section]): a list of all sections from this morphology
-            that are part of an intact subtree. Note: these section won't be grafted
-        axon_branches (List[Section]): a list a intact sections coming from donor morphologies
-            These are the sections that will be appended
+        morphology (~neurom.core.morphology.Morphology): the morphology to repair
+        section (neurom.core.morphology.Section): the section to repair
+        intact_sections (List[~neurom.core.morphology.Section]): a list of all sections from this
+            morphology that are part of an intact subtree. Note: these section won't be grafted.
+        axon_branches (List[neurom.core.morphology.Section]): a list a intact sections coming from
+            donor morphologies. These are the sections that will be appended
 
-    ..note::
-       The original code used to have more parameters. In the context of the bbp-morphology-workflow
-       it seems that some of the parameters were always used with the same value. This
-       reimplementation assumes the following BlueRepairSDK options:
+    .. note::
+        This is a re-implementation of:
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L727
 
-        - --overlap=true
-        - --incremental=false
-        - --restrict=true
-        - --distmethod=mirror'
+        The original code used to have more parameters. In the context of the
+        bbp-morphology-workflow it seems that some of the parameters were always used with the
+        same value. This re-implementation assumes the following BlueRepairSDK options:
+
+        - ``--overlap=true``
+        - ``--incremental=false``
+        - ``--restrict=true``
+        - ``--distmethod=mirror``
     '''
 
     if not intact_sections:

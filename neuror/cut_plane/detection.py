@@ -21,11 +21,11 @@ L = logging.getLogger(__name__)
 
 
 class CutPlane(planes.HalfSpace):
-    '''The cut plane class
+    '''The cut plane class.
 
     It is composed of a HalfSpace and a morphology
     The morphology is part of the HalfSpace, the cut space is
-    the complementary HalfSpace
+    the complementary HalfSpace.
     '''
 
     def __init__(self, coefs: List[float],
@@ -35,9 +35,9 @@ class CutPlane(planes.HalfSpace):
         '''Cut plane ctor.
 
         Args:
-            coefs: the [abcd] coefficients of a plane equation: a X + b Y + c Z + d = 0
-            upward: if true, the morphology points satisfy: a X + b Y + c Z + d > 0
-                    else, they satisfy: a X + b Y + c Z + d < 0
+            coefs: the [abcd] coefficients of a plane equation: ``a X + b Y + c Z + d = 0``
+            upward: if ``True``, the morphology points satisfy: ``a X + b Y + c Z + d > 0``
+                    else, they satisfy: ``a X + b Y + c Z + d < 0``
             morphology: the morphology
             bin_width: the bin width
         '''
@@ -48,7 +48,6 @@ class CutPlane(planes.HalfSpace):
         elif isinstance(morphology, (str, Path)):
             self.morphology = nm.load_morphology(morphology)
         elif morphology is not None:
-            # pylint: disable=broad-exception-raised
             raise NeuroRError(f'Unsupported morphology type: {type(morphology)}')
 
         self.bin_width = bin_width
@@ -62,10 +61,13 @@ class CutPlane(planes.HalfSpace):
 
     @classmethod
     def from_json(cls, cut_plane_obj, morphology=None):
-        '''Factory constructor from a JSON file
+        '''Factory constructor from a JSON file.
 
-        cut_plane_obj (dict|str|pathlib.Path): a cut plane
-            It can be a python dictionary or a path to a json file that contains one
+        Args:
+            cut_plane_obj (dict|str|pathlib.Path): a cut plane
+                It can be a python dictionary or a path to a json file that contains one
+            morphology (~neurom.core.morphology.Morphology): the morphology passed to the
+                :class:`CutPlane` object
         '''
         assert isinstance(cut_plane_obj, (str, dict, Path))
 
@@ -95,8 +97,8 @@ class CutPlane(planes.HalfSpace):
              searched_axes=('X', 'Y', 'Z'),
              searched_half_spaces=(-1, 1),
              fix_position=None):
-        """
-        Find and return the cut plane that is oriented along X, Y or Z.
+        """Find and return the cut plane that is oriented along X, Y or Z.
+
         6 potential positions are considered: for each axis, they correspond
         to the coordinate of the first and last point of the neuron.
 
@@ -114,7 +116,7 @@ class CutPlane(planes.HalfSpace):
            corresponds to the cut plane
 
         Args:
-            neuron (Neuron|str|pathlib.Path): a Neuron object or path
+            neuron (~neurom.core.morphology.Morphology|str|pathlib.Path): a morphology
             bin_width: The size of the binning
 
             display: where or not to display the control plots
@@ -281,7 +283,6 @@ def _minimize(x0, points, bin_width):
                                method='Nelder-Mead')
 
     if result.status:
-        # pylint: disable=broad-exception-raised
         raise NeuroRError(result.message)
     return result.x
 
@@ -305,7 +306,7 @@ def plot(neuron, result, inline=False):
     '''Plot the neuron, the cut plane and the cut leaves.
 
     Args:
-        neuron (Neuron): the neuron to be plotted
+        neuron (~neurom.core.morphology.Morphology): the neuron to be plotted
         result (dict): the cut plane object in dictionary form
         inline (bool): if True, plot as an interactive plot (for example in a Jupyter notebook)
     '''

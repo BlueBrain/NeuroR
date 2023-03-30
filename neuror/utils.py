@@ -13,8 +13,9 @@ L = logging.getLogger('neuror')
 class RepairType(Enum):
     '''The types used for the repair.
 
-    based on
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.h#L22
+    .. note::
+        This class is based on
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.h#L22
     '''
     trunk = 0
     tuft = 1
@@ -24,7 +25,7 @@ class RepairType(Enum):
 
 
 def repair_type_map(neuron, apical_section):
-    '''Return a dict of extended types'''
+    '''Return a dict of extended types.'''
     extended_types = {}
     for section in iter_sections(neuron):
         if section.type == SectionType.apical_dendrite:
@@ -45,7 +46,7 @@ def repair_type_map(neuron, apical_section):
 
 
 def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
+    """Returns the unit vector of the vector."""
     return vector / np.linalg.norm(vector)
 
 
@@ -66,7 +67,7 @@ def rotation_matrix(axis, theta):  # pylint: disable=too-many-locals
 
 
 def angle_between(v1, v2):
-    """Returns the angle in radians between vectors 'v1' and 'v2'::
+    """Returns the angle in radians between vectors 'v1' and 'v2'.
 
     ..code::
 
@@ -83,10 +84,10 @@ def angle_between(v1, v2):
 
 
 class RepairJSON(json.JSONEncoder):
-    '''JSON encoder that handles numpy types
+    '''JSON encoder that handles numpy types.
 
-    In python3, numpy.dtypes don't serialize to correctly, so a custom converter
-    is needed.
+    In python3, `numpy types <https://numpy.org/doc/stable/user/basics.types.html>`_ don't
+    serialize to correctly, so a custom converter is needed.
     '''
 
     def default(self, o):  # pylint: disable=method-hidden
@@ -102,7 +103,7 @@ class RepairJSON(json.JSONEncoder):
 
 
 def direction(section):
-    '''Return the direction vector of a section
+    '''Return the direction vector of a section.
 
     Args:
         section (morphio.mut.Section): section
@@ -111,7 +112,7 @@ def direction(section):
 
 
 def section_length(section):
-    '''Section length
+    '''Section length.
 
     Args:
         section (morphio.mut.Section): section
