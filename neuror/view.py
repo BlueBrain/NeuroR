@@ -1,4 +1,4 @@
-'''Generate output plots'''
+'''Generate output plots.'''
 import logging
 import os
 from datetime import datetime
@@ -25,7 +25,7 @@ matplotlib.use('Agg')
 
 
 def get_common_bounding_box(neurons):
-    '''Returns the bounding box that wraps all neurons'''
+    '''Returns the bounding box that wraps all neurons.'''
     common_bbox = geom.bounding_box(neurons[0])
     for neuron in neurons[1:]:
         bbox = geom.bounding_box(neuron)
@@ -36,7 +36,7 @@ def get_common_bounding_box(neurons):
 
 
 def plot(neuron, bbox, subplot, title, **kwargs):
-    '''2D neuron plot'''
+    '''2D neuron plot.'''
     ax = plt.subplot(subplot, facecolor='w', aspect='equal')
     xlim = (bbox[0][0], bbox[1][0])
     ylim = (bbox[0][2], bbox[1][2])
@@ -62,7 +62,7 @@ def _neuron_subplot(folders, f, pp, subplot, titles):
 
 
 def view_all(folders, titles, output_pdf=None):
-    '''Generate PDF report'''
+    '''Generate PDF report.'''
     if not output_pdf:
         path = './plots'
         output_pdf = os.path.join(path, datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.pdf')
@@ -87,9 +87,10 @@ def view_all(folders, titles, output_pdf=None):
 
 
 def plot_repaired_neuron(neuron, cut_points, plot_file=None):
-    ''' Draw a neuron using plotly
+    ''' Draw a neuron using plotly.
 
-    Repaired section are displayed with a different colors'''
+    Repaired section are displayed with a different colors.
+    '''
 
     for mode in ['3d', 'xz']:
         builder = NeuronBuilder(neuron, mode, neuron.name, False)

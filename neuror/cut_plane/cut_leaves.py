@@ -1,5 +1,8 @@
 """Detect cut leaves with new algo."""
 from itertools import product
+from typing import List
+
+import morphio
 import numpy as np
 from neurom.core.dataformat import COLS
 from neuror.cut_plane.planes import HalfSpace
@@ -15,8 +18,8 @@ def _get_cut_leaves(half_space, morphology, bin_width, percentile_threshold):
     Args:
         half_space (planes.HalfSpace): half space to search cut points
         morphology (morphio.Morphology): morphology
-        bin_width: the bin width
-        percentile_threshold: the minimum percentile of leaves counts in bins
+        bin_width (float): the bin width
+        percentile_threshold (float): the minimum percentile of leaves counts in bins
 
     Returns:
         leaves: ndarray of dim (n, 3) with cut leaves coordinates
@@ -46,11 +49,11 @@ def _get_cut_leaves(half_space, morphology, bin_width, percentile_threshold):
 
 
 def find_cut_leaves(
-    morph,
-    bin_width=3,
-    percentile_threshold=70.0,
-    searched_axes=("Z",),
-    searched_half_spaces=(-1, 1),
+    morph: morphio.Morphology,
+    bin_width: float = 3,
+    percentile_threshold: float = 70.0,
+    searched_axes: List[str] = ("Z",),
+    searched_half_spaces: List[float] = (-1, 1),
 ):
     """Find all cut leaves for cuts with strong signal for real cut.
 
@@ -66,7 +69,7 @@ def find_cut_leaves(
     Note that all cuts can be valid, thus cut leaves can be on both sides.
 
     Args:
-        morph (morphio.Morphology): morphology
+        morph: morphology
         bin_width: the bin width
         percentile_threshold: the minimum percentile of leaves counts in bins
         searched_axes: x, y or z. Specify the half space for which to search the cut leaves

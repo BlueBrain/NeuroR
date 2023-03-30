@@ -3,7 +3,7 @@ import logging
 from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-from tqdm import tqdm
+from typing import Dict, List, Tuple
 
 import numpy as np
 from morphio import MorphioError, SomaType, set_maximum_warnings
@@ -12,6 +12,7 @@ from neurom.check import morphology_checks as mc
 from neurom.check import CheckResult
 from neurom.apps.annotate import annotate
 from neurom import load_morphology
+from tqdm import tqdm
 
 from neuror.exceptions import CorruptedMorphology
 from neuror.exceptions import ZeroLengthRootSection
@@ -67,10 +68,9 @@ def sanitize(input_neuron, output_path):
 
 
 def _sanitize_one(path, input_folder, output_folder):
-    '''Function to be called by sanitize_all to catch all exceptions
-    and return path if in error
+    '''Function to be called by sanitize_all to catch all exceptions and return path if in error.
 
-    Since Pool.imap_unordered only supports one argument, the argument
+    Since :meth:`multiprocessing.pool.Pool.imap_unordered` only supports one argument, the argument
     is a tuple: (path, input_folder, output_folder).
     '''
     relative_path = path.relative_to(input_folder)
@@ -95,7 +95,8 @@ def sanitize_all(input_folder, output_folder, nprocesses=1):
         input_folder (str|pathlib.Path): input neuron
         output_folder (str|pathlib.Path): output name
 
-    .. note:: the sub-directory structure is maintained.
+    .. note::
+        The sub-directory structure is maintained.
     '''
     set_maximum_warnings(0)
 
@@ -124,7 +125,7 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
         zero_length (float): smallest length of a segment
 
     Returns:
-        a fixed morphio.mut.Morphology
+        morphio.mut.Morphology: a fixed morphology
     '''
     neuron = Morphology(neuron)
     to_be_deleted = []
@@ -152,12 +153,12 @@ def fix_non_zero_segments(neuron, zero_length=_ZERO_LENGTH):
     return neuron
 
 
-def annotate_neurolucida(morph_path, checkers=None):
+def annotate_neurolucida(morph_path: str, checkers: Dict = None):
     """Annotate errors on a morphology in neurolucida format.
 
     Args:
-        morph_path (str): absolute path to an ascii morphology
-        checkers (dict): dict of checker functons from neurom with function as keys
+        morph_path: absolute path to an ascii morphology
+        checkers: dict of checker functons from neurom with function as keys
             and marker data in a dict as values, if None, default checkers are used
 
     Default checkers include:
@@ -168,9 +169,9 @@ def annotate_neurolucida(morph_path, checkers=None):
         - multifurcation
 
     Returns:
-        annotations to append to .asc file
-        dict of error summary
-        dict of error markers
+        * annotations to append to .asc file
+        * dict of error summary
+        * dict of error markers
     """
     if checkers is None:
         checkers = {
@@ -213,16 +214,19 @@ def annotate_neurolucida(morph_path, checkers=None):
     return annotate(results, checkers.values()), summary, markers
 
 
-def annotate_neurolucida_all(morph_paths, nprocesses=1):
+def annotate_neurolucida_all(
+    morph_paths: List[str], nprocesses: int = 1
+) -> Tuple[Dict, Dict, Dict]:
     """Annotate errors on a list of morphologies in neurolicida format.
 
     Args:
-        morph_paths (list): list of str of paths to morphologies.
+        morph_paths: list of str of paths to morphologies.
+        nprocesses: number of processes to use for parallel computation
 
     Returns:
-        dict annotations to append to .asc file (morph_path as keys)
-        dict of dict of error summary (morph_path as keys)
-        dict of dict of markers (morph_path as keys)
+        * dict annotations to append to .asc file (morph_path as keys)
+        * dict of dict of error summary (morph_path as keys)
+        * dict of dict of markers (morph_path as keys)
     """
     summaries, annotations, markers = {}, {}, {}
     with Pool(nprocesses) as pool:
@@ -234,7 +238,7 @@ def annotate_neurolucida_all(morph_paths, nprocesses=1):
     return annotations, summaries, markers
 
 
-def fix_points_in_soma(morph):
+def fix_points_in_soma(morph: Morphology) -> bool:
     """Ensure section points are not inside the soma.
 
     Method:
@@ -244,6 +248,12 @@ def fix_points_in_soma(morph):
         - if there is at least 1 point inside the soma, a new point is defined to replace them.
           If this new point is too close to the first point outside the soma, the point is not
           added.
+
+    Args:
+        morph: the morphology
+
+    Returns:
+        ``True`` if at least one point was changed, else ``False``.
     """
     changed = False
     for root_sec in morph.root_sections:

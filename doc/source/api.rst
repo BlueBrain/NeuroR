@@ -18,6 +18,7 @@ API
    neuror.utils
    neuror.axon
    neuror.main
+   neuror.exceptions
    neuror.cut_plane.cut_leaves
    neuror.cut_plane.detection
    neuror.cut_plane.legacy_detection

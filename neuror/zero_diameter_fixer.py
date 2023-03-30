@@ -1,8 +1,9 @@
-'''Fix zero diameters
+'''Fix zero diameters.
 
-Re-implementation of:
-https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/apps/Fix_Zero_Diameter.cpp
-with sections recursion instead of point recursion
+.. note::
+    This module is a re-implementation of:
+    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/apps/Fix_Zero_Diameter.cpp
+    with sections recursion instead of point recursion
 '''
 from collections import namedtuple
 import numpy as np
@@ -12,10 +13,11 @@ SMALL = 0.0001
 Point = namedtuple('Point',
                    ['section',
                     'point_id'])  # index of the point within the given section
+"""The class used to store a point as a section and point ID in this section."""
 
 
 def _next_point_upstream(point):
-    '''Yield upstream points until reaching the root'''
+    '''Yield upstream points until reaching the root.'''
     section, point_id = point
     while not (section.is_root and point_id == 0):
         if point_id > 0:
@@ -31,10 +33,10 @@ def _get_point_diameter(point):
 
 
 def _set_point_diameter(point, new_diameter):
-    '''Set a given diameter
+    '''Set a given diameter.
 
     Unfortunately morphio does not support single value assignment
-    so one has to update the diameters for the whole sections
+    so one has to update the diameters for the whole sections.
     '''
     diameters = point.section.diameters
     diameters[point.point_id] = new_diameter
@@ -42,10 +44,11 @@ def _set_point_diameter(point, new_diameter):
 
 
 def _connect_average_legacy(from_point):
-    '''Apply a ramp diameter between the two points
+    '''Apply a ramp diameter between the two points.
 
-    Re-implementation of
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
+    .. note::
+        This is a re-implementation of
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
     '''
     count = 0
     next_point = None
@@ -65,12 +68,13 @@ def _connect_average_legacy(from_point):
 
 
 def _connect_average(from_point):
-    '''Apply a ramp diameter between the two points
+    '''Apply a ramp diameter between the two points.
 
-    Re-implementation of
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
-    Contrary to the previous implementation the diameter the ramp is computed in term of
-    pathlength and no longer in term of point number
+    .. note::
+        This is a re-implementation of
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L232
+        Contrary to the previous implementation the diameter the ramp is computed in term of
+        pathlength and no longer in term of point number.
     '''
     prev_point = from_point
     pathlengths = []
@@ -94,19 +98,21 @@ def _connect_average(from_point):
 
 
 def _fix_downstream(section):
-    '''Re-implementation of recursePullFix() available at
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L66
+    '''Ensure that diameters are decreasing in downstream direction.
 
     If the current diameter is below the threshold, change its value to the biggest value
-    among the 1-degree children downstream diameters
+    among the 1-degree children downstream diameters.
 
     This is recursive only until a diameter above threshold is found so this
-    fixes zero diameters that are located at the beginning of the neurite
+    fixes zero diameters that are located at the beginning of the neurite.
 
-    Fixes this:
-    Soma--0--0--0--1--1--1
-    But not this:
-    Soma--1--1--1--0--0--0--1--1
+    Fixes this: ``Soma--0--0--0--1--1--1``
+
+    But not this: ``Soma--1--1--1--0--0--0--1--1``
+
+    .. note::
+        This is a re-implementation of recursePullFix() available at
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L66
 
     Args:
         section(morphio.Section):
@@ -126,10 +132,11 @@ def _fix_downstream(section):
 
 
 def _fix_in_between(section, stack, legacy):
-    '''Re-implementation of
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L162
+    '''Fix diameters between two points with valid diameters by applying a ramp.
 
-    Fix diameters between two points with valid diameters by applying a ramp
+    .. note::
+        This is a re-implementation of
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L162
 
     Args:
         point: the current points
@@ -156,11 +163,12 @@ def _fix_in_between(section, stack, legacy):
 
 
 def _fix_upstream(section, upstream_good_diameter):
-    '''Re-implementation of recursePushFix() available at
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L94
+    '''Reset the diameter to `upstream_good_diameter` if the current value and all child values
+    are below threshold.
 
-    Reset the diameter to upstream_good_diameter if the current value and all child values
-    are below threshold
+    .. note::
+        This is a re-implementation of recursePushFix() available at
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/MUK/-/blob/main/muk/Zero_Diameter_Fixer.cpp#L94
 
     Args:
         section: the current section
@@ -168,8 +176,8 @@ def _fix_upstream(section, upstream_good_diameter):
             the current diameter is not suitable
 
     Returns:
-        The current diameter if above threshold, else the smallest child value above threshold
-        else (if no child value is above threshold) returns 0
+        (float): The current diameter if above threshold, else the smallest child value above
+        threshold else (if no child value is above threshold) returns 0.
     '''
     diameters = section.diameters
     nonzero_indices = np.asarray(diameters > SMALL).nonzero()[0]
@@ -187,13 +195,13 @@ def _fix_upstream(section, upstream_good_diameter):
 
 
 def fix_neurite(root_section, legacy=False):
-    '''Apply all fixes to a neurite'''
+    '''Apply all fixes to a neurite.'''
     _fix_downstream(root_section)
     _fix_in_between(root_section, [], legacy)
     _fix_upstream(root_section, 0)
 
 
 def fix_zero_diameters(neuron, legacy=False):
-    '''Fix zero diameters'''
+    '''Fix zero diameters.'''
     for root in neuron.root_sections:
         fix_neurite(root, legacy)

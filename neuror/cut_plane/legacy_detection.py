@@ -19,8 +19,11 @@ L = logging.getLogger(__name__)
 
 
 def children_ids(section):
-    '''
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L111
+    '''Return the children IDs.
+
+    .. note::
+        This is a re-implementation of:
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L111
 
     The original code returns the ids of the descendant sections
     but this implementation return the Section objects instead.
@@ -29,7 +32,7 @@ def children_ids(section):
 
 
 def cut_detect(neuron, cut, offset, axis):
-    '''Detect the cut leaves the old way
+    '''Detect the cut leaves the old way.
 
     The cut leaves are simply the leaves that live
     on the half-space (split along the 'axis' coordinate)
@@ -47,7 +50,6 @@ def cut_detect(neuron, cut, offset, axis):
             sum_minus += coord
 
     if count_plus == 0 or count_minus == 0:
-        # pylint: disable=broad-exception-raised
         raise NeuroRError(
             "cut detection warning:one of the sides is empty. can't decide on cut side"
         )
@@ -65,14 +67,14 @@ def cut_detect(neuron, cut, offset, axis):
 
 
 def internal_cut_detection(neuron, axis):
-    '''As in:
+    '''Use cut_detect to get the side of the half space the points live in.
 
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
-
-    Use cut_detect to get the side of the half space the points live in.
     Then mark points which are children of the apical section.
 
-'''
+    .. note::
+        This is a re-implementation of:
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/repair.cpp#L263
+    '''
     axis = {'x': COLS.X, 'y': COLS.Y, 'z': COLS.Z}[axis.lower()]
 
     cut = defaultdict(lambda key: False)
@@ -103,10 +105,11 @@ def internal_cut_detection(neuron, axis):
 
 
 def get_obliques(neuron, extended_types):
-    '''
-    Returns the oblique roots.
+    '''Returns the oblique roots.
 
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L212
+    .. note::
+        This is a re-implementation of:
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L212
     '''
     return [section for section in iter_sections(neuron)
             if (extended_types[section] == RepairType.oblique and
@@ -114,8 +117,11 @@ def get_obliques(neuron, extended_types):
 
 
 def cut_mark(sections, cut, offset, side, axis):
-    '''
-    https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L654
+    '''Find which sections should be cut.
+
+    .. note::
+        This is a re-implementation of:
+        https://bbpgitlab.epfl.ch/nse/morphologyrepair/BlueRepairSDK/-/blob/main/BlueRepairSDK/src/helper_dendrite.cpp#L654
     '''
     for sec in sections:
         if sec.children:

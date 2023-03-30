@@ -24,19 +24,19 @@ L = logging.getLogger('neuror')
 @click.option('-v', '--verbose', count=True, default=0,
               help='-v for INFO, -vv for DEBUG')
 def cli(verbose):
-    '''The CLI entry point'''
+    '''The CLI entry point.'''
     level = (logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)]
     L.setLevel(level)
 
 
 @cli.group()
 def unravel():
-    '''CLI utilities related to unravelling'''
+    '''CLI utilities related to unravelling.'''
 
 
 @cli.group()
 def cut_plane():
-    '''CLI utilities related to cut-plane repair'''
+    '''CLI utilities related to cut-plane repair.'''
 
 
 @cli.group()
@@ -50,17 +50,17 @@ def sanitize():
 
 @cut_plane.group()
 def compute():
-    '''CLI utilities to detect cut planes'''
+    '''CLI utilities to detect cut planes.'''
 
 
 @cut_plane.group()
 def repair():
-    '''CLI utilities to repair cut planes'''
+    '''CLI utilities to repair cut planes.'''
 
 
 @cli.group()
 def error_annotation():
-    '''CLI utilities related to error annotations'''
+    '''CLI utilities related to error annotations.'''
 
 
 @error_annotation.command(short_help='Annotate errors on a morphology')
@@ -125,7 +125,7 @@ def folder(input_dir, output_dir, error_summary_file, marker_file):
               help=('Path to a CSV whose columns represents the X, Y and Z '
                     'coordinates of points from which to start the repair'))
 def file(input_file, output_file, plot_file, axon_donor, cut_file):
-    '''Repair dendrites of a cut neuron'''
+    '''Repair dendrites of a cut neuron.'''
     import pandas
 
     from neuror.main import repair  # pylint: disable=redefined-outer-name
@@ -151,7 +151,7 @@ def file(input_file, output_file, plot_file, axon_donor, cut_file):
               help=('A dir with the cut points CSV file for each morphology. '
                     'See also "neuror cut-plane repair file --help".'))
 def folder(input_dir, output_dir, plot_dir, axon_donor, cut_file_dir):
-    '''Repair dendrites of all neurons in a directory'''
+    '''Repair dendrites of all neurons in a directory.'''
     from neuror.full import repair_all
     repair_all(input_dir, output_dir, axons=axon_donor, cut_points_dir=cut_file_dir,
                plots_dir=plot_dir)
@@ -165,7 +165,7 @@ def folder(input_dir, output_dir, plot_dir, axon_donor, cut_file_dir):
                     'and after unravelling'))
 @click.option('--window-half-length', default=DEFAULT_WINDOW_HALF_LENGTH)
 def file(input_file, output_file, mapping_file, window_half_length):
-    '''Unravel a cell'''
+    '''Unravel a cell.'''
     from neuror.unravel import unravel  # pylint: disable=redefined-outer-name
     neuron, mapping = unravel(input_file, window_half_length=window_half_length)
     neuron.write(output_file)
@@ -194,7 +194,7 @@ def folder(input_dir, output_dir, raw_planes_dir, unravelled_planes_dir, window_
 @click.argument('folders', nargs=-1)
 @click.option('--title', '-t', multiple=True)
 def report(folders, title):
-    '''Generate a PDF with plots of pre and post repair neurons'''
+    '''Generate a PDF with plots of pre and post repair neurons.'''
     from neuror.view import view_all
     if not folders:
         print('Need to pass at least one folder')
@@ -211,7 +211,7 @@ def report(folders, title):
 @click.argument('input_file')
 @click.argument('output_file')
 def zero_diameters(input_file, output_file):
-    '''Output a morphology where the zero diameters have been removed'''
+    '''Output a morphology where the zero diameters have been removed.'''
     from neuror.zero_diameter_fixer import fix_zero_diameters
     neuron = Morphology(input_file)
     fix_zero_diameters(neuron)
@@ -241,11 +241,11 @@ def folder(input_folder, output_folder, nprocesses):
 
 @cut_plane.group()
 def compute():
-    '''CLI utilities to compute cut planes'''
+    '''CLI utilities to compute cut planes.'''
 
 
 def _check_results(result):
-    '''Check the result status'''
+    '''Check the result status.'''
     if not result:
         L.error('Empty results')
         return -1
@@ -267,7 +267,7 @@ def hint(filename):
 
     Example::
 
-       cut-plane compute hint ./tests/data/Neuron_slice.h5
+       neuror cut-plane compute hint ./tests/data/Neuron_slice.h5
 """
     from neuror.cut_plane.viewer import app, set_neuron
     set_neuron(filename)
@@ -352,7 +352,7 @@ def file(filename, output, width, display, plane, position):
 
     Example::
 
-       cut-plane compute file -d tests/data/Neuron_slice.h5  -o my-plane.json -w 10
+       neuror cut-plane compute file -d tests/data/Neuron_slice.h5  -o my-plane.json -w 10
     '''
     _export_cut_plane(filename, output, width, display, plane or ('x', 'y', 'z'), position)
 
@@ -391,7 +391,7 @@ def join(out_filename, plane_paths):
 
     Example::
 
-       cut-plane join result.json plane1.json plane2.json plane3.json
+       neuror cut-plane join result.json plane1.json plane2.json plane3.json
     '''
     data = []
     for plane in plane_paths:
