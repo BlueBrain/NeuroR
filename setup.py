@@ -28,7 +28,7 @@ setup(
         'numpy>=1.19.2',
         'pandas>=0.24.2',
         'pyquaternion>=0.9.2',
-        'scipy>=1.2.0',
+        'scipy<1.11.1',
     ],
     extras_require={
         'plotly': [
