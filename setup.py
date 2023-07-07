@@ -25,10 +25,10 @@ setup(
         'morph-tool>=2.9.0,<3.0',
         'morphio>=3.0.0,<4.0',
         'neurom>=3.0.1,<4.0',
-        'numpy>=1.19.2',
+        'numpy<1.25',
         'pandas>=0.24.2',
         'pyquaternion>=0.9.2',
-        'scipy<1.10',
+        'scipy>=1.2.0',
     ],
     extras_require={
         'plotly': [
