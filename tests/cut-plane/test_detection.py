@@ -80,9 +80,17 @@ def test_minimize_more17():
     params = 4, 45, -21, 0, 0, 61
 
     result = _minimize(params, _get_points(), bin_width=10)
-    assert_allclose(result,
-                    [4.1510e+00, 4.6763e+01, -2.0966e+01, -2.7207e-04, -4.5070e-04, 6.8804e+01],
-                    rtol=1e-4)
+    if (
+        version.parse(np.__version__) < version.parse('1.25')
+        or "AVX512_SKX" not in np.show_config(mode="dicts").get("SIMD Extensions", {}).get("found", {})
+    ):
+        assert_allclose(result,
+                        [4.1510e+00, 4.6763e+01, -2.0966e+01, -2.7207e-04, -4.5070e-04, 6.8804e+01],
+                        rtol=1e-4)
+    else:
+        assert_allclose(result,
+                        [4.0991e+00, 4.6774e+01, -2.0667e+01, -2.9807e-04, -2.6715e-04,  6.8812e+01],
+                        rtol=1e-4)
 
 
 def test__compute_probabilities():
