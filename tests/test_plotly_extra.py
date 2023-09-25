@@ -8,7 +8,8 @@ from neuror.cli import cli
 DATA = Path(__file__).parent / 'data'
 
 
-def test_report(tmpdir):
+def test_report(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     runner = CliRunner()
-    result = runner.invoke(cli, ['report', str(DATA), str(tmpdir)], catch_exceptions=False)
+    result = runner.invoke(cli, ['report', str(DATA.resolve()), str(tmpdir)], catch_exceptions=False)
     assert result.exit_code == 0

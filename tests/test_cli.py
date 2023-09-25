@@ -15,6 +15,8 @@ def test_error_annotation_file(tmpdir):
         'error-annotation', 'file',
         str(DATA / 'test-error-detection/error-morph.asc'),
         str(tmpdir / 'out.asc'),
+        "--error_summary_file", str(tmpdir / "error_summary.json.json"),
+        "--marker_file", str(tmpdir / "markers.json"),
     ])
     assert result.exit_code == 0, result.exception
 
@@ -23,11 +25,13 @@ def test_error_annotation_folder(tmpdir):
     result = _run([
         'error-annotation', 'folder',
         str(DATA / 'test-error-detection'),
-        str(tmpdir)
+        str(tmpdir),
+        "--error_summary_file", str(tmpdir / "error_summary.json.json"),
+        "--marker_file", str(tmpdir / "markers.json"),
     ])
     assert result.exit_code == 0, result.exception
     assert (set(str(p.relative_to(tmpdir)) for p in Path(tmpdir).rglob('*')) ==
-                 {'simple.asc', 'error-morph.asc'})
+                 {'error_summary.json.json', 'simple.asc', 'markers.json', 'error-morph.asc'})
 
 
 def test_repair_file(tmpdir):

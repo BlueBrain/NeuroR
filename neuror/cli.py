@@ -372,7 +372,7 @@ def folder(input_dir, output_dir, width, display, plane):
     See "cut-plane compute --help" for more information'''
     for inputfilename in iter_morphology_files(input_dir):
         L.info('Seaching cut plane for file: %s', inputfilename)
-        outfilename = os.path.join(output_dir, inputfilename.with_suffix('.json'))
+        outfilename = os.path.join(output_dir, inputfilename.with_suffix('.json').name)
         try:
             _export_cut_plane(inputfilename, outfilename, width, display=display,
                               searched_axes=(plane or ('X', 'Y', 'Z')),
