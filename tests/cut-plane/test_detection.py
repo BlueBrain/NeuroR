@@ -19,11 +19,7 @@ DATA = Path(__file__).parent.parent / 'data'
 
 def _get_points():
     '''Utility function to get all neuron points'''
-    neuron = nm.load_neuron(DATA / 'rotated.h5')
-    return np.array([point
-                     for neurite in neuron.neurites
-                     for section in nm.iter_sections(neurite)
-                     for point in section.points])
+    return np.load(DATA / "neuron_points.npy")
 
 
 def test_project_normal():

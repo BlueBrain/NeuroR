@@ -8,7 +8,7 @@ from collections import Counter, OrderedDict, defaultdict
 from enum import Enum
 from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import jsonschema
 import morphio
@@ -21,7 +21,6 @@ from neurom import NeuriteType, iter_neurites, iter_sections, load_morphology
 from neurom.core.dataformat import COLS
 from neurom.core import Neurite, Section
 from neurom.features.section import branch_order, section_path_length
-from nptyping import NDArray, Shape, Float
 from scipy.spatial.distance import cdist
 
 from neuror import axon, cut_plane
@@ -339,10 +338,10 @@ class Repair(object):
                  inputfile: Path,
                  axons: Optional[Path] = None,
                  seed: Optional[int] = 0,
-                 cut_leaves_coordinates: Optional[NDArray[Shape["3"], Any]] = None,
+                 cut_leaves_coordinates: Optional[np.ndarray] = None,
                  legacy_detection: bool = False,
                  repair_flags: Optional[Dict[RepairType, bool]] = None,
-                 apical_point: NDArray[Shape["3"], Float] = None,
+                 apical_point: np.ndarray = None,
                  params: Dict = None,
                  validate_params=False):
         np.random.seed(seed)
@@ -779,7 +778,7 @@ def repair(inputfile: Path,  # pylint: disable=too-many-arguments
            outputfile: Path,
            axons: Optional[List[Path]] = None,
            seed: int = 0,
-           cut_leaves_coordinates: Optional[NDArray[Shape["3"], Any]] = None,
+           cut_leaves_coordinates: Optional[np.ndarray] = None,
            legacy_detection: bool = False,
            plot_file: Optional[Path] = None,
            repair_flags: Optional[Dict[RepairType, bool]] = None,
