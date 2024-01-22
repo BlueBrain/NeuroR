@@ -499,6 +499,7 @@ class Repair(object):
             except ImportError:
                 L.warning('Skipping writing plots as [plotly] extra is not installed')
 
+        self.neuron.remove_unifurcations()
         self.neuron.write(outputfile)
         L.debug('Repair successful for %s', self.inputfile)
 
