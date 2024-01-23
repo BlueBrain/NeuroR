@@ -2,7 +2,7 @@ from pathlib import Path
 
 from morph_tool import diff
 from morphio import SectionType
-from neurom.io.utils import load_morphology
+from neurom import load_morphology
 import pytest
 from numpy.testing import assert_array_equal
 

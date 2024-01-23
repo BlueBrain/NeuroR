@@ -2,7 +2,7 @@ from pathlib import Path
 
 from morph_tool import apical_point_section_segment
 from morph_tool.spatial import point_to_section_segment
-from neurom.io.utils import load_morphology
+from neurom import load_morphology
 import pytest
 from numpy.testing import assert_array_equal
 
