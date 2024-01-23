@@ -172,7 +172,10 @@ def test_sanitize__negative_diameters():
     ("CellBody"
     (Color Red)
     (CellBody)
-    (0 0 0 2)
+    (2 0 0 2)
+    (0 2 0 2)
+    (-2 0 0 2)
+    (0 -2 0 2)
     )
 
     ((Dendrite)

@@ -8,7 +8,8 @@ import pytest
 from mock import patch
 from morph_tool.spatial import point_to_section_segment
 from morphio import SectionType
-from neurom import COLS, NeuriteType, load_neuron
+from neurom import COLS, NeuriteType
+from neurom.io.utils import load_morphology
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import neuror.main as test_module
@@ -22,8 +23,8 @@ DATA_PATH = Path(__file__).parent / 'data'
 
 SIMPLE_PATH = DATA_PATH / 'simple.swc'
 SLICE_PATH = DATA_PATH / 'neuron-slice.h5'
-SIMPLE = load_neuron(SIMPLE_PATH)
-SLICE = load_neuron(SLICE_PATH)
+SIMPLE = load_morphology(SIMPLE_PATH)
+SLICE = load_morphology(SLICE_PATH)
 
 
 class DummySection:
@@ -215,7 +216,7 @@ def test_last_segment_vector():
 
 def test__grow_until_sholl_sphere():
     np.random.seed(0)
-    neuron = load_neuron(DATA_PATH / 'simple.swc')
+    neuron = load_morphology(DATA_PATH / 'simple.swc')
     section = neuron.neurites[0].root_node
     test_module._grow_until_sholl_sphere(section, SIMPLE.soma.center, 0, _PARAMS,
                                          lambda diam:diam, 0.1, 1.0)
@@ -325,8 +326,8 @@ def test_repair_axon(tmpdir):
     filename = DATA_PATH / 'real-with-axon.asc'
     outfilename = Path(tmpdir, 'out.asc')
     test_module.repair(filename, outfilename, axons=[filename])
-    neuron_in = load_neuron(filename)
-    neuron_out = load_neuron(outfilename)
+    neuron_in = load_morphology(filename)
+    neuron_out = load_morphology(outfilename)
     axon = neuron_out.section(41)
     assert axon.type == NeuriteType.axon
     assert_array_equal(neuron_in.section(40).points[0],
@@ -336,7 +337,7 @@ def test_repair_axon(tmpdir):
     # Test disactivating the axon repair
     repair_flags = {RepairType.axon: False}
     test_module.repair(filename, outfilename, axons=[filename], repair_flags=repair_flags)
-    neuron_out = load_neuron(outfilename)
+    neuron_out = load_morphology(outfilename)
     axon = neuron_out.section(41)
     assert axon.type == NeuriteType.axon
     assert_array_equal(neuron_in.section(41).points[0],
@@ -365,7 +366,7 @@ def test_legacy_compare_with_legacy_result():
 
     The arguments are the one used in the legacy morphology workflow.
     '''
-    neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
+    neuron = load_morphology(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
 
     # tests were written for NeuroM < 2 when it shifted sections by +1 comparing to MorphIO.
@@ -455,7 +456,7 @@ def test_legacy_sholl_data():
 
     The arguments are the one used in the legacy morphology workflow.
     '''
-    neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
+    neuron = load_morphology(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
     obj._fill_repair_type_map()
     obj._fill_statistics_for_intact_subtrees()
@@ -486,7 +487,7 @@ def test_legacy_compare_with_legacy_result2():
 
     The arguments are the one used in the legacy morphology workflow.
     '''
-    neuron = load_neuron(DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5')
+    neuron = load_morphology(DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5', legacy_detection=True)
 
     cut_sections = {point_to_section_segment(neuron, point)[0] + 1

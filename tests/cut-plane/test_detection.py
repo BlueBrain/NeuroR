@@ -155,7 +155,7 @@ def test_from_json():
 
 def test_find():
     filename = DATA / 'rotated.h5'
-    neuron = nm.load_neuron(filename)
+    neuron = nm.io.utils.load_morphology(filename)
     result = test_module.CutPlane.find(neuron, bin_width=10).to_json()
     assert (set(result.keys()) ==
                  {'details', 'cut-plane', 'cut-leaves', 'status'})

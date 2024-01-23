@@ -2,7 +2,7 @@ from pathlib import Path
 
 from morph_tool import diff
 from morphio import SectionType
-from neurom import load_neuron
+from neurom.io.utils import load_morphology
 import pytest
 from numpy.testing import assert_array_equal
 
@@ -12,8 +12,8 @@ DATA_PATH = Path(__file__).parent / 'data'
 
 SIMPLE_PATH = DATA_PATH / 'simple.swc'
 SLICE_PATH = DATA_PATH / 'neuron-slice.h5'
-SIMPLE = load_neuron(SIMPLE_PATH)
-SLICE = load_neuron(SLICE_PATH)
+SIMPLE = load_morphology(SIMPLE_PATH)
+SLICE = load_morphology(SLICE_PATH)
 
 
 def test_tree_distance():
@@ -50,7 +50,7 @@ def test__sort_intact_sections_by_score():
 
 
 def test__repair():
-    neuron = load_neuron(Path(DATA_PATH, 'valid.h5'))
+    neuron = load_morphology(Path(DATA_PATH, 'valid.h5'))
     axon = neuron.root_sections[0]
     assert axon.type == SectionType.axon
     test_module.repair(neuron, axon, [axon], [axon], set(), y_extent=10000)
@@ -61,7 +61,7 @@ def test__repair():
 
 def test__repair_no_intact_axon():
     filename = Path(DATA_PATH, 'valid.h5')
-    neuron = load_neuron(filename)
+    neuron = load_morphology(filename)
     axon = neuron.root_sections[0]
     used_axon_branches = set()
     test_module.repair(neuron, axon, [], [axon], used_axon_branches, y_extent=10000)
