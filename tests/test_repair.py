@@ -328,22 +328,22 @@ def test_repair_axon(tmpdir):
     test_module.repair(filename, outfilename, axons=[filename])
     neuron_in = load_morphology(filename)
     neuron_out = load_morphology(outfilename)
-    axon = neuron_out.section(41)
+    axon = neuron_out.section(40)
     assert axon.type == NeuriteType.axon
-    assert_array_equal(neuron_in.section(40).points[0],
-                       neuron_out.section(40).points[0])
-    assert len(neuron_out.section(41).points) > len(neuron_in.section(41).points)
+    assert_array_equal(neuron_in.section(39).points,
+                       neuron_out.section(39).points)
+    assert len(neuron_out.section(40).points) > len(neuron_in.section(40).points)
 
     # Test disactivating the axon repair
     repair_flags = {RepairType.axon: False}
     test_module.repair(filename, outfilename, axons=[filename], repair_flags=repair_flags)
     neuron_out = load_morphology(outfilename)
-    axon = neuron_out.section(41)
+    axon = neuron_out.section(40)
     assert axon.type == NeuriteType.axon
-    assert_array_equal(neuron_in.section(41).points[0],
-                       neuron_out.section(41).points[0])
+    assert_array_equal(neuron_in.section(40).points,
+                       neuron_out.section(40).points)
 
-    assert len(neuron_out.section(41).points) == len(neuron_in.section(41).points), 'The section should not have been regrown'
+    assert len(neuron_out.section(40).points) == len(neuron_in.section(40).points), 'The section should not have been regrown'
 
 
 def test_repair_no_intact_axon(tmpdir):
