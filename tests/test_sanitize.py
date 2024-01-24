@@ -172,7 +172,10 @@ def test_sanitize__negative_diameters():
     ("CellBody"
     (Color Red)
     (CellBody)
-    (0 0 0 2)
+    (2 0 0 2)
+    (0 2 0 2)
+    (-2 0 0 2)
+    (0 -2 0 2)
     )
 
     ((Dendrite)
@@ -296,8 +299,7 @@ def test_error_annotation_all():
 
 
 def test_fix_points_in_soma():
-    neuron = load_morphology(DATA / "simple_inside_soma.asc")
-
+    neuron = load_morphology(DATA / "simple_inside_soma.swc")
     fix_points_in_soma(neuron)
 
     # In the given morph:

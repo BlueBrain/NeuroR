@@ -150,7 +150,7 @@ def test_unravel_all(tmpdir):
 
 def test_legacy():
     actual, _ = test_module.unravel(DATA / 'legacy-unravel/1-pt-soma.swc', legacy_behavior=True)
-    assert not diff(actual, DATA / 'legacy-unravel/expected-1-pt-soma.h5')
+    assert not diff(actual, DATA / 'legacy-unravel/expected-1-pt-soma.swc')
 
     actual, _ = test_module.unravel(DATA / 'legacy-unravel/3-pts-soma.swc', legacy_behavior=True)
     assert not diff(actual, DATA / 'legacy-unravel/expected-3-pts-soma.h5')
