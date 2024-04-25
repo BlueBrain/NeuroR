@@ -31,6 +31,9 @@ class DummySection:
         self.points = np.array(points)
         self.children = children or []
 
+    def to_morphio(self):
+        return self
+
 
 def test_validation():
     Repair(SIMPLE_PATH, params={"tip_percentile": 1}, validate_params=True)
@@ -215,7 +218,7 @@ def test_last_segment_vector():
 
 def test__grow_until_sholl_sphere():
     np.random.seed(0)
-    neuron = load_morphology(DATA_PATH / 'simple.swc')
+    neuron = load_morphology(DATA_PATH / 'simple.swc', mutable=True)
     section = neuron.neurites[0].root_node
     test_module._grow_until_sholl_sphere(section, SIMPLE.soma.center, 0, _PARAMS,
                                          lambda diam:diam, 0.1, 1.0)
@@ -369,7 +372,7 @@ def test_legacy_compare_with_legacy_result():
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5', legacy_detection=True)
 
     # tests were written for NeuroM < 2 when it shifted sections by +1 comparing to MorphIO.
-    cut_sections = {point_to_section_segment(neuron, point)[0] + 1
+    cut_sections = {point_to_section_segment(neuron.to_morphio(), point)[0] + 1
                     for point in obj.cut_leaves}
 
     legacy_cut_sections = {
@@ -489,7 +492,7 @@ def test_legacy_compare_with_legacy_result2():
     neuron = load_morphology(DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5')
     obj = test_module.Repair(inputfile=DATA_PATH / 'compare-bbpsdk/vd100714B_idB.h5', legacy_detection=True)
 
-    cut_sections = {point_to_section_segment(neuron, point)[0] + 1
+    cut_sections = {point_to_section_segment(neuron.to_morphio(), point)[0] + 1
                     for point in obj.cut_leaves}
 
     legacy_cut_sections = {62,64,65,69,73,77,78,85,87,88,89,91,93,94,115,116,119,120,125,126,130,

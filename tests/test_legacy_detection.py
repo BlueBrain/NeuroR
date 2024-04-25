@@ -35,7 +35,7 @@ def test_get_obliques():
     '''
     neuron = load_morphology(DATA_PATH / 'compare-bbpsdk/rp120430_P-2_idA.h5')
 
-    apical_section = neuron.sections[apical_point_section_segment(neuron)[0]]
+    apical_section = neuron.sections[apical_point_section_segment(neuron.to_morphio())[0]]
     extended_types = repair_type_map(neuron, apical_section)
     assert ([sec.id + OFFSET for sec in test_module.get_obliques(neuron, extended_types)] ==
                  [217])
@@ -59,7 +59,7 @@ def test_legacy_compare_with_legacy_result():
     points, sign = test_module.internal_cut_detection(neuron, 'z')
     assert sign == 1
     # tests were written for NeuroM < 2 when it shifted sections by +1 comparing to MorphIO.
-    cut_sections = {point_to_section_segment(neuron, point)[0] + 1
+    cut_sections = {point_to_section_segment(neuron.to_morphio(), point)[0] + 1
                     for point in points}
 
     legacy_cut_sections = {13,14,17,18,38,39,40,45,58,67,68,69,73,75,76,93,94,101,102,103,105,106,109,110,111,120,124,125,148,149,150,156,157,158,162,163,164,166,167,168,169,192,201,202,203,205,206,208}

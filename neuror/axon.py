@@ -91,8 +91,8 @@ def _similar_section(intact_axons, section):
     '''
     dists = []
     for root in intact_axons:
-        origin = root.points[0]
-        origin_cut = section.points[0]
+        origin = root.points[0, COLS.XYZ]
+        origin_cut = section.points[0, COLS.XYZ]
         diff = origin_cut - origin
         diff[COLS.X] = origin_cut[COLS.X] + origin[COLS.X]
         dists.append(np.linalg.norm(diff))
@@ -161,14 +161,14 @@ def repair(morphology, section, intact_sections, axon_branches, used_axon_branch
         L.debug("Pasting axon branch with ID %s", branch.id)
 
         end_point = section.points[-1, COLS.XYZ]
-        appended = section.append_section(branch)
+        appended = section.to_morphio().append_section(branch.to_morphio())
         translation = section.points[-1, COLS.XYZ] - appended.points[0, COLS.XYZ]
         align(appended, translation)
         translate(appended, translation)
 
         # Make sure the child section first point is exactly the end point of the parent section
         appended_points = np.copy(appended.points)
-        appended_points[0] = end_point
+        appended_points[0, COLS.XYZ] = end_point
         appended.points = appended_points
 
         if any(np.any(section.points[:, COLS.Y] > y_extent) for section in appended.iter()):

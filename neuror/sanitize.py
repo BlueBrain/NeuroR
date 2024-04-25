@@ -10,6 +10,7 @@ from morphio import MorphioError, SomaType, set_maximum_warnings
 from morphio.mut import Morphology  # pylint: disable=import-error
 from neurom.check import morphology_checks as mc
 from neurom.check import CheckResult
+from neurom.core.soma import get_center, get_radius, check_overlaps
 from neurom.apps.annotate import annotate
 from neurom import load_morphology
 from tqdm import tqdm
@@ -256,9 +257,9 @@ def fix_points_in_soma(morph: Morphology) -> bool:
         ``True`` if at least one point was changed, else ``False``.
     """
     changed = False
-    for root_sec in morph.root_sections:
+    for root_sec in morph.to_morphio().root_sections:
         sec_pts = root_sec.points
-        in_soma = np.argwhere(morph.soma.overlaps(sec_pts)).flatten()
+        in_soma = np.argwhere(check_overlaps(morph.soma, sec_pts)).flatten()
 
         if in_soma.size > 0:
             changed = True
@@ -271,7 +272,7 @@ def fix_points_in_soma(morph: Morphology) -> bool:
             in_pt = sec_pts[last_in_soma]
             out_pt = sec_pts[last_in_soma + 1]
             vec = out_pt - in_pt
-            new_pt = morph.soma.center + vec / np.linalg.norm(vec) * morph.soma.radius
+            new_pt = get_center(morph.soma) + vec / np.linalg.norm(vec) * get_radius(morph.soma)
             if np.linalg.norm(new_pt - root_sec.points[last_in_soma + 1]) <= _ZERO_LENGTH:
                 new_sec_pts = root_sec.points[last_in_soma + 1:]
                 last_in_soma += 1

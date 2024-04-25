@@ -24,7 +24,7 @@ setup(
         'matplotlib>=2.2.3',
         'morph-tool>=2.9.0,<3.0',
         'morphio>=3.0.0,<4.0',
-        'neurom @ git+https://github.com/BlueBrain/NeuroM.git@v4#egg=neurom',
+        'neurom @ git+https://github.com/BlueBrain/NeuroM.git@soma-functions#egg=neurom',
         'numpy>=1.19.2',
         'nptyping>=2',
         'pandas>=0.24.2',

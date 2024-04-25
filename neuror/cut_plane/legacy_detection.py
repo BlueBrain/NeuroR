@@ -81,7 +81,7 @@ def internal_cut_detection(neuron, axis):
     side = cut_detect(neuron, cut, 0, axis)
 
     # reclassify cut points in tuft,based on apical point position
-    apical_section_id, point_id = apical_point_section_segment(neuron)
+    apical_section_id, point_id = apical_point_section_segment(neuron.to_morphio())
     if apical_section_id is not None:
         apical_section = neuron.sections[apical_section_id]
         apical_offset = apical_section.points[point_id, axis]
