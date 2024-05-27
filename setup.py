@@ -36,7 +36,7 @@ setup(
             'dash-core-components>=0.46.0',  # HTML components
             'dash-table>=3.6.0',  # Interactive DataTable component (new!)
             'dash>=0.41.0',  # The core dash backend
-            'plotly-helper>=0.0.8,<1.0',
+            'plotly-helper>=0.0.9,<1.0',
         ],
         'docs': [
             'sphinx-autorun>=1.1.1',
