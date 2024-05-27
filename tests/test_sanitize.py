@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 from morphio import Morphology
+from morphio.mut import Morphology as MutMorphology
 from numpy.testing import assert_array_equal, assert_equal, assert_array_almost_equal
 
 from morph_tool.utils import iter_morphology_files
@@ -299,7 +300,7 @@ def test_error_annotation_all():
 
 
 def test_fix_points_in_soma():
-    neuron = load_morphology(DATA / "simple_inside_soma.swc")
+    neuron = load_morphology(DATA / "simple_inside_soma.swc", mutable=True)
     fix_points_in_soma(neuron)
 
     # In the given morph:
@@ -347,6 +348,6 @@ def test_fix_points_in_soma():
     )
 
     # Test that it fails when an entire section is located inside the soma
-    neuron.soma.radius = 10
+    neuron.soma.to_morphio().diameters *= 10
     with pytest.raises(tested.CorruptedMorphology, match="An entire section is located inside the soma"):
         fix_points_in_soma(neuron)

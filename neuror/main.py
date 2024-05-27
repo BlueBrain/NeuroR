@@ -19,6 +19,7 @@ from morph_tool.spatial import point_to_section_segment
 from morphio import PointLevel, SectionType
 from neurom import NeuriteType, iter_neurites, iter_sections, load_morphology
 from neurom.core.dataformat import COLS
+from neurom.core.types import tree_type_checker
 from neurom.core import Neurite, Section
 from neurom.features.section import branch_order, section_path_length
 from scipy.spatial.distance import cdist
@@ -279,7 +280,9 @@ def _continuation(sec, origin, params, taper, tip_radius):
     # we apply tapering function + minimum diameter
     radius = max(tip_radius, sec.points[-1, COLS.R] - taper)
     new_point = np.append(coord, radius)
-    sec.points = np.vstack((sec.points, new_point))
+    sec_pts = np.vstack((sec.points, new_point))
+    sec.to_morphio().points = sec_pts[:, COLS.XYZ]
+    sec.to_morphio().diameters = sec_pts[:, COLS.R] * 2
 
 
 def _y_cylindrical_extent(section):
@@ -290,9 +293,18 @@ def _y_cylindrical_extent(section):
 
 def _max_y_dendritic_cylindrical_extent(neuron):
     '''Return the maximum distance of dendritic section ends and the origin in the XZ plane.'''
-    return max((_y_cylindrical_extent(section) for section in neuron.iter()
-                if section.type in {SectionType.basal_dendrite, SectionType.apical_dendrite}),
-               default=0)
+    return max(
+        (
+            _y_cylindrical_extent(section)
+            for section in iter_sections(
+                neuron,
+                section_filter=tree_type_checker(
+                    SectionType.basal_dendrite, SectionType.apical_dendrite
+                ),
+            )
+        ),
+        default=0,
+    )
 
 
 class Repair(object):
@@ -365,19 +377,22 @@ class Repair(object):
         else:
             self.cut_leaves = np.asarray(cut_leaves_coordinates)
 
-        self.neuron = load_morphology(inputfile)
+        self.neuron = load_morphology(inputfile, mutable=True)
         self.repair_type_map = {}
         self.max_y_cylindrical_extent = _max_y_dendritic_cylindrical_extent(self.neuron)
         self.max_y_extent = max(np.max(section.points[:, COLS.Y])
-                                for section in self.neuron.iter())
+                                for section in self.neuron.to_morphio().iter())
 
         self.info = {}
         apical_section_id = None
         if apical_point != -1:
             if apical_point:
-                apical_section_id = point_to_section_segment(self.neuron, apical_point)[0]
+                apical_section_id = point_to_section_segment(
+                    self.neuron.to_morphio(),
+                    apical_point,
+                )[0]
             else:
-                apical_section_id = apical_point_section_segment(self.neuron)[0]
+                apical_section_id = apical_point_section_segment(self.neuron.to_morphio())[0]
 
         if apical_section_id:
             self.apical_section = self.neuron.sections[apical_section_id]
@@ -428,7 +443,7 @@ class Repair(object):
         '''
         if self.cut_leaves.size == 0:
             L.warning('No cut leaves. Nothing to repair for morphology %s', self.inputfile)
-            self.neuron.write(outputfile)
+            self.neuron.to_morphio().write(outputfile)
             return
 
         # See https://github.com/BlueBrain/MorphIO/issues/161
@@ -439,6 +454,7 @@ class Repair(object):
                 plane = cut_plane.CutPlane.find_legacy(axon_donor, 'z')
             else:
                 plane = cut_plane.CutPlane.find(axon_donor)
+            plane.morphology = load_morphology(plane.morphology, mutable=True)
             keep_axons_alive.append(plane)
             self.donated_intact_axon_sections.extend(
                 [section for section in iter_sections(plane.morphology)
@@ -499,8 +515,8 @@ class Repair(object):
             except ImportError:
                 L.warning('Skipping writing plots as [plotly] extra is not installed')
 
-        self.neuron.remove_unifurcations()
-        self.neuron.write(outputfile)
+        self.neuron.to_morphio().remove_unifurcations()
+        self.neuron.to_morphio().write(outputfile)
         L.debug('Repair successful for %s', self.inputfile)
 
     def _find_intact_obliques(self):
@@ -700,7 +716,7 @@ class Repair(object):
                        self.params['seg_length']).tolist()]
             prop = PointLevel(points, [current_diameter, child_diameter])
 
-            child = section.append_section(prop)
+            child = section.to_morphio().append_section(prop)
             L.debug('section appended: %s', child.id)
 
     def _grow(self, section, order_offset, origin):

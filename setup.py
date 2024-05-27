@@ -22,10 +22,11 @@ setup(
         'click>=6.7',
         'jsonschema',
         'matplotlib>=2.2.3',
-        'morph-tool>=2.9.0,<3.0',
+        'morph-tool>=2.11.0,<3.0',
         'morphio>=3.0.0,<4.0',
-        'neurom>=3.0.1,<4.0',
-        'numpy<1.25',
+        'neurom>=4.0.0',
+        'numpy>=1.19.2',
+        'nptyping>=2',
         'pandas>=0.24.2',
         'pyquaternion>=0.9.2',
         'scipy>=1.2.0',
@@ -35,7 +36,7 @@ setup(
             'dash-core-components>=0.46.0',  # HTML components
             'dash-table>=3.6.0',  # Interactive DataTable component (new!)
             'dash>=0.41.0',  # The core dash backend
-            'plotly-helper>=0.0.8,<1.0',
+            'plotly-helper>=0.0.9,<1.0',
         ],
         'docs': [
             'sphinx-autorun>=1.1.1',
